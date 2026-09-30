@@ -976,3 +976,86 @@ From a synchronized WSL checkout, run the PS4 configure workflow again. Verify t
 - CMake reaches the same native dependency stage without mutating the submodule.
 
 Only after this validation should the TexturePacker host-tool integration be addressed.
+
+
+---
+
+## 28. R-004.13 — Clean Kodi submodule validation and PS5 host-tool reference — 2026-10-01
+
+### Validation result
+
+The WSL checkout was synchronized to `origin/main` at `4ddc06d`, then the legacy PS4 overlay directories that had previously been copied into `references/kodi` were removed:
+
+- `references/kodi/cmake/platform/ps4`
+- `references/kodi/cmake/scripts/ps4`
+- `references/kodi/xbmc/platform/ps4`
+
+The resulting repository state is clean:
+
+- parent repository: `main...origin/main`;
+- `references/kodi`: clean;
+- `references/kodi-ps5`: pinned clean submodule;
+- generated `build/` content remains ignored.
+
+This confirms the new clean-source staging workflow is not what dirties the Kodi submodule. The previous dirty state was legacy residue from the old overlay mechanism.
+
+### Decision
+
+The clean-source staging architecture is now validated and becomes the required build model:
+
+```
+references/kodi (pinned, clean)
+        |
+        | git archive HEAD
+        v
+build/ps4/kodi-source (generated)
+        |
+        | apply repository-owned PS4 overlay
+        v
+CMake configure/build
+```
+
+The pinned upstream Kodi submodule must not be modified by the normal PS4 build workflow.
+
+### PS5 host-tool research
+
+The exact PS5 reference repository is:
+
+`https://github.com/VivaLaVent/kodi-ps5`
+
+Its current host-tool workflow provides direct evidence for the TexturePacker blocker:
+
+1. `scripts/10-build-host-tools.sh` builds **TexturePacker** and **JsonSchemaBuilder** natively for the host.
+2. It installs both under a native prefix (default `$HOME/kodi-ps5-native/bin`).
+3. The same script creates `Toolchain-Native.cmake` so Kodi's other native tools are built for the host.
+4. `scripts/20-configure-kodi.sh` passes:
+   - `-DWITH_TEXTUREPACKER="$NATIVE/bin"`
+   - `-DWITH_JSONSCHEMABUILDER="$NATIVE/bin"`
+   - `-DNATIVEPREFIX="$NATIVE"`
+   - `-DINTERNAL_TEXTUREPACKER_INSTALLABLE=FALSE`
+5. The PS5 patch `0001-texturepacker-not-shipped-on-ps5.patch` explicitly treats TexturePacker as a host build tool and prevents shipping/building a target-side TexturePacker for PS5.
+
+**Conclusion:** this confirms the architectural model already suspected for the PS4 port: host build tools must be built natively and supplied explicitly to the cross-configure. We should not set `HOST_CAN_EXECUTE_TARGET=TRUE`.
+
+### Current PS4 mapping
+
+The PS4 project already has a native prefix at:
+
+`build/ps4/build/native`
+
+and CMake successfully finds:
+
+- `flatc`;
+- `JsonSchemaBuilder`.
+
+The remaining configure blocker is therefore specifically the missing native **TexturePacker** executable/path.
+
+The next implementation step is to adapt the PS5 host-tool strategy to the PS4 repository without copying PS5-specific packaging or platform logic. The likely implementation is a dedicated PS4 host-tools bootstrap that builds TexturePacker natively from the pinned Kodi source, installs it into `build/ps4/build/native/bin`, and passes the resulting directory through `WITH_TEXTUREPACKER`.
+
+### Important scope boundary
+
+This is a build-system decision, not yet a Kodi runtime/platform decision. No renderer, video, or PS4 runtime architecture is changed by this step.
+
+### Next action
+
+Implement and validate the native TexturePacker host-tool integration, using the online PS5 workflow as the reference and keeping the Kodi submodule clean. Validation must reach a successful configure before a full Kodi build is attempted.
