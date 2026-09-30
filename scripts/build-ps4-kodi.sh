@@ -29,7 +29,7 @@ NATIVEPREFIX="${BUILD_DIR}/build/native"
 KODI_SRC="${KODI_SRC}" \
 NATIVEPREFIX="${NATIVEPREFIX}" \
 JOBS="${JOBS:-$(nproc)}" \
-  "${ROOT}/scripts/build-ps4-native-texturepacker.sh"
+  bash "${ROOT}/scripts/build-ps4-native-texturepacker.sh"
 
 cmake -S "${KODI_SRC}" -B "${BUILD_DIR}" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
