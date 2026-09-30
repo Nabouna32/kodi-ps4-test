@@ -1549,3 +1549,85 @@ No Kodi shader conversion should be implemented until this validation is complet
 The release-pipeline blocker is now reduced to **tool acquisition and validation**, not compiler discovery.
 
 R-002A can continue with the known-good shader fixture while this track is resolved. The eventual Kodi Piglet integration remains gated on a reproducible project-owned shader build path.
+---
+
+## 28. R-002A.5 — ioQuake3 history shows when the 124 shader binaries entered the project — 2026-09-30
+
+The ioQuake3 repository history provides an important additional clue about shader provenance.
+
+### 28.1 The 124 blobs were introduced together with the precompiled-shader transition
+
+Commit e265104cb90b844daa4e5e93586e76fadf812c2a, dated 2026-07-21 and titled **“Ditching Piglet + Shacc”**, changes the renderer from runtime shader compilation/cache handling to the shipped per-stage shader-binary model.
+
+The commit simultaneously:
+
+- adds ps4_shaderbin.c/.h;
+- changes the renderer to load per-stage binaries;
+- removes the old glGetProgramBinaryOES cache;
+- makes ShaccVSH optional/fallback-only;
+- adds the fixes/shaderbin/ package directory;
+- packages the shaderbin directory;
+- and contains **exactly 124 shader binary blobs**, totalling about 1.17 MB of raw Git blob data at that revision.
+
+This is strong historical evidence that the 124 production shader binaries were generated before or during this transition and then committed as release assets. The normal Makefile does not regenerate them.
+
+### 28.2 What this history tells us
+
+The project did not arrive at the current release pipeline by compiling shaders as part of every PKG build.
+
+The historical transition is effectively:
+
+```text
+Piglet + ShaccVSH runtime compilation
+              |
+              v
+capture/produce native shader binaries
+              |
+              v
+commit 124 generated blobs
+              |
+              v
+release builds package the blobs
+              |
+              v
+runtime uses glShaderBinary()
+```
+
+This reinforces the conclusion that the host-side compiler/capture step is an **offline asset-generation stage**, separate from the ordinary C/C++ + PKG build.
+
+### 28.3 What the history still does not reveal
+
+The transition commit itself does not identify the compiler invocation. The current README later credits the exact GitGud psbc repository, but the historical commit that introduced the blobs does not expose a compiler command in the Makefile.
+
+Therefore the missing information is now very specific:
+
+> Which psbc revision/command was used to generate the 124 blobs before they were committed?
+
+That is the most valuable remaining provenance question.
+
+### 28.4 Consequence for Kodi
+
+This gives us a concrete model for Kodi:
+
+1. get the exact psbc source;
+2. reproduce one ioQuake3-style shader compilation offline;
+3. prove the resulting binary can be loaded by Piglet;
+4. build a small Kodi shader conversion layer only if psbc requires Kodi-specific preprocessing;
+5. generate Kodi's complete shader asset set as a separate build step;
+6. make the normal Kodi PKG build consume those generated assets rather than invoking a compiler on the PS4.
+
+We should **not** copy ioQuake3's 124 binaries into Kodi. They are useful as provenance/format references only.
+
+### 28.5 Updated confidence
+
+- **High:** the exact psbc project referenced by ioQuake3 is gitgud.io/veiledmerc/psbc.
+- **High:** ioQuake3's release architecture uses precompiled Piglet stage binaries and does not regenerate them in its normal Makefile.
+- **High:** the 124 blobs were already part of the project at the July 21 “Ditching Piglet + Shacc” transition.
+- **Medium:** psbc directly produced those exact 124 blobs rather than another intermediate tool/capture process being used before packaging.
+- **Low-medium:** exact psbc revision, invocation, and reproducibility remain unverified.
+
+### 28.6 Next research action
+
+The next step is therefore to obtain the GitGud psbc source itself or an authoritative mirror. If that cannot be fetched directly, search the PS4 homebrew ecosystem for mirrors, forks, packages, or references containing the same project history.
+
+Only after recovering the source should we decide whether psbc can be built and used directly for Kodi.
