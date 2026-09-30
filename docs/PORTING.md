@@ -2345,3 +2345,35 @@ Les deux premiers répertoires sont des références externes. Ils ne doivent pa
 Le dépôt contient maintenant la mécanique Git nécessaire pour travailler directement sur les sources de référence. Aucun code Kodi PS4 n'a encore été introduit.
 
 **Prochaine étape pratique :** initialiser les sous-modules dans l'environnement de travail, vérifier les révisions obtenues et commencer le premier audit de code comparatif ciblé, au lieu de rester uniquement sur l'analyse documentaire.
+
+
+## 39. R-002A.16 — premier slice exécutable PS4 : squelette Piglet/EGL/GLES2 — 2026-09-30
+
+Le projet quitte maintenant le stade purement documentaire avec un premier morceau de code PS4 indépendant de Kodi : `poc/piglet/`.
+
+### 39.1 Implémentation
+
+Le POC initialise Piglet, crée un display EGL et un contexte GLES2, journalise les capacités GL, charge deux shaders précompilés externes via `glShaderBinary`, vérifie leur linkage, crée une texture NPOT 3x5, crée un FBO couleur et tente une première présentation via `eglSwapBuffers`.
+
+Cette chaîne suit le sample Piglet OpenOrbis : `EGL_DEFAULT_DISPLAY`, `EGL_OPENGL_ES_API`, `EGL_OPENGL_ES2_BIT`, contexte client GLES2 et `eglSwapBuffers`. citeturn0search6turn0search0
+
+### 39.2 Comparaison Kodi / PS5 / PS4
+
+L'audit du port VivaLaVent montre que son `CWinSystemPS5GLContext` encapsule le contrat Kodi autour d'EGL, du contexte, de la surface et de `PresentRender`. Le PS5 utilise toutefois OpenGL Core et des mécanismes de pacing/HDR spécifiques : ils ne sont pas copiés.
+
+Kodi upstream dispose déjà d'un renderer GLES et d'une infrastructure EGL ; la future couche PS4 devra donc adapter ces abstractions au contrat Piglet plutôt que créer un renderer Kodi indépendant. citeturn1search0turn1search6
+
+### 39.3 Statut
+
+- Code POC ajouté : **oui**.
+- Compilation OpenOrbis : **non vérifiée dans l'environnement actuel**.
+- Exécution PS4 : **non réalisée**.
+- R-002A : **non validé**.
+
+Les shaders restent externes. Aucun binaire Sony propriétaire ou dump non public n'est ajouté au dépôt.
+
+### 39.4 Prochaine validation
+
+La première exécution sur PS4 devra conserver : version EGL, vendor/renderer/version GL, extensions, format des shaders, résultat du linkage, NPOT, FBO et première présentation.
+
+Le toolchain OpenOrbis fournit les headers, stubs et exemples nécessaires au développement homebrew sans SDK Sony officiel et documente explicitement son support Piglet/OpenGL. citeturn0search0turn0search3
