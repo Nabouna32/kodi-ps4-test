@@ -2720,4 +2720,76 @@ The remaining blocker is environmental, not architectural: OpenOrbis and the sel
 
 - OpenOrbis PS4 Toolchain installation documentation: https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain
 - GitHub self-hosted runner requirements: https://docs.github.com/en/actions/reference/runners/self-hosted-runners
+## 44. R-004.4 — Native Windows OpenOrbis smoke test — 2026-09-30
 
+The first OpenOrbis toolchain validation has now been performed on native Windows using OpenOrbis 0.5.4 and LLVM/Clang 18.1.8.
+
+### Environment
+
+Validated locally:
+
+- `OO_PS4_TOOLCHAIN` points to the OpenOrbis PS4 toolchain root.
+- `link.x` is present.
+- OpenOrbis provides `bin/linux`, `bin/macos`, and `bin/windows`.
+- The Windows OpenOrbis tools include `create-fself.exe`, `create-gp4.exe`, `PkgTool.Core.exe`, `PkgEditor.exe`, and `readoelf.exe`.
+- Clang/Clang++ 18.1.8, LLD 18.1.8, CMake 4.4.3 and Ninja 1.13.2 are available natively on Windows.
+
+### Important finding: the sample Makefile is Unix-oriented
+
+The OpenOrbis `samples/hello_world/Makefile` only defines compiler/tool paths for Linux and macOS and uses Unix commands such as `mkdir -p` and `rm -f`. Therefore the sample cannot simply be invoked with native Windows `make` without introducing an additional Unix compatibility environment.
+
+This is a limitation of the sample build wrapper, not proof that the OpenOrbis compiler toolchain requires Linux.
+
+### Native Windows compilation result
+
+The sample source was compiled directly with Windows Clang++ using the OpenOrbis target and sysroot:
+
+```text
+--target=x86_64-pc-freebsd12-elf
+```
+
+The OpenOrbis C++ standard library headers were found under:
+
+```text
+<OO_PS4_TOOLCHAIN>/include/c++/v1
+```
+
+With that include path, `hello_world/main.cpp` compiled successfully to `main.o`.
+
+### Native Windows linkage result
+
+The resulting object was linked successfully into `hello_world.elf` using the OpenOrbis linker script and runtime libraries. The effective OpenOrbis sample linkage is:
+
+```text
+-lc -lkernel -lc++
+```
+
+with `crt1.o`, `link.x`, and the OpenOrbis library directory.
+
+An earlier linkage attempt using only `-lc` exposed the missing kernel and C++ runtime dependencies. Repeating the linkage with the complete OpenOrbis library set succeeded without linker errors.
+
+This validates the important part of the native Windows cross-toolchain chain:
+
+```text
+Windows
+  -> Clang++ 18
+  -> OpenOrbis libc++ / libc / kernel
+  -> LLD + OpenOrbis link.x
+  -> PS4-targeted ELF
+```
+
+### Consequence for the Kodi build strategy
+
+Native Windows remains a viable candidate for the first OpenOrbis Kodi build runner. We should **not** introduce MSYS2, MinGW, WSL or a Linux runner merely to compensate for the Unix-only sample Makefile.
+
+The next validation must reproduce the required OpenOrbis compilation/linkage through the project's own CMake/Ninja build path, because that is the relevant build model for Kodi and avoids depending on the sample Makefile.
+
+Packaging (`create-fself`, GP4/PKG generation) and execution on real PS4 hardware are still unvalidated.
+
+### Next action
+
+1. Reproduce the OpenOrbis sample packaging path using the Windows tools where useful.
+2. Verify the project's CMake toolchain configuration with the same native Windows compiler/linker environment.
+3. Proceed to the first Kodi CMake configure only after the toolchain smoke test is fully understood.
+
+This result should also be incorporated into the eventual self-hosted GitHub Actions runner design: the runner can use native Windows if the Kodi CMake build proves compatible with the same toolchain.
