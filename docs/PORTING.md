@@ -1657,3 +1657,82 @@ The research path is now:
 The current evidence continues to support treating opengnm-psbc as a **different GNM-oriented compiler**, not as a replacement for Piglet shader compilation.
 
 No Kodi code was changed in this research step.
+
+## 30. R-002A.7 — authoritative open-source psbc source recovered via GitHub mirror — 2026-09-30
+
+The previous blocker was the inaccessible GitGud repository veiledmerc/psbc. A new GitHub repository, **bizkut/psbc**, exposes source code and history for a project named **psbc** whose implementation and historical commits match the PS4 shader-binary research we need to investigate.
+
+### 30.1 What the recovered source proves
+
+The recovered bizkut/psbc project is a host-side shader compiler built on Mesa NIR/ACO. Its documented CLI accepts **SPIR-V**, not GLSL ES source directly:
+
+```
+SPIR-V -> NIR -> ACO -> PlayStation Shader Binary
+```
+
+Its output writer explicitly constructs a PsslBinaryHeader, a GnmShaderFileHeader, stage-specific GnmVsShader/GnmPsShader structures, GCN ISA shader code, GnmShaderBinaryInfo, and PsslBinaryParamInfo.
+
+The output is therefore a **PSSL/GNM-family shader binary**, not an implementation of a GLSL-to-Piglet frontend.
+
+This is an important correction to the previous assumption that the recovered source might immediately solve Kodi's GLSL ES 1.00 -> Piglet pipeline.
+
+### 30.2 Historical evidence is particularly valuable
+
+The repository history contains commits from 2023 that explicitly discuss compatibility with official Sony shader tooling:
+
+- `92261464dbdfa32cac4912cd587129ee7ecb8afb` — `pssl: export VS semantics starting at 15`, stating that this should improve compatibility with shaders produced by the official SDK.
+- `54814297c1a42090a83a1ef325e5e5ec9a03c3e4` — `pssl: attempt to make header sizes correct`, noting compatibility with the official SDK's `sb-dump`.
+- `593dba4994b6817e649397d3e1242f2cee545a6e` — `add BinaryShader crc32 and fix its offsets`, after which the official shader dumper reportedly works with shaders produced by psbc.
+
+This makes the repository highly relevant as a **clean-room/reverse-engineered PSSL/GNM shader-binary implementation**, but it does not by itself prove that the exact binary it produces is the same object consumed by Piglet's glShaderBinary().
+
+### 30.3 Current buildability evidence
+
+The repository includes a complete Makefile and documents host requirements: C11 with GNU extensions, C++17, GNU Make, Python 3 with py3-mako, and libgnm headers.
+
+A later commit, `e21e69960f387121428521988237744f6111f13f`, explicitly added native macOS build support for the shader compiler. This is useful evidence that the compiler is intended to be reproducibly built on a host rather than being a proprietary runtime-only component.
+
+### 30.4 Important distinction from opengnm-psbc
+
+This finding does **not** justify replacing the original psbc investigation with opengnm-psbc.
+
+The recovered source is itself a psbc implementation and shares the same broad Mesa/NIR/ACO architecture, but its current documented input/output contract is still GNM/PSSL-oriented:
+
+```
+SPIR-V -> PSSL/GNM Shader Binary
+```
+
+The newer PS4-OpenGNM/opengnm-psbc follows the same broad architecture and explicitly targets sceGnmSet*Shader, while the original ioQuake3 use case is Piglet + glShaderBinary().
+
+The remaining question is therefore narrower and testable:
+
+> **Can a PSSL/GNM shader binary produced by this psbc implementation be accepted by Piglet, and if so under which glShaderBinary() format value?**
+
+### 30.5 New highest-value experiment
+
+Before attempting to write or find another compiler, the most efficient experiment is now:
+
+1. build bizkut/psbc on the host;
+2. compile a trivial vertex/fragment SPIR-V pair for PS4 base/GFX7;
+3. load those generated binaries through the R-002A Piglet POC using glShaderBinary();
+4. test the documented binary format and the format reported by Piglet where applicable;
+5. compare the generated binary header/layout against an existing known-good Piglet blob from OpenOrbis/ioQuake3;
+6. record whether Piglet accepts it and whether the resulting program links and renders.
+
+A successful result would potentially remove the need to recover a separate proprietary/unknown Piglet compiler. A failure would still be valuable because it cleanly establishes that the GNM/PSSL compiler output is insufficient for Piglet.
+
+### 30.6 Current confidence
+
+- **High:** a usable source tree for a PS4 psbc implementation has been recovered.
+- **High:** this implementation generates PSSL/GNM-family shader binaries from SPIR-V.
+- **High:** it contains historical work specifically aimed at compatibility with official Sony PSSL shader tooling.
+- **Medium:** it may be related to or descended from the veiledmerc/psbc project referenced by ioQuake3; source-level provenance between the GitHub mirror and GitGud project is not yet formally established.
+- **Low-medium:** its output is directly consumable by Piglet through glShaderBinary(); this requires the R-002A hardware experiment.
+
+### 30.7 Project impact
+
+The shader investigation is no longer blocked on source acquisition.
+
+The next blocker is now an **empirical format-compatibility test** between the recovered psbc PSSL output and Piglet's glShaderBinary() path.
+
+No Kodi source was modified in this research step. The next implementation-relevant work remains the standalone R-002A graphics POC, with shader compatibility as the immediate experimental focus.
