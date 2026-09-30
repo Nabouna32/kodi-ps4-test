@@ -54,37 +54,71 @@ Current native prefix:
 
 CMake already finds native flatc and JsonSchemaBuilder there.
 
-## Native TexturePacker host tool
+## Native host tools
 
-TexturePacker is a **host build tool**. For the PS4 cross-build it must be compiled for WSL/Linux and available as a host executable before Kodi's target configuration/build uses it.
+Kodi native build tools are **host tools**. For the PS4 cross-build they must be compiled for WSL/Linux and made available before Kodi's target configuration/build uses them.
 
-The repository builds Kodi's pinned TexturePacker source with the normal WSL host compiler and installs the resulting executable into:
+The repository builds the currently required Kodi host tools from the pinned source with the normal WSL host compiler:
+- TexturePacker
+- JsonSchemaBuilder
+
+They are installed into:
+
+    build/ps4/build/native/bin/
+
+The PS4 configure receives that directory through:
+- WITH_TEXTUREPACKER
+- WITH_JSONSCHEMABUILDER
+
+The host/target boundary remains explicit: HOST_CAN_EXECUTE_TARGET is false, and no PS4-target host tools are built or shipped.
+
+### TexturePacker
+
+TexturePacker is built from:
+
+    tools/depends/native/TexturePacker/src
+
+and installs as:
 
     build/ps4/build/native/bin/TexturePacker
 
-The PS4 configure receives that host tool through `WITH_TEXTUREPACKER`. `HOST_CAN_EXECUTE_TARGET` remains false, and `INTERNAL_TEXTUREPACKER_INSTALLABLE=FALSE` prevents Kodi from trying to build/package a target-side TexturePacker.
+Its WSL host dependencies are:
+- liblzo2-dev
+- libpng-dev
+- libgif-dev
+- libjpeg-dev
 
-This is intentionally limited to the host/target build boundary. No PS5 platform code is copied for this purpose.
+These are host dependencies, not PS4 target dependencies.
 
-### Host dependencies
+### JsonSchemaBuilder
 
-The TexturePacker host build uses the normal Ubuntu development packages for the libraries required by the pinned Kodi source:
+JsonSchemaBuilder is built from:
 
-- `liblzo2-dev`
-- `libpng-dev`
-- `libgif-dev`
-- `libjpeg-dev`
+    tools/depends/native/JsonSchemaBuilder/src
 
-These are **WSL host dependencies**, not PS4 target dependencies. No project-local replacement or dependency workaround is used for them.
+with APP_NAME_LC=kodi, so Kodi installs:
 
-The packages were installed and verified on the current Ubuntu 26.04.1 WSL environment on 2026-10-01:
+    build/ps4/build/native/bin/kodi-JsonSchemaBuilder
 
-    libgif-dev:amd64        5.2.2-1ubuntu3.2
-    libjpeg-dev:amd64       8c-2ubuntu12
-    liblzo2-dev:amd64       2.10-3build2
-    libpng-dev:amd64        1.6.57-1
+This is the executable expected by the pinned Kodi FindJsonSchemaBuilder.cmake during cross-compilation.
 
-The actual TexturePacker build and subsequent Kodi configure still require validation after these packages are installed.
+### Shared bootstrap
+
+The focused bootstrap is:
+
+    scripts/build-ps4-native-host-tools.sh
+
+It uses:
+- the pinned Kodi source tree;
+- WSL host /usr/bin/cc and /usr/bin/c++;
+- Ninja;
+- KODI_SOURCE_DIR;
+- APP_NAME_LC=kodi;
+- ARCH_DEFINES=-DTARGET_POSIX;-DTARGET_LINUX;-D_GNU_SOURCE.
+
+It intentionally does not bootstrap Kodi's full native dependency graph or vendor host libraries.
+
+The previous specialized TexturePacker-only helper has been removed.
 
 ## Build workflow
 
@@ -95,15 +129,7 @@ scripts/build-ps4-kodi.sh:
 4. configures Kodi with the PS4 toolchain;
 5. builds with Ninja.
 
-The next build-system change is the dedicated native TexturePacker bootstrap. Configure-only validation must pass before the full build is attempted.
-
-
-Native TexturePacker bootstrap
-
-The PS4 build now materializes Kodi first, then builds Kodi's TexturePacker source natively with the WSL host compiler (/usr/bin/cc and /usr/bin/c++). The tool is installed into the existing native prefix at build/ps4/build/native/bin/TexturePacker. The cross-configure receives WITH_TEXTUREPACKER and WITH_JSONSCHEMABUILDER from that same prefix and explicitly sets INTERNAL_TEXTUREPACKER_INSTALLABLE=FALSE so a PS4-target TexturePacker is not built or shipped. This follows Kodi's actual FindTexturePacker host/target boundary and the PS5 reference without copying PS5-specific platform code.
-
-The implementation has been committed to main, but configure-only validation on the WSL checkout is still required. The next local test must start by synchronizing with origin/main, then run scripts/build-ps4-kodi.sh far enough to observe native TexturePacker configuration and Kodi cross-configuration.
-
+The native host-tools bootstrap is now shared by TexturePacker and JsonSchemaBuilder. The implementation is committed to main; WSL configure-only validation is still required. Do not start the full Kodi build until configuration succeeds.
 
 ## Native TexturePacker mechanism audit
 
