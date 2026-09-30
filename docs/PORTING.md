@@ -2438,3 +2438,12 @@ Graphics/Piglet and hardware video remain hardware-dependent validation tracks.
 ### Next action
 
 Proceed to **R-003.2 — PS4 audio sink audit and first implementation slice**, using official Kodi audio-sink interfaces, the PS5 `AESinkPS5` implementation as structural reference, and OpenOrbis `sceAudioOut` definitions as the PS4 API source.
+
+
+### 40.1 Source correction after static review
+
+A static source review after the initial file creation found and corrected a stale reference to the removed class-level deadzone constant in PS4PadInput.cpp.
+
+The current source uses the file-local STICK_DEADZONE consistently.
+
+This remains **not compile-validated** because the OpenOrbis/Kodi build environment is not available in the current session. The correction was made before treating the slice as source-reviewed.
