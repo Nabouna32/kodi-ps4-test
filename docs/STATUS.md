@@ -49,16 +49,17 @@ Until the next configure-only validation succeeds:
 
 ## Next action
 
-The HarfBuzz dependency integration is implemented in the PS4 build overlay, but it has not yet been executed in the WSL environment. Run `CONFIGURE_ONLY=1 scripts/build-ps4-kodi.sh` and inspect the target dependency bootstrap first. The expected result is that Kodi's official `freetype2-noharfbuzz` and HarfBuzz recipes build into the target dependency prefix and Kodi discovers HarfBuzz from that prefix. Stop at the next real blocker.
+The HarfBuzz dependency integration is implemented in the PS4 build overlay, but it has not yet been executed successfully in the WSL environment. Two consecutive WSL attempts stopped before target dependency configuration because the repository-owned unified-diff patch was malformed. The first correction fixed one set of hunk counts; the second WSL run exposed another malformed hunk around the Android/FreeBSD case boundary. The patch has now been corrected again in commit `321e94e43e894f642979035a3e1889450694e4ff`.
+
+No HarfBuzz build result has been obtained yet. The next validation must first confirm that the current patch applies cleanly, then observe the target dependency bootstrap. Do not install Ubuntu `libharfbuzz-dev` as a workaround.
 
 The intended sequence is:
-1. initialize the smallest Kodi target-dependency environment needed by HarfBuzz;
-2. build the official `freetype2-noharfbuzz` bootstrap dependency and HarfBuzz for the PS4 target;
-3. stage the resulting static library, headers and pkg-config/CMake metadata in the target dependency prefix already searched by Kodi;
-4. rerun `CONFIGURE_ONLY=1` and verify that HarfBuzz is discovered as a PS4 target library;
-5. stop again at the next blocker rather than broadening the dependency surface.
-
-The implementation is now present in the PS4 overlay and build entrypoint. The first WSL validation exposed a repository patch-format defect before any target dependency configuration ran: the unified-diff hunk counts in `0001-openorbis-ps4-target-depends.patch` were incorrect. The patch was corrected in commit `c0bd3fc49b075d1dcd408f2377ada34ced57b75e`. No HarfBuzz build result has been obtained yet. Do not install Ubuntu `libharfbuzz-dev` as a workaround.
+1. apply the corrected Kodi target-dependency patch;
+2. initialize the smallest Kodi target-dependency environment needed by HarfBuzz;
+3. build the official `freetype2-noharfbuzz` bootstrap dependency and HarfBuzz for the PS4 target;
+4. stage the resulting static library, headers and pkg-config/CMake metadata in the target dependency prefix already searched by Kodi;
+5. rerun `CONFIGURE_ONLY=1` and verify that HarfBuzz is discovered as a PS4 target library;
+6. stop again at the next blocker rather than broadening the dependency surface.
 
 ## Major runtime risks
 
@@ -68,9 +69,8 @@ The implementation is now present in the PS4 overlay and build entrypoint. The f
 
 No PS4 runtime/platform implementation is currently claimed as working.
 
-
 ## HarfBuzz implementation phase
 
-The PS4 overlay now extends Kodi's `tools/depends/configure.ac` for `x86_64-pc-freebsd12-elf` / `--with-platform=ps4`. The build script bootstraps that generated configure system, builds only the official target dependency path needed by HarfBuzz (`freetype2-noharfbuzz` → HarfBuzz), and passes the resulting target prefix to Kodi CMake through `DEPENDS_PATH`. Host Meson/Ninja/pkg-config/Python/CMake are exposed through the existing native prefix rather than rebuilt as new project-specific tools.
+The PS4 overlay extends Kodi's `tools/depends/configure.ac` for `x86_64-pc-freebsd12-elf` / `--with-platform=ps4`. The build script bootstraps that generated configure system, builds only the official target dependency path needed by HarfBuzz (`freetype2-noharfbuzz` → HarfBuzz), and passes the resulting target prefix to Kodi CMake through `DEPENDS_PATH`. Host Meson/Ninja/pkg-config/Python/CMake are exposed through the existing native prefix rather than rebuilt as new project-specific tools.
 
-This is an implementation change only; WSL execution and configure-only validation are still pending. The next validation must first confirm that the corrected overlay patch applies cleanly, then observe the target dependency bootstrap.
+This remains an implementation-only phase until the WSL configure-only run successfully applies the overlay and reaches the target dependency bootstrap.
