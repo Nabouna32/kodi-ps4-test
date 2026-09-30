@@ -1631,3 +1631,29 @@ We should **not** copy ioQuake3's 124 binaries into Kodi. They are useful as pro
 The next step is therefore to obtain the GitGud psbc source itself or an authoritative mirror. If that cannot be fetched directly, search the PS4 homebrew ecosystem for mirrors, forks, packages, or references containing the same project history.
 
 Only after recovering the source should we decide whether psbc can be built and used directly for Kodi.
+---
+
+## 29. R-002A.6 — psbc provenance: original project is referenced by the freegnm ecosystem — 2026-09-30
+
+Further cross-repository research confirms that gitgud.io/veiledmerc/psbc is not an isolated reference from ioQuake3.
+
+The current PS4-OpenGNM/freegnm-examples documentation explicitly distinguishes the original psbc project at gitgud.io/veiledmerc/psbc from the newer opengnm-psbc project. It describes opengnm-psbc as a SPIR-V-to-PS4 Shader Binary compiler while still listing the original psbc as a supported library/compiler.
+
+This is useful because it confirms that the ioQuake3 credit points to a historically established PS4 shader project, and that the newer OpenGNM compiler should not be silently substituted for it.
+
+### 29.1 Important limitation
+
+The original GitGud repository remains inaccessible through the available web fetch path. No source-level claim about its implementation, input format, output format, license, or exact revision is therefore made yet.
+
+### 29.2 Consequence
+
+The research path is now:
+
+1. recover the original veiledmerc/psbc source through a mirror/archive or local SDK/project copy;
+2. compare it with references from the freegnm ecosystem;
+3. identify whether ioQuake3 used the original compiler directly or a derivative/toolchain around it;
+4. only then attempt a reproducible Kodi shader compilation.
+
+The current evidence continues to support treating opengnm-psbc as a **different GNM-oriented compiler**, not as a replacement for Piglet shader compilation.
+
+No Kodi code was changed in this research step.
