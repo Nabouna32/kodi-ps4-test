@@ -1802,3 +1802,94 @@ The repository is currently a research/documentation repository rather than a ch
 The OpenOrbis sample gives us the concrete EGL/Piglet initialization sequence, including `scePigletSetConfigurationVSH`, EGL 1.4 initialization, an ES2 context, and a native window structure. The next implementation should reproduce only that minimal path and keep shader binaries as externally supplied test fixtures rather than redistributing Sony-provided shader assets.
 
 No Kodi source was changed in this step.
+
+
+## 32. R-002A.9 — direct byte-level inspection of a known-good Piglet shader asset — 2026-09-30
+
+The ioQuake3-PS4 repository exposes its shipped shader binaries through GitHub, which allows us to inspect the actual bytes rather than relying only on source comments.
+
+### 32.1 The file contains the driver format value followed by the Piglet binary
+
+A representative shipped asset, `fixes/shaderbin/11979310.bin`, is 1,895 bytes long. Its first bytes decode as:
+
+```
+70 92 00 00 71 bc 91 e8 ...
+```
+
+Interpreted little-endian, this is:
+
+```
+0x9270          -> GLenum format stored by the capture tool
+0xE891BC71      -> Piglet Shader Binary magic
+```
+
+This exactly matches the current ioQuake3 capture implementation:
+
+1. call the undocumented `glPigletGetShaderBinarySCE`;
+2. receive both a binary blob and the driver's `GLenum format`;
+3. write the format as a 4-byte prefix;
+4. write the returned Piglet binary unchanged;
+5. later read the prefix and pass that exact value to `glShaderBinary()`.
+
+The same `0x9270` prefix is also visible in another representative asset, `2e57d5b2.bin`, confirming that this is not an isolated artifact.
+
+### 32.2 This gives us a real Piglet binary fixture
+
+We now have a concrete, independently inspectable binary format reference:
+
+```
+ioQuake3 asset
+    |
+    +-- uint32_t GLenum format = 0x9270
+    |
+    +-- Piglet binary
+          |
+          +-- magic = 0xE891BC71
+          +-- embedded GLSL ES source
+          +-- compiled PS4 shader data
+```
+
+The embedded source in the inspected vertex shader begins with `#version 100`, matching the project's documented GLSL ES 1.00 renderer.
+
+This is significantly stronger evidence than merely knowing that Piglet accepts “some precompiled binary”: we can now identify the exact outer packaging used by a hardware-verified Piglet application and the beginning of the inner binary format.
+
+### 32.3 Important consequence for the psbc experiment
+
+The recovered `psbc` / `opengnm-psbc` family currently builds PSSL/GNM shader containers whose documented consumer is `sceGnmSet*Shader`.
+
+The known-good Piglet asset instead begins with the Piglet-specific magic `0xE891BC71` and is consumed through `glShaderBinary()`.
+
+Therefore, before attempting to feed an `opengnm-psbc` output into Piglet, we can now perform a deterministic host-side comparison:
+
+- check whether the generated output begins with the Piglet magic;
+- inspect whether it contains the Piglet container structure;
+- compare its header/section layout with the known-good ioQuake3 fixture;
+- only if the structures are plausibly compatible should a PS4 `glShaderBinary()` experiment be attempted.
+
+If the generated file is instead only a PSSL/GNM container with the GNM magic/layout, that is strong evidence that it is the wrong binary family for Piglet and avoids an unnecessary hardware experiment.
+
+### 32.4 New blocker reduction
+
+The Piglet shader investigation has therefore progressed from:
+
+```
+“we know Piglet needs precompiled shaders”
+```
+
+to:
+
+```
+“we have an actual Piglet binary fixture, its format value,
+its magic, and the exact capture/load packaging used by a
+hardware-verified PS4 application.”
+```
+
+The remaining major unknown is now the **production path that generates this specific Piglet binary family from GLSL ES 1.00**.
+
+### 32.5 Next action
+
+The next research step should be to recover the original `veiledmerc/psbc` source/provenance more precisely and compare its generated binary header against the known-good Piglet fixture.
+
+In parallel, if a local legitimate OpenOrbis/SDK installation is available, the most valuable inspection is the SDK's Piglet/ESSLC/Shacc tooling. We should inspect the actual installed toolchain rather than infer proprietary tool names from community discussions.
+
+No Kodi source was modified in this step.
