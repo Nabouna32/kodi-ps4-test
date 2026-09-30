@@ -76,6 +76,21 @@ that phase complete.
 Do not rely on chat history for project continuity. A new agent or conversation
 must be able to understand the current state from Git and these documents.
 
+## Comparative platform research rule
+
+For any non-trivial PS4 porting question where another implementation can provide useful evidence, use this research sequence systematically:
+
+1. **Official Kodi** — establish the upstream behavior, interfaces, build mechanism, constraints, and intended extension points.
+2. **PS5 reference** — inspect the corresponding implementation in `VivaLaVent/kodi-ps5` to identify concrete PlayStation/Kodi integration patterns, workarounds, and build-system choices.
+3. **PS4 information** — research the PS4/OpenOrbis ecosystem online using current, public sources to establish what the PS4 platform actually provides and what remains unknown.
+4. **Comparison** — explicitly compare the three sources and separate common Kodi/PlayStation concepts from PS5-specific assumptions and PS4-specific constraints.
+5. **Adaptation** — derive the smallest justified PS4 implementation from that comparison. Do not copy PS5 code merely because it exists there, and do not invent a PS4 equivalent without evidence.
+6. **Validation** — turn the resulting hypothesis into the smallest reproducible experiment or build validation available before treating it as confirmed.
+
+This sequence is the default methodology for platform, graphics, input, audio, filesystem, networking, video, packaging, build-system, and similar porting questions. Use authoritative/primary sources first and record important external evidence and its source in `docs/RESEARCH.md`.
+
+Do not skip the official Kodi or PS4 evidence because the PS5 reference appears to offer an obvious solution. The PS5 repository is a reference, not an authority for PS4 behavior.
+
 ## Practical development rule
 
 Progress from research to executable validation as soon as the required

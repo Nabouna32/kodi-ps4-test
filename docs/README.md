@@ -19,3 +19,5 @@ This directory is the project's durable technical memory. Git is the source of t
 - Keep current state in STATUS.md rather than burying it in a chronological log.
 - Keep build/toolchain details in BUILD.md, architecture in ARCHITECTURE.md, durable decisions in DECISIONS.md, and investigations in RESEARCH.md.
 - Keep PORTING.md as an index rather than a second copy of every document.
+- For non-trivial porting questions, follow the documented comparison workflow: official Kodi → PS5 reference → current PS4/OpenOrbis information → explicit comparison → minimal PS4 adaptation → executable validation.
+- Treat PS5 code as evidence of an integration pattern, never as proof that the same API or behavior exists on PS4.

@@ -40,3 +40,10 @@ This keeps the external source clean and makes the generated build input explici
 TexturePacker is treated as a native host executable, not as a PS4 target executable. The PS4 build must provide the native executable through WITH_TEXTUREPACKER and must not set HOST_CAN_EXECUTE_TARGET to true. Because Kodi's FreeBSD logic otherwise marks its internal TexturePacker as installable, the PS4 configure explicitly disables INTERNAL_TEXTUREPACKER_INSTALLABLE.
 
 Reason: Kodi's own FindTexturePacker.cmake establishes this host/target boundary, and the PS5 reference confirms the same build model. This keeps the PS4 target free of an unnecessary host-only build tool.
+
+
+## D-009 — Systematic three-source porting methodology
+
+For non-trivial PS4 porting questions, the project follows a repeatable evidence chain: official Kodi first, the PS5 reference second, current public PS4/OpenOrbis information third, then an explicit comparison before adapting anything for PS4.
+
+Reason: this preserves Kodi's upstream intent, exploits the PS5 port as a practical PlayStation/Kodi reference, and prevents PS5-specific assumptions from being mistaken for PS4 capabilities. The final PS4 implementation must be the smallest adaptation justified by the comparison and must be validated experimentally where possible.
