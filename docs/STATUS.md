@@ -3,7 +3,7 @@
 Repository: Nabouna32/kodi-ps4-test
 Branch: main
 Primary development environment: WSL2/Linux
-Current phase: build/toolchain validation
+Current phase: build/toolchain validation / minimal bring-up profile
 
 ## Validated
 
@@ -21,14 +21,22 @@ Current phase: build/toolchain validation
 
 ## Current blocker
 
-The native host-tools bootstrap now builds both TexturePacker and JsonSchemaBuilder from the pinned Kodi source and installs them into the shared native prefix. During WSL validation, JsonSchemaBuilder compiled successfully but CMake 4.2.3 generated the install rule as `JsonSchemaBuilder` despite `APP_NAME_LC=kodi`. A clean `/tmp` CMake configure reproduced the same result, ruling out a stale build cache. The pinned Kodi `FindJsonSchemaBuilder.cmake` explicitly accepts both `kodi-JsonSchemaBuilder` and `JsonSchemaBuilder`, so the bootstrap is being corrected to accept the actual upstream-supported executable name rather than adding a rename workaround.
+The native host-tools bootstrap is validated for the currently required tools:
+- TexturePacker: installed and accepted by Kodi
+- JsonSchemaBuilder: installed as `JsonSchemaBuilder`, which the pinned Kodi finder accepts
 
-Until configure-only validation runs successfully:
-- TexturePacker: validated ✅
-- JsonSchemaBuilder: compilation/install validated as `JsonSchemaBuilder`; bootstrap correction pending ⏳
-- Kodi PS4 cross-configuration: blocked only by the helper's incorrect executable-name expectation
-- CCache/ClangFormat warnings: non-blocking at this stage
-- Do not start a full Kodi build until configure succeeds.
+Kodi now reaches the real PS4 cross-configuration, with `Cross-Compiling: TRUE`, `System type: FreeBSD`, `Core system type: ps4`, and `ARCH x86_64-ps4`.
+
+The next configure blocker was libbluray: Kodi's optional `Bluray` dependency attempted to find target LibXml2 while configuring the internal libbluray build. Blu-ray playback is not required for the first bring-up milestone (Kodi GUI + GLES + PS4 controller), so the durable correction is to disable Blu-ray in the PS4 bring-up profile rather than install an unrelated host dependency.
+
+The PS4 overlay now explicitly excludes Bluray from optional platform dependencies and forces `ENABLE_BLURAY=OFF`.
+
+Until the next configure-only validation succeeds:
+- Native host tools: validated ✅
+- Kodi PS4 cross-configuration entry: validated ✅
+- Blu-ray/libbluray: intentionally disabled for bring-up ✅
+- CCache/ClangFormat warnings: non-blocking
+- Full Kodi build: not started
 
 ## Next action
 
@@ -37,11 +45,12 @@ Synchronize the WSL checkout with origin/main and run:
     CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 
 Verify that:
-1. both native host tools build and install;
-2. the supplied JsonSchemaBuilder directory contains the executable name accepted by the pinned Kodi finder;
-3. Kodi's PS4 configuration completes successfully.
+1. both native host tools remain available;
+2. libbluray/LibXml2 is no longer entered into the dependency path;
+3. Kodi proceeds to the next dependency or completes configuration;
+4. the PS4 host/target boundary remains intact.
 
-If configuration reveals a new blocker, document it and make it the next focused step.
+If configuration reveals a new blocker, document it and make that blocker the next focused step. Do not install a host package merely to satisfy a target dependency before checking whether the corresponding Kodi feature is needed for the bring-up profile.
 
 ## Major runtime risks
 
