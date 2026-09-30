@@ -243,13 +243,15 @@ When a future conversation begins, the assistant should first inspect Git and th
 
 **Default branch:** \`main\`
 
-**Implementation:** not started.
+**Implementation:** PS4 build/toolchain integration is in progress; Kodi platform/runtime implementation has not yet started.
 
-**Documentation:** initial project continuity document created.
+**Documentation:** maintained as the persistent continuity record and updated after validated discoveries, decisions, experiments and corrections.
 
-**Current phase:** Phase A — research / architecture.
+**Current phase:** Phase A — build/toolchain validation and platform architecture research.
 
-**Next planned investigation:** detailed comparison of the current Kodi renderer/windowing architecture, the PS5 renderer, and the PS4 GLES/EGL/Piglet + VideoOut stack, followed by a dedicated investigation of PS4 hardware video decoding.
+**Latest validated milestone:** the WSL2/Linux OpenOrbis + LLVM 21 compilation/link/FSELF chain works with a minimal PS4 executable.
+
+**Next planned investigation:** validate the LLVM 21 archiver tools required by CMake, then resume native Kodi configure validation. Renderer/video implementation remains blocked on the dedicated GLES/Piglet and video investigations described below.
 
 ---
 
@@ -714,3 +716,123 @@ The correction was committed directly to `main` as:
 `4d7bbf738880659ceb59a3e3b08640848dc81085`
 
 The next validation is configure-only from a clean `build/ps4` directory. No full Kodi build should be started until configuration succeeds.
+
+
+---
+
+## 24. R-004.10 — WSL2/Linux OpenOrbis + LLVM 21 smoke test — 2026-09-30
+
+### Environment
+
+The project is now being validated in WSL2/Linux as the primary development environment, while Windows remains available as a fallback until the complete build path is proven.
+
+Validated WSL environment:
+
+- Ubuntu 26.04.1 LTS, x86_64;
+- Clang 21.1.8;
+- Clang++ 21.1.8;
+- LLD 21.1.8;
+- CMake 4.2.3;
+- Ninja 1.13.2;
+- GCC/G++ 15.2;
+- Meson 1.10.1;
+- pkg-config 2.5.1;
+- OpenOrbis PS4 toolchain installed under `$OO_PS4_TOOLCHAIN`.
+
+The shell environment exports:
+
+```bash
+export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
+export PATH="$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
+```
+
+### Experiment
+
+A minimal C++ program was compiled for:
+
+`x86_64-pc-freebsd12-elf`
+
+The first link attempt used OpenOrbis `link.x` but omitted the OpenOrbis CRT object. LLD produced an ELF while warning that `_start` was missing, and `create-fself` subsequently crashed.
+
+This was an experiment error, not evidence of an LLVM 21 or OpenOrbis incompatibility.
+
+The link was corrected to include:
+
+```
+$OO_PS4_TOOLCHAIN/lib/crt1.o
+```
+
+alongside:
+
+- OpenOrbis `link.x`;
+- `-lc`;
+- `-lkernel`;
+- `-lc++`;
+- LLD 21.1.8.
+
+### Validated result
+
+The corrected link produced:
+
+- an ELF64 PIE for FreeBSD x86-64;
+- a valid `_start` symbol from the OpenOrbis CRT;
+- `_start_ps4_c`;
+- the test `main` function.
+
+`create-fself` then successfully produced:
+
+- `hello.oelf` — 87 KiB in this test;
+- `eboot.bin` — 68 KiB in this test.
+
+Therefore the following chain is **validated under WSL2/Linux**:
+
+```
+Clang 21.1.8
+    ->
+x86_64-pc-freebsd12-elf
+    ->
+LLD 21.1.8 + OpenOrbis link.x + crt1.o
+    ->
+PS4-targeted ELF
+    ->
+create-fself
+    ->
+OELF + eboot.bin
+```
+
+This confirms that **LLVM 21 does not need to be downgraded to the previously used LLVM 18 solely for OpenOrbis compilation/link/FSELF generation**.
+
+### Scope and limitation
+
+This validates compilation, linkage and FSELF generation only.
+
+It does **not** yet validate:
+
+- execution on a real PS4;
+- GP4/PKG generation;
+- installation or launching through GoldHEN;
+- the complete Kodi CMake build.
+
+### Toolchain follow-up
+
+The repository CMake toolchain currently names `llvm-ar` and `llvm-ranlib` directly. In the current WSL shell, an unqualified `llvm-ar` command was not found even though Clang/LLD 21.1.8 are installed.
+
+This has **not yet been established as a build blocker**. The next toolchain investigation must identify the LLVM 21 archiver binaries and decide whether the CMake toolchain should reference them explicitly or expose them through PATH.
+
+Do not downgrade LLVM or modify the Kodi toolchain based solely on this observation.
+
+---
+
+## 25. Current validated state — 2026-09-30
+
+The project has now crossed an important boundary:
+
+1. **OpenOrbis is operational under WSL2/Linux.**
+2. **LLVM 21.1.8 + LLD 21.1.8 can target the OpenOrbis PS4 ABI.**
+3. **OpenOrbis CRT + linker script can produce a valid PS4-targeted ELF.**
+4. **create-fself can package that ELF into an OELF and `eboot.bin` under Linux.**
+5. **The remaining uncertainty is no longer basic LLVM/OpenOrbis compatibility; it is integration into the Kodi CMake/dependency build and later PS4 runtime validation.**
+
+The next concrete step is therefore **not** another compiler experiment. It is to resolve/validate the LLVM archiver tool discovery used by the repository's CMake toolchain, then continue the existing clean Kodi configure validation.
+
+The earlier Windows-specific smoke test remains useful historical evidence, but the WSL2 result is now the current Linux-side source of truth for the OpenOrbis/LLVM 21 toolchain path.
