@@ -2016,3 +2016,203 @@ Priorité donnée à la préparation concrète du **standalone GLES/Piglet POC**
 Le SDK 4.508.021 pourra être inspecté ultérieurement et ses résultats comparés à cette base sans remettre en cause l'architecture du POC.
 
 Aucun code Kodi n'est modifié à ce stade.
+
+
+## 36. R-002A.13 — reconstruction concrète du standalone Piglet POC — 2026-09-30
+
+L'inspection directe du sample Piglet fourni par OpenOrbis permet maintenant de transformer R-002A en spécification d'implémentation concrète, sans dépendre de l'installation du SDK Sony.
+
+### 36.1 Séquence minimale réellement utilisée par OpenOrbis
+
+Le sample `samples/piglet` suit cette chaîne :
+
+```
+main
+  -> PigletApplication::Init()
+      -> loadModules()
+      -> createContext()
+      -> createTexture()
+      -> createShaders()
+      -> setup()
+  -> Logic()
+  -> Render()
+      -> glClear / draw
+      -> eglSwapBuffers()
+```
+
+Le contexte est créé avec :
+
+1. `scePigletSetConfigurationVSH()`;
+2. `eglGetDisplay(EGL_DEFAULT_DISPLAY)`;
+3. `eglInitialize()`;
+4. `eglBindAPI(EGL_OPENGL_ES_API)`;
+5. `eglSwapInterval(display, 0)`;
+6. `eglChooseConfig()` avec RGBA 8/8/8/8, sans depth/stencil/MSAA et `EGL_OPENGL_ES2_BIT`;
+7. `eglCreateWindowSurface()`;
+8. `eglCreateContext()` avec `EGL_CONTEXT_CLIENT_VERSION = 2`;
+9. `eglMakeCurrent()`;
+10. interrogation de `GL_VERSION`, `GL_VENDOR` et `GL_RENDERER`.
+
+OpenOrbis confirme également que `OrbisPglConfig` est une structure de taille `0x88`, avec notamment des champs de mémoire partagée système/vidéo, de mémoire flexible et de taille de command buffer. Les valeurs exactes du sample sont documentées comme valeurs de travail du sample, et **ne doivent pas encore être considérées comme les valeurs finales du POC Kodi**.
+
+### 36.2 Découverte importante : le sample officiel OpenOrbis ne fait pas de VideoOut manuel
+
+Le sample Piglet crée une `EGLSurface` native puis utilise `eglSwapBuffers()`. Il ne construit pas lui-même une chaîne `sceVideoOutRegisterBuffers -> sceVideoOutSubmitFlip` dans son renderer.
+
+Cela permet de préciser l'architecture du POC :
+
+```
+Piglet / GLES
+    |
+EGL window surface
+    |
+eglSwapBuffers()
+    |
+PS4 presentation path
+```
+
+La piste VideoOut explicite reste utile pour comprendre la présentation bas niveau et pour le futur renderer Kodi, mais elle n'est **pas nécessaire pour le premier POC EGL/Piglet** si `eglSwapBuffers()` fournit déjà une présentation fonctionnelle.
+
+Cette simplification réduit fortement la surface du premier test.
+
+### 36.3 Le POC ne doit pas reproduire le sample complet
+
+Le sample OpenOrbis charge notamment :
+
+- `libScePigletv2VSH.sprx`;
+- `libScePrecompiledShaders.sprx`;
+- des assets PNG ;
+- GLM ;
+- un shader pair récupéré depuis `scePrecompiledShaderEntries[]`.
+
+Pour notre POC, nous devons réduire cela au strict nécessaire :
+
+```
+OpenOrbis app
+  -> Piglet configuration
+  -> EGL/GLES2 context
+  -> known-good Piglet shader fixture
+  -> minimal draw
+  -> eglSwapBuffers
+  -> diagnostics
+```
+
+Le POC ne doit pas dépendre de GLM, de STB ou d'un système d'assets complexe pour le premier test.
+
+### 36.4 Découverte shader : deux conventions doivent être conservées séparément
+
+L'inspection directe révèle une différence importante entre deux pipelines documentés :
+
+**Sample OpenOrbis :**
+
+```
+glShaderBinary(..., format = 0, ...)
+```
+
+Le commentaire du sample indique que le format PS4 utilisé par cette voie est `0` et que les blobs proviennent du module `libScePrecompiledShaders`.
+
+**ioQuake3-PS4 :**
+
+```
+uint32_t format = 0x9270
++ Piglet binary magic 0xE891BC71
+-> glShaderBinary(..., format, ...)
+```
+
+Cette différence ne doit pas être résolue par supposition. Elle indique probablement des voies de génération/packaging ou des conventions différentes selon la provenance du blob/runtime.
+
+La règle du POC est donc :
+
+- ne jamais hardcoder `0x9270` comme vérité universelle ;
+- ne jamais supposer que `format = 0` fonctionne pour un blob capturé ioQuake3 ;
+- stocker **format + blob** comme une fixture indissociable ;
+- tester chaque fixture avec le format qui lui est associé ;
+- enregistrer `GL_VERSION`, `GL_VENDOR`, `GL_RENDERER` et toutes les erreurs GL/EGL.
+
+### 36.5 Première matrice de tests
+
+Le POC doit être structuré en tests indépendants afin d'identifier précisément le premier point de rupture :
+
+| ID | Test | But |
+|---|---|---|
+| G0 | EGL init | display + config + context |
+| G1 | shader fixture | `glShaderBinary` + link |
+| G2 | primitive | vertex attributes + draw |
+| G3 | texture | RGBA8 upload + sampling |
+| G4 | NPOT | texture non puissance de deux |
+| G5 | FBO | render-to-texture |
+| G6 | second pass | texture produite par FBO puis échantillonnée |
+| G7 | swap | `eglSwapBuffers` stable |
+| G8 | pacing | plusieurs centaines de frames sans dérive/crash |
+| G9 | capability dump | extensions, formats et limites réellement exposés |
+
+Un échec doit être enregistré au niveau du test concerné, pas comme un simple « Piglet incompatible ».
+
+### 36.6 POC shaders
+
+Pour le premier passage matériel, les shaders doivent être considérés comme des **fixtures expérimentales externes**.
+
+Deux catégories seront utilisées :
+
+1. **fixture Piglet connue et hardware-validated** provenant d'une source publique déjà étudiée, uniquement comme référence de compatibilité ;
+2. **future fixture produite/capturée dans un environnement de développement légitime**, lorsque nous disposerons d'un environnement permettant de générer les blobs nécessaires.
+
+Les assets propriétaires ne seront pas ajoutés au dépôt Kodi.
+
+### 36.7 Structure de dépôt envisagée pour l'implémentation
+
+Lorsque l'environnement OpenOrbis sera disponible, le POC pourra être ajouté séparément du futur port Kodi :
+
+```
+poc/
+  piglet/
+    README.md
+    Makefile
+    src/
+      main.cpp
+      piglet_context.cpp
+      piglet_context.hpp
+      shader_fixture.cpp
+      shader_fixture.hpp
+      tests.cpp
+    fixtures/
+      README.md
+```
+
+Le POC doit rester autonome et ne pas créer prématurément une dépendance entre Kodi et les hypothèses Piglet.
+
+### 36.8 Valeur des configurations mémoire du sample
+
+Le sample OpenOrbis configure notamment :
+
+- `systemSharedMemorySize = 250 MiB`;
+- `videoSharedMemorySize = 512 MiB`;
+- `maxMappedFlexibleMemory = 170 MiB`;
+- `drawCommandBufferSize = 1 MiB`;
+- `lcueResourceBufferSize = 1 MiB`.
+
+Ces valeurs prouvent une configuration fonctionnelle du sample, mais elles ne doivent pas encore être copiées aveuglément dans Kodi. La future implémentation devra déterminer le budget mémoire réellement nécessaire à Kodi et les contraintes du runtime ciblé.
+
+### 36.9 Critère de sortie de R-002A
+
+R-002A sera considéré comme suffisamment validé lorsque le POC démontre sur PS4 :
+
+- contexte EGL/GLES2 opérationnel ;
+- chargement/link d'un shader Piglet connu ;
+- rendu d'une primitive ;
+- texture RGBA ;
+- texture NPOT ;
+- FBO + second pass ;
+- présentation répétée par `eglSwapBuffers()` ;
+- frame pacing stable ;
+- dump des capacités utiles.
+
+À ce stade seulement, nous déciderons si Kodi peut commencer son intégration GLES/Piglet ou si une adaptation importante est nécessaire.
+
+### 36.10 Prochaine action
+
+Le travail de recherche nécessaire au POC est maintenant suffisamment précis. Le prochain travail d'implémentation est la création du **standalone Piglet POC** dans le dépôt, dès qu'un environnement OpenOrbis/build PS4 est disponible.
+
+En attendant cet environnement, aucune raison ne justifie de bloquer le projet sur le SDK Sony : le POC peut être préparé contre les interfaces OpenOrbis publiques et ses fixtures définies séparément.
+
+Aucun code Kodi n'est modifié dans cette étape.
