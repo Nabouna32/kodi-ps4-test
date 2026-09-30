@@ -36,6 +36,13 @@ file(COPY "${PROJECT_ROOT}/cmake/scripts/ps4"
 file(COPY "${PROJECT_ROOT}/overlay/xbmc/platform/ps4"
   DESTINATION "${KODI_SRC}/xbmc/platform")
 execute_process(
+  COMMAND patch --dry-run -p1 -i "${PROJECT_ROOT}/overlay/tools/depends/0001-openorbis-ps4-target-depends.patch"
+  WORKING_DIRECTORY "${KODI_SRC}"
+  RESULT_VARIABLE PATCH_DRY_RUN_RESULT)
+if(NOT PATCH_DRY_RUN_RESULT EQUAL 0)
+  message(FATAL_ERROR "OpenOrbis PS4 target-dependency patch does not match the pinned Kodi source")
+endif()
+execute_process(
   COMMAND patch -p1 -i "${PROJECT_ROOT}/overlay/tools/depends/0001-openorbis-ps4-target-depends.patch"
   WORKING_DIRECTORY "${KODI_SRC}"
   RESULT_VARIABLE PATCH_RESULT)
