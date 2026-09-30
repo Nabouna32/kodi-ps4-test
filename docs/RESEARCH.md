@@ -140,7 +140,7 @@ Next validation is a fresh `CONFIGURE_ONLY=1` run. If another blocker appears, c
 
 ## R-004.18 — Required HarfBuzz target dependency / Kodi depends path
 
-**Status:** audit completed; implementation not yet applied.
+**Status:** integration implemented; WSL validation pending.
 
 The new configure blocker is fundamentally different from Blu-ray/XSLT. At the pinned Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`, `ASS>=0.15.0` and `HarfBuzz` are required dependencies. The pinned `FindASS.cmake` explicitly requires HarfBuzz, and the Kodi GUI also includes HarfBuzz headers directly. Therefore HarfBuzz cannot be removed from the minimal bring-up profile merely to avoid the dependency.
 
@@ -165,6 +165,8 @@ OpenOrbis provides the PS4 compiler, target headers/stubs and linker/toolchain i
 
 ### Conclusion
 
-The smallest clean direction is **not** a new HarfBuzz implementation and not a CMake hack that points Kodi at a host library. The next implementation should reuse Kodi's official `tools/depends/target/harfbuzz` recipe and its dependency bootstrap semantics, adapting only the PS4/OpenOrbis cross-build integration needed to produce and expose a static target library in the same dependency prefix that `FindHarfBuzz.cmake` already searches.
+The smallest clean direction is **not** a new HarfBuzz implementation and not a CMake hack that points Kodi at a host library. The repository now reuses Kodi's official `tools/depends/target/harfbuzz` recipe and its `freetype2-noharfbuzz` bootstrap dependency through a minimal PS4/OpenOrbis overlay patch. The patch teaches Kodi's depends configure system about `x86_64-pc-freebsd12-elf` / `ps4` and extends the generated target CMake toolchain for FreeBSD. The build script configures only this dependency path, stages it in the target dependency prefix, and passes that prefix to Kodi CMake.
+
+Implementation is committed, but it has not yet been executed in the WSL environment. The next validation is therefore the configure-only build; any failure must be classified from the real output before further adaptation.
 
 Before implementation, the remaining concrete question is how to initialize Kodi's official `tools/depends` configuration for the OpenOrbis toolchain without accidentally pulling the entire desktop dependency graph. The target dependency graph shows that HarfBuzz itself has a deliberately small bootstrap path, so the implementation should build only that path and then let the normal CMake discovery consume the resulting target prefix.
