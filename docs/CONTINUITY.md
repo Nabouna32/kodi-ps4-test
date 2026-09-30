@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Current main HEAD: `9fdbd84460fc7332e4f1425f90b94141e644fb94` (docs update after the final HarfBuzz overlay patch-format correction). Always verify the current GitHub HEAD before relying on historical hashes.
+Current main HEAD: `0401d6ed17cddaeccdb6b6ba1e0c5ad6307e5223` (docs update after the final target-dependency patch hunk correction). Always verify the current GitHub HEAD before relying on historical hashes.
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -332,7 +332,7 @@ git reset --hard origin/main
 CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 ```
 
-Two consecutive WSL runs stopped at the overlay application step with `patch: **** malformed patch`; these were repository patch-format defects, not HarfBuzz/toolchain results. The first correction fixed one set of hunk counts; the second exposed another malformed hunk at the Android/FreeBSD case boundary. Inspection then found a third incorrect hunk count in `Toolchain.cmake.in`. The current patch was corrected in commit `14a0ba05e8b7dce99234c7c3dea8339cd395499a`. It must now be applied successfully in WSL before interpreting any target dependency result.
+Two consecutive WSL runs stopped at the overlay application step with `patch: **** malformed patch`; these were repository patch-format defects, not HarfBuzz/toolchain results. The first correction fixed one set of hunk counts; the second exposed another malformed hunk at the Android/FreeBSD case boundary. Inspection then found a third incorrect hunk count in `Toolchain.cmake.in`. The previous patch correction `14a0ba05e8b7dce99234c7c3dea8339cd395499a` fixed the Toolchain.cmake hunk, but WSL still reported `patch: **** malformed patch at line 19`. Direct inspection against the exact pinned Kodi source then identified one remaining incorrect hunk header in `configure.ac`: the hunk contained four original context lines, not five. That final patch-format defect was corrected in commit `abe4c8d3fdcdb0222e5e57cd0cc97cc8ddbc2124`. The patch has not yet been executed in WSL after this correction.
 
 Verify that:
 1. native host tools remain available;
