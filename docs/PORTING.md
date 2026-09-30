@@ -249,9 +249,9 @@ When a future conversation begins, the assistant should first inspect Git and th
 
 **Current phase:** Phase A — build/toolchain validation and platform architecture research.
 
-**Latest validated milestone:** the WSL2/Linux OpenOrbis + LLVM 21 compilation/link/FSELF chain works with a minimal PS4 executable.
+**Latest validated milestone:** the WSL2/Linux OpenOrbis + LLVM 21 compilation/link/FSELF chain works with a minimal PS4 executable, and the WSL development environment now exposes the complete LLVM 21 tool suite through PATH.
 
-**Next planned investigation:** validate the LLVM 21 archiver tools required by CMake, then resume native Kodi configure validation. Renderer/video implementation remains blocked on the dedicated GLES/Piglet and video investigations described below.
+**Next planned action:** resume native Kodi configure validation from a clean WSL build directory. Renderer/video implementation remains blocked on the dedicated GLES/Piglet and video investigations described below.
 
 ---
 
@@ -739,12 +739,14 @@ Validated WSL environment:
 - pkg-config 2.5.1;
 - OpenOrbis PS4 toolchain installed under `$OO_PS4_TOOLCHAIN`.
 
-The shell environment exports:
+The WSL development shell exports:
 
 ```bash
 export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
-export PATH="$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
+export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
 ```
+
+This makes the LLVM 21 tool suite available consistently, including `clang`, `clang++`, `ld.lld`, `llvm-ar`, and `llvm-ranlib`. OpenOrbis tools such as `create-fself` remain available through the same development environment.
 
 ### Experiment
 
@@ -815,11 +817,14 @@ It does **not** yet validate:
 
 ### Toolchain follow-up
 
-The repository CMake toolchain currently names `llvm-ar` and `llvm-ranlib` directly. In the current WSL shell, an unqualified `llvm-ar` command was not found even though Clang/LLD 21.1.8 are installed.
+The repository CMake toolchain names `llvm-ar` and `llvm-ranlib` directly. The binaries are installed by Ubuntu's LLVM 21 packages under `/usr/lib/llvm-21/bin`.
 
-This has **not yet been established as a build blocker**. The next toolchain investigation must identify the LLVM 21 archiver binaries and decide whether the CMake toolchain should reference them explicitly or expose them through PATH.
+The initial shell did not expose those two commands through PATH, but investigation confirmed that the binaries exist and are functional:
 
-Do not downgrade LLVM or modify the Kodi toolchain based solely on this observation.
+- `/usr/lib/llvm-21/bin/llvm-ar`
+- `/usr/lib/llvm-21/bin/llvm-ranlib` (symlink to `llvm-ar`)
+
+No additional LLVM package or downgrade was required. The development environment was instead normalized so that `/usr/lib/llvm-21/bin` is prepended to PATH. This keeps the CMake toolchain portable at the command-name level while making the selected LLVM version an explicit property of the WSL development environment.
 
 ---
 
@@ -833,6 +838,62 @@ The project has now crossed an important boundary:
 4. **create-fself can package that ELF into an OELF and `eboot.bin` under Linux.**
 5. **The remaining uncertainty is no longer basic LLVM/OpenOrbis compatibility; it is integration into the Kodi CMake/dependency build and later PS4 runtime validation.**
 
-The next concrete step is therefore **not** another compiler experiment. It is to resolve/validate the LLVM archiver tool discovery used by the repository's CMake toolchain, then continue the existing clean Kodi configure validation.
+The next concrete step is therefore **not** another compiler experiment. The LLVM archiver discovery issue is resolved at the WSL environment level, so work can return to the existing clean Kodi configure validation.
 
 The earlier Windows-specific smoke test remains useful historical evidence, but the WSL2 result is now the current Linux-side source of truth for the OpenOrbis/LLVM 21 toolchain path.
+
+
+---
+
+## 26. R-004.11 — WSL LLVM 21 development environment normalization — 2026-10-01
+
+### Observation
+
+A fresh WSL session initially resolved:
+
+- `clang` → LLVM 21.1.8;
+- `clang++` → LLVM 21.1.8;
+- `ld.lld` → LLVM 21.1.8;
+
+but did not resolve `llvm-ar` or `llvm-ranlib` because `/usr/lib/llvm-21/bin` was not present in PATH.
+
+The binaries themselves were installed and functional.
+
+### Decision
+
+WSL is the primary development environment and is expected to become the future self-hosted GitHub Actions runner environment. Therefore LLVM 21 is exposed explicitly through the development shell rather than hard-coding an Ubuntu-specific LLVM path into the repository CMake toolchain.
+
+The persistent shell configuration is now:
+
+```bash
+export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
+export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
+```
+
+### Fresh-session validation
+
+A completely new WSL session confirmed:
+
+```
+/usr/lib/llvm-21/bin/clang
+/usr/lib/llvm-21/bin/clang++
+/usr/lib/llvm-21/bin/ld.lld
+/usr/lib/llvm-21/bin/llvm-ar
+/usr/lib/llvm-21/bin/llvm-ranlib
+```
+
+All reported LLVM/LLD version **21.1.8**, and `create-fself` remained available from OpenOrbis.
+
+### Conclusion
+
+The LLVM archiver discovery issue is resolved without:
+
+- installing another LLVM version;
+- downgrading LLVM;
+- hard-coding `/usr/lib/llvm-21/bin` into the project CMake toolchain.
+
+The WSL environment is now suitable for the repository's LLVM 21 CMake toolchain.
+
+### Next action
+
+Return to the Kodi configure investigation. Start from the repository's real current Git state, inspect `AGENTS.md` and the relevant PS4 build/toolchain files, clean only the generated `build/ps4` tree as required, reapply the Kodi overlay, and rerun **configure-only** before attempting a full Kodi build.
