@@ -22,7 +22,8 @@ set(PLATFORM_OPTIONAL_DEPS_EXCLUDE
     Pipewire
     PulseAudio
     Sndio
-    UDEV)
+    UDEV
+    XSLT)
 
 # The first build is a core bring-up build. Binary add-ons are built separately
 # by Kodi's add-on buildsystem and are intentionally not part of this target.
@@ -93,14 +94,14 @@ if(NOT CMAKE_INSTALL_PREFIX)
 endif()
 
 if(NOT prefix)
-  set(prefix "\${CMAKE_INSTALL_PREFIX}")
+  set(prefix "${CMAKE_INSTALL_PREFIX}")
 endif()
-set(exec_prefix "\${prefix}" CACHE PATH "PS4 exec prefix" FORCE)
-set(libdir "\${prefix}/lib" CACHE PATH "PS4 library directory" FORCE)
-set(bindir "\${prefix}/bin" CACHE PATH "PS4 binary directory" FORCE)
-set(datarootdir "\${prefix}/share" CACHE PATH "PS4 data root" FORCE)
-set(datadir "\${datarootdir}" CACHE PATH "PS4 data directory" FORCE)
+set(exec_prefix "${prefix}" CACHE PATH "PS4 exec prefix" FORCE)
+set(libdir "${prefix}/lib" CACHE PATH "PS4 library directory" FORCE)
+set(bindir "${prefix}/bin" CACHE PATH "PS4 binary directory" FORCE)
+set(datarootdir "${prefix}/share" CACHE PATH "PS4 data root" FORCE)
+set(datadir "${datarootdir}" CACHE PATH "PS4 data directory" FORCE)
 
 set(PATH_DEFINES
-    -DBIN_INSTALL_PATH="\${libdir}/\${APP_NAME_LC}"
-    -DINSTALL_PATH="\${datadir}/\${APP_NAME_LC}")
+    -DBIN_INSTALL_PATH="${libdir}/${APP_NAME_LC}"
+    -DINSTALL_PATH="${datadir}/${APP_NAME_LC}")
