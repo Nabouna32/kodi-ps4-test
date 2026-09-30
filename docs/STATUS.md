@@ -58,7 +58,7 @@ The intended sequence is:
 4. rerun `CONFIGURE_ONLY=1` and verify that HarfBuzz is discovered as a PS4 target library;
 5. stop again at the next blocker rather than broadening the dependency surface.
 
-No implementation has been applied for this step yet. Do not install Ubuntu `libharfbuzz-dev` as a workaround.
+The implementation is now present in the PS4 overlay and build entrypoint. It has not yet been executed in the WSL environment. Do not install Ubuntu `libharfbuzz-dev` as a workaround.
 
 ## Major runtime risks
 
