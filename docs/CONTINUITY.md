@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Handoff baseline HEAD (verified immediately before this continuity update): `252c4fa0613c2d0fac73b9e5fdb47125c97183e4`
+Handoff baseline HEAD (verified immediately before this continuity update): `4c931ec95d59614f1bfe05770213d152c009eeb3`
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -243,22 +243,23 @@ It has been **actually validated**:
 - TexturePacker compiled and installed
 - Kodi then reached the real PS4 cross-configure
 
-## Current blocker — JsonSchemaBuilder
+## Current configure state
 
-The same `CONFIGURE_ONLY=1` validation then failed:
-
-```text
-Could not find 'JsonSchemaBuilder' executable in
-.../build/ps4/build/native/bin
-supplied by -DWITH_JSONSCHEMABUILDER
-```
-
-Therefore:
+The native host-tools bootstrap is now validated for both required tools:
 - TexturePacker: ✅
-- Kodi reached PS4 cross-configuration: ✅
-- JsonSchemaBuilder host tool: ❌ current blocker
-- CCache/ClangFormat warnings: non-blocking at this stage
-- Do not start a full Kodi build until configure succeeds.
+- JsonSchemaBuilder: ✅ as `JsonSchemaBuilder`, accepted by the pinned Kodi finder
+
+The configure-only run reached the real PS4 cross-configuration:
+- `Cross-Compiling: TRUE`
+- `System type: FreeBSD`
+- `Core system type: ps4`
+- `ARCH x86_64-ps4`
+
+The next blocker was Kodi's optional Bluray dependency. Its internal libbluray configuration attempted to find target LibXml2. Blu-ray is not required for the first bring-up milestone, so the project deliberately does **not** install a host LibXml2 package to satisfy it. The PS4 overlay now:
+- excludes `Bluray` from optional platform dependencies;
+- forces `ENABLE_BLURAY=OFF`.
+
+This establishes the current bring-up policy: start with only what is required for Kodi GUI + GLES/EGL + PS4 controller input, then re-enable additional Kodi subsystems one at a time with separate validation.
 
 ## JsonSchemaBuilder research
 
@@ -267,10 +268,7 @@ Relevant official Kodi files:
 - `tools/depends/native/JsonSchemaBuilder/src/CMakeLists.txt`
 - `tools/depends/native/JsonSchemaBuilder/Makefile`
 
-The known current Kodi implementation builds a small C++17 host executable and installs it with a name based on:
-`APP_NAME_LC`, normally `kodi-JsonSchemaBuilder`.
-
-The exact three files were re-fetched and verified at the pinned Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`. They confirm that Kodi expects a host executable named `kodi-JsonSchemaBuilder` (with `JsonSchemaBuilder` also accepted by the finder) and that the tool is a small C++17 native build.
+The exact files were verified at the pinned Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`. Kodi's finder accepts both `kodi-JsonSchemaBuilder` and `JsonSchemaBuilder`. CMake 4.2.3 produced the latter, so the helper accepts the upstream-supported name without a rename workaround.
 
 ## PS5 reference
 
@@ -312,11 +310,17 @@ was removed.
 
 The implementation is committed to main.
 
-### Validation — current blocker
+### Validation — host tools and cross-configure
 
-WSL validation reached the native JsonSchemaBuilder build successfully. CMake 4.2.3 installed it as `JsonSchemaBuilder`, not `kodi-JsonSchemaBuilder`, despite `APP_NAME_LC=kodi`. A clean `/tmp` CMake configure reproduced the same result, ruling out a stale build cache. The pinned Kodi `FindJsonSchemaBuilder.cmake` was fetched directly and confirms that `find_program()` accepts both `${APP_NAME_LC}-JsonSchemaBuilder` and `JsonSchemaBuilder`. Therefore the correct fix is to make the helper accept the upstream-supported plain executable name; no rename workaround is needed.
+WSL validation after the host-tool correction confirmed:
+1. TexturePacker builds/installs;
+2. JsonSchemaBuilder builds/installs as `JsonSchemaBuilder`;
+3. the pinned Kodi finder accepts that executable;
+4. Kodi enters PS4 cross-configuration.
 
-The required next validation is:
+The next configure blocker was optional Bluray/libbluray, which attempted to find target LibXml2. The PS4 overlay now disables that feature for the minimal bring-up profile.
+
+Required next validation:
 
 ```bash
 cd ~/projects/kodi-ps4-test
@@ -327,14 +331,12 @@ CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 ```
 
 Verify that:
-1. TexturePacker still builds and installs;
-2. JsonSchemaBuilder builds and installs as `JsonSchemaBuilder`, which the pinned Kodi finder accepts;
-3. Kodi's PS4 cross-configuration accepts the supplied host tools;
-4. configure completes without a new blocker.
+1. native host tools remain available;
+2. Bluray/libbluray is no longer configured;
+3. Kodi proceeds to the next dependency or completes configuration;
+4. the host/target boundary remains intact.
 
-Do not start a full Kodi build until configure succeeds.
-
-If configure reveals a new blocker, update `STATUS.md`, `BUILD.md`, and this continuity document, then make that blocker the next focused step.
+Do not start a full Kodi build until configure succeeds. If a new blocker appears, first classify whether it belongs to the minimal GUI/GLES/controller milestone or to an optional feature that can remain disabled.
 
 ### Scope boundary
 
@@ -342,8 +344,8 @@ No Vulkan/OpenGNM, renderer, controller, audio, video, GP4/PKG, GoldHEN runtime,
 
 ## Milestones
 
-A — Host tools: TexturePacker ✅, JsonSchemaBuilder ❌  
-B — Kodi configure: not yet validated  
+A — Host tools: TexturePacker ✅, JsonSchemaBuilder ✅  
+B — Kodi configure: cross-configuration reached; configure completion pending  
 C — Kodi compilation: not yet validated  
 D — Kodi ELF/FSELF: not yet validated  
 E — real PS4 runtime: not yet validated  
