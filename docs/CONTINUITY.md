@@ -98,10 +98,14 @@ The systematic research rule was formalized in commit:
 ## Current repository / Kodi state
 
 Repository: `Nabouna32/kodi-ps4-test`  
-Branch: `main`
+Branch: `main`  
+Current verified HEAD: `729dbf21d14551a9352db1387d0ae362e78bfb81`
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
+
+Known pinned PS5 reference commit:
+`0ea36e36d738aa045c1b8ed63c24a0314c7f72a5`
 
 **Always verify the current GitHub HEAD before relying on historical hashes.**
 
@@ -266,12 +270,12 @@ Relevant official Kodi files:
 The known current Kodi implementation builds a small C++17 host executable and installs it with a name based on:
 `APP_NAME_LC`, normally `kodi-JsonSchemaBuilder`.
 
-However, **the pinned Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024` is authoritative**. Before implementing Step 5, re-fetch those exact three files at that commit and verify their behavior.
+The exact three files were re-fetched and verified at the pinned Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`. They confirm that Kodi expects a host executable named `kodi-JsonSchemaBuilder` (with `JsonSchemaBuilder` also accepted by the finder) and that the tool is a small C++17 native build.
 
 ## PS5 reference
 
 Online reference:
-`VivaLaVent/kodi-ps5`
+`VivaLaVent/kodi-ps5` at pinned commit `0ea36e36d738aa045c1b8ed63c24a0314c7f72a5`
 
 Its `10-build-host-tools.sh` explicitly builds:
 - TexturePacker
@@ -328,16 +332,17 @@ CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 
 Immediate objective: get Kodi configuration past JsonSchemaBuilder.
 
-### Before implementation
+### Pre-implementation verification completed
 
-Do **not** code immediately. First:
-1. verify actual current `main`;
-2. read `AGENTS.md` and current docs;
-3. verify JsonSchemaBuilder is still the blocker;
-4. fetch the three JsonSchemaBuilder files from pinned Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`;
-5. compare them with `VivaLaVent/kodi-ps5`;
-6. explain the exact change and scope;
-7. ask for validation if an important architectural choice remains.
+The pre-implementation audit has now been completed against the current GitHub repository:
+1. verified current `main`;
+2. read `AGENTS.md` and the relevant project documentation;
+3. confirmed the `JsonSchemaBuilder` configure blocker in the repository state and upstream mechanism;
+4. fetched the three `JsonSchemaBuilder` files from pinned Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`;
+5. compared the host-tool approach with the pinned PS5 reference;
+6. confirmed the proposed Step 5 scope without beginning implementation.
+
+The next conversation should repeat the normal source-of-truth verification before modifying anything, even though this audit is recorded here.
 
 ### Scope boundary
 
@@ -375,7 +380,7 @@ Always verify current GitHub HEAD first.
 
 ## Final continuity rule
 
-After every meaningful step, update the appropriate docs in the repository so a future conversation can resume from Git + documentation without relying on chat history.
+After every meaningful step, update the appropriate docs in the repository so a future conversation can resume from Git + documentation without relying on chat history. `docs/CONTINUITY.md` is the canonical cross-conversation handoff and must be refreshed whenever a handoff is prepared or its documented state becomes stale.
 
 The authority order is:
 
