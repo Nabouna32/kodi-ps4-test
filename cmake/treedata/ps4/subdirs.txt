@@ -1,1 +1,7 @@
-xbmc/platform/ps4   platform/ps4
+xbmc/cores/RetroPlayer/shaders/gl   cores/RetroPlayer/shaders/gl
+xbmc/platform/common/speech         platform/common/speech
+xbmc/platform/posix                 platform/posix
+xbmc/platform/posix/filesystem      platform/posix/filesystem
+xbmc/platform/posix/threads         platform/posix/threads
+xbmc/platform/posix/utils           platform/posix/utils
+xbmc/platform/ps4                   platform/ps4
