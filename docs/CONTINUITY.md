@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Current main HEAD: `4463bd5d4d605624520006857f101ea3567495bd` (docs update after correcting the HarfBuzz overlay patch). Always verify the current GitHub HEAD before relying on historical hashes.
+Current main HEAD: `b6a5dc3a868816918658649b7c37b099acb5ab27` (docs update after the second HarfBuzz overlay patch-format correction). Always verify the current GitHub HEAD before relying on historical hashes.
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -332,7 +332,7 @@ git reset --hard origin/main
 CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 ```
 
-The previous run stopped at the overlay application step with `patch: **** malformed patch`; this was a repository patch-format defect, not a HarfBuzz/toolchain result. The corrected patch must now be applied and the target dependency bootstrap observed from the real WSL environment.
+Two consecutive WSL runs stopped at the overlay application step with `patch: **** malformed patch`; these were repository patch-format defects, not HarfBuzz/toolchain results. The first correction fixed one set of hunk counts; the second exposed another malformed hunk at the Android/FreeBSD case boundary. The current patch was corrected in commit `321e94e43e894f642979035a3e1889450694e4ff`. It must now be applied successfully in WSL before interpreting any target dependency result.
 
 Verify that:
 1. native host tools remain available;
