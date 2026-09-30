@@ -1823,3 +1823,20 @@ Still required:
 4. only after configuration succeeds, proceed toward a full cross-build.
 
 **Current blocker:** configure-only validation has not yet been rerun with the applied overlay.
+
+
+### Overlay script validation
+
+The new overlay script was also executed in a local CMake script test using CMake 3.31.6. It successfully validated its directory checks and copied all three overlay roots into a representative Kodi checkout.
+
+This validates the script's CMake syntax and copy behavior, but **does not replace validation on the actual Windows Kodi development checkout**.
+
+### Next action
+
+Run on the Windows development machine:
+
+```powershell
+cmake -DPROJECT_ROOT="$PWD" -DKODI_SRC="$PWD/references/kodi" -P scripts/apply-kodi-overlay.cmake
+```
+
+Then rerun the configure-only Kodi command. The real configure result is the next source of truth.
