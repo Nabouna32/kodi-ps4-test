@@ -677,3 +677,40 @@ The local Windows configure must now be rerun from a clean \`build/ps4\` directo
 ### Next action
 
 Pull \`main\`, verify the changed PS4 platform file, remove \`build/ps4\`, reapply the overlay, and rerun configure-only CMake. Do not start the full Kodi build until configure completes successfully.
+
+
+---
+
+## 23. R-004.9 — Native prefix expansion correction — 2026-09-30
+
+### Observation
+
+The first rerun after R-004.8 no longer failed because Meson received an empty prefix. Instead, Kodi's nested pkgconf CMake project attempted to create:
+
+`build/ps4/build/pkgconf/C:/dev/projects/kodi-ps4-test/build/ps4/build/pkgconf/build/native`
+
+This shows that `NATIVEPREFIX` was still being treated as a malformed relative path by the nested ExternalProject configuration.
+
+### Root cause
+
+The PS4 platform file used an escaped CMake variable reference:
+
+`"${CMAKE_BINARY_DIR}/build/native"`
+
+The escape prevented the parent Kodi CMake configuration from expanding `CMAKE_BINARY_DIR` when defining `NATIVEPREFIX`. The nested pkgconf project consequently received an invalid prefix value and ExternalProject combined it with its own working prefix.
+
+### Correction
+
+`NATIVEPREFIX` is now defined with normal CMake variable expansion:
+
+`"${CMAKE_BINARY_DIR}/build/native"`
+
+The target-side prefix remains separate from this native build-tools prefix.
+
+### Validation status
+
+The correction was committed directly to `main` as:
+
+`4d7bbf738880659ceb59a3e3b08640848dc81085`
+
+The next validation is configure-only from a clean `build/ps4` directory. No full Kodi build should be started until configuration succeeds.
