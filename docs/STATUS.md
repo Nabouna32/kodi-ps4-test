@@ -71,6 +71,6 @@ No PS4 runtime/platform implementation is currently claimed as working.
 
 ## HarfBuzz implementation phase
 
-The PS4 overlay extends Kodi's `tools/depends/configure.ac` for `x86_64-pc-freebsd12-elf` / `--with-platform=ps4`. The build script bootstraps that generated configure system, builds only the official target dependency path needed by HarfBuzz (`freetype2-noharfbuzz` → HarfBuzz), and passes the resulting target prefix to Kodi CMake through `DEPENDS_PATH`. Host Meson/Ninja/pkg-config/Python/CMake are exposed through the existing native prefix rather than rebuilt as new project-specific tools.
+The PS4 overlay extends Kodi's `tools/depends/configure.ac` for the Autoconf host `x86_64-pc-freebsd12` / `--with-platform=ps4`, while the generated target toolchain passes the OpenOrbis LLVM target `x86_64-pc-freebsd12-elf`. The build script bootstraps that generated configure system, builds only the official target dependency path needed by HarfBuzz (`freetype2-noharfbuzz` → HarfBuzz), and passes the resulting target prefix to Kodi CMake through `DEPENDS_PATH`. Host Meson/Ninja/pkg-config/Python/CMake are exposed through the existing native prefix rather than rebuilt as new project-specific tools.
 
 This remains an implementation-only phase until the WSL configure-only run successfully applies the overlay and reaches the target dependency bootstrap.
