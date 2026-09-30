@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Handoff baseline HEAD (verified during this research phase): `9ec1469457c0b9af0a9285cb19aa0c0b95e9858c`
+Handoff baseline HEAD (verified immediately after HarfBuzz integration implementation): `9452ba34e1117c775e3a1ebcfcecce26e4c4c2fc`
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -366,7 +366,7 @@ Integrate the smallest part of Kodi's official target dependency mechanism neede
 4. rerun configure-only and validate target-side discovery;
 5. stop at the next blocker.
 
-No HarfBuzz implementation has been applied yet.
+The smallest integration is now implemented in the repository overlay. It extends Kodi's target dependency configuration for the OpenOrbis FreeBSD target, reuses the official `freetype2-noharfbuzz` and HarfBuzz recipes, and stages the result in the target dependency prefix consumed by Kodi CMake. WSL execution and configure-only validation are still pending.
 
 ## Milestones
 
