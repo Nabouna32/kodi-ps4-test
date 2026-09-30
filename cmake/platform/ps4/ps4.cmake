@@ -82,7 +82,7 @@ include(GNUInstallDirs)
 # target. Keep their prefix separate from the PS4 application install root.
 # Native tools such as pkgconf must receive an absolute prefix on Windows.
 if(NOT NATIVEPREFIX)
-  set(NATIVEPREFIX "\${CMAKE_BINARY_DIR}/build/native"
+  set(NATIVEPREFIX "${CMAKE_BINARY_DIR}/build/native"
       CACHE PATH "PS4 native build-tools prefix" FORCE)
 endif()
 
