@@ -1990,3 +1990,29 @@ Le chemin immédiatement exploitable reste la preuve de concept GLES/Piglet avec
 
 Aucun fichier SDK ou fichier propriétaire n'est ajouté au dépôt.
 
+## 35. R-002A.12 — piste SDK mise de côté temporairement — 2026-09-30
+
+L'installation/inspection locale du SDK 4.508.021 est **mise de côté** jusqu'à ce que l'environnement de développement soit disponible.
+
+Une dernière recherche publique ciblée sur la provenance de `veiledmerc/psbc`, `glPigletGetShaderBinarySCE` et le magic Piglet `0xE891BC71` n'a pas apporté de nouvelle source exploitable.
+
+### 35.1 Décision
+
+Ne pas bloquer le projet sur l'installation du SDK.
+
+La piste SDK reste documentée comme investigation future à forte valeur, mais le travail R-002A continue par les voies open-source et reproductibles déjà identifiées.
+
+### 35.2 Prochaine direction de travail
+
+Priorité donnée à la préparation concrète du **standalone GLES/Piglet POC** :
+
+1. récupérer précisément la séquence OpenOrbis Piglet minimale ;
+2. définir la structure du petit programme POC ;
+3. identifier les dépendances OpenOrbis nécessaires ;
+4. préparer les tests GLES2 indépendants de Kodi ;
+5. utiliser les blobs Piglet connus comme fixtures de validation, sans les intégrer comme assets Kodi ;
+6. préparer ensuite l'expérience de compilation/compatibilité shader lorsque l'environnement PS4/OpenOrbis sera disponible.
+
+Le SDK 4.508.021 pourra être inspecté ultérieurement et ses résultats comparés à cette base sans remettre en cause l'architecture du POC.
+
+Aucun code Kodi n'est modifié à ce stade.
