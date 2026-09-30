@@ -54,4 +54,9 @@ cmake -S "${KODI_SRC}" -B "${BUILD_DIR}" -G Ninja \
   -DENABLE_SNDIO=OFF \
   -DENABLE_ALSA=OFF
 
+if [[ "${CONFIGURE_ONLY:-0}" == "1" ]]; then
+  echo "==> configure-only requested; skipping Kodi build"
+  exit 0
+fi
+
 cmake --build "${BUILD_DIR}" --parallel "${JOBS:-$(nproc)}"
