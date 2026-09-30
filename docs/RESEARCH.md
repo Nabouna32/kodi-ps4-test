@@ -136,3 +136,35 @@ For the first bring-up milestone (Kodi GUI + GLES/EGL + PS4 controller), XSLT is
 The PS4 overlay now excludes `XSLT` from `PLATFORM_OPTIONAL_DEPS_EXCLUDE`. No explicit `ENABLE_XSLT` override was added because Kodi models that option through its AUTO/string optional-dependency mechanism; platform-level exclusion is the narrower adaptation.
 
 Next validation is a fresh `CONFIGURE_ONLY=1` run. If another blocker appears, classify it against the minimal milestone before installing dependencies or disabling additional functionality.
+
+
+## R-004.18 — Required HarfBuzz target dependency / Kodi depends path
+
+**Status:** audit completed; implementation not yet applied.
+
+The new configure blocker is fundamentally different from Blu-ray/XSLT. At the pinned Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`, `ASS>=0.15.0` and `HarfBuzz` are required dependencies. The pinned `FindASS.cmake` explicitly requires HarfBuzz, and the Kodi GUI also includes HarfBuzz headers directly. Therefore HarfBuzz cannot be removed from the minimal bring-up profile merely to avoid the dependency.
+
+Kodi's `FindHarfBuzz.cmake` has no internal-build macro: unlike `FindASS.cmake`, it only searches the configured target dependency prefix via CMake config/pkg-config and then exposes the resulting target. The official Kodi target-dependency tree does, however, contain `tools/depends/target/harfbuzz`, version `14.2.0`, built with Meson as a static library. Its Makefile explicitly supports cross-compilation and installs into Kodi's target dependency prefix.
+
+The official target dependency graph also documents the important bootstrap relationship:
+
+- `harfbuzz` depends on `freetype2-noharfbuzz` and optional target `libiconv`;
+- `freetype2-noharfbuzz` exists specifically to break the FreeType ↔ HarfBuzz circular dependency;
+- normal `freetype2` depends on HarfBuzz and enables HarfBuzz support;
+- `libass` depends on Fontconfig, FriBidi, HarfBuzz, FreeType and optional Iconv.
+
+This means installing Ubuntu `libharfbuzz-dev` would be the wrong fix: the missing library is the **PS4 target** HarfBuzz, not a Linux host library.
+
+### PS5 comparison
+
+The pinned PS5 reference does not solve this through Kodi's CMake `FindHarfBuzz` module. Its toolchain points Kodi at a PS5 target sysroot populated by pacbrew packages. The PS5 repository explicitly treats HarfBuzz as a target payload dependency alongside FreeType, FriBidi and libass. This confirms the architectural pattern—target-side HarfBuzz must already exist in the target sysroot—but the PS5 payload package cannot be reused or assumed compatible with PS4.
+
+### OpenOrbis comparison
+
+OpenOrbis provides the PS4 compiler, target headers/stubs and linker/toolchain infrastructure; it does not provide Kodi's third-party HarfBuzz library. Public OpenOrbis documentation describes the toolchain as providing PS4 headers/library stubs and requiring application/library dependencies to be supplied separately. Therefore Kodi's HarfBuzz must be built for the PS4 target and staged in a target dependency prefix.
+
+### Conclusion
+
+The smallest clean direction is **not** a new HarfBuzz implementation and not a CMake hack that points Kodi at a host library. The next implementation should reuse Kodi's official `tools/depends/target/harfbuzz` recipe and its dependency bootstrap semantics, adapting only the PS4/OpenOrbis cross-build integration needed to produce and expose a static target library in the same dependency prefix that `FindHarfBuzz.cmake` already searches.
+
+Before implementation, the remaining concrete question is how to initialize Kodi's official `tools/depends` configuration for the OpenOrbis toolchain without accidentally pulling the entire desktop dependency graph. The target dependency graph shows that HarfBuzz itself has a deliberately small bootstrap path, so the implementation should build only that path and then let the normal CMake discovery consume the resulting target prefix.
