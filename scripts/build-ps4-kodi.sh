@@ -24,12 +24,23 @@ cmake \
   -DKODI_SRC="${KODI_SRC}" \
   -P "${ROOT}/scripts/apply-kodi-overlay.cmake"
 
+NATIVEPREFIX="${BUILD_DIR}/build/native"
+
+KODI_SRC="${KODI_SRC}" \
+NATIVEPREFIX="${NATIVEPREFIX}" \
+JOBS="${JOBS:-$(nproc)}" \
+  "${ROOT}/scripts/build-ps4-native-texturepacker.sh"
+
 cmake -S "${KODI_SRC}" -B "${BUILD_DIR}" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_TOOLCHAIN_FILE="${ROOT}/cmake/toolchains/openorbis-ps4-kodi.cmake" \
   -DCORE_SYSTEM_NAME=ps4 \
   -DCORE_PLATFORM_NAME=ps4 \
   -DAPP_RENDER_SYSTEM=gles \
+  -DNATIVEPREFIX="${NATIVEPREFIX}" \
+  -DWITH_TEXTUREPACKER="${NATIVEPREFIX}/bin" \
+  -DWITH_JSONSCHEMABUILDER="${NATIVEPREFIX}/bin" \
+  -DINTERNAL_TEXTUREPACKER_INSTALLABLE=FALSE \
   -DENABLE_PYTHON=OFF \
   -DENABLE_TESTING=OFF \
   -DENABLE_OPTICAL=OFF \
