@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Current main HEAD: `aaec01d7af531623865a3be30aabe602085cc6aa` (docs update after the Autoconf PS4 host-triplet correction). Always verify the current GitHub HEAD before relying on historical hashes.
+Current main HEAD at handoff preparation: `df18c90` (`docs: refresh current main handoff head`). Always verify the current GitHub HEAD before relying on historical hashes.
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -359,18 +359,42 @@ Audit completed against the exact pinned Kodi commit, the pinned PS5 reference, 
 
 Do **not** install Ubuntu `libharfbuzz-dev`; the missing artifact is the PS4 target library.
 
-### Proposed next implementation step
+### Current implementation and validation state
 
-Integrate the smallest part of Kodi's official target dependency mechanism needed for HarfBuzz into the PS4/OpenOrbis build:
-1. initialize the required target-dependency build environment;
-2. build `freetype2-noharfbuzz` and HarfBuzz for PS4;
-3. stage the target library/headers/metadata in the dependency prefix Kodi already searches;
-4. rerun configure-only and validate target-side discovery;
-5. stop at the next blocker.
+The smallest repository-owned integration is implemented in:
+`overlay/tools/depends/0001-openorbis-ps4-target-depends.patch`
 
-The smallest integration is now implemented in the repository overlay. It applies a minimal patch to Kodi's target dependency configuration for the OpenOrbis FreeBSD target, reuses the official `freetype2-noharfbuzz` and HarfBuzz recipes, adds the required FreeBSD target toolchain behavior, and stages the result in the target dependency prefix consumed by Kodi CMake.
+It patches only Kodi's target dependency configuration so the official `freetype2-noharfbuzz` and HarfBuzz recipes can be built for the OpenOrbis FreeBSD target. The overlay also adds the corresponding FreeBSD target behavior to Kodi's target `Toolchain.cmake.in`.
 
-The WSL configure-only run confirmed that this overlay patch applies cleanly. It then failed in the target dependency bootstrap because the build script passed `--host=x86_64-pc-freebsd12-elf`; Autoconf rejects that tuple, while the LLVM/OpenOrbis compiler target legitimately remains `x86_64-pc-freebsd12-elf`. The durable correction is now committed in `e0855e77f3e1467863eb9107d0f798462671533e`: Autoconf uses `x86_64-pc-freebsd12`, and the target dependency prefix is consequently `build/ps4/build/x86_64-pc-freebsd12-release`. WSL configure-only validation after this correction is pending.
+The WSL configure-only run confirmed:
+- the overlay patch applies cleanly;
+- Autoconf accepts `x86_64-pc-freebsd12`;
+- clang/clang++, LLVM tools and `ld.lld` are selected;
+- the compiler test succeeds;
+- cross-compilation is detected.
+
+The remaining blocker is the final Kodi platform validation in `tools/depends/configure.ac`: the command passes `--with-platform=ps4`, the PS4 branch sets `target_platform=ps4`, but the final `case $use_platform` currently accepts only the upstream platform names and rejects `ps4` with `unsupported platform (ps4)`.
+
+This is the **current exact blocker**. It is not a compiler, OpenOrbis, HarfBuzz, or patch-format failure.
+
+### Next action
+
+1. Inspect the exact pinned final `case $use_platform` block and all `target_platform` consumers.
+2. Add `ps4)` to the repository-owned overlay at the exact pinned insertion point.
+3. Re-audit the patch against the exact pinned Kodi source.
+4. Run:
+   ```bash
+   cd ~/projects/kodi-ps4-test
+   git fetch origin
+   git reset --hard origin/main
+   export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
+   export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
+   CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
+   ```
+5. Verify that `tools/depends` proceeds beyond platform validation and reaches the actual target dependency build/discovery.
+6. Stop at the next blocker and classify it before broadening scope.
+
+Do not start a full Kodi build until configure succeeds.
 
 ## Milestones
 
