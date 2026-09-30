@@ -35,6 +35,10 @@ The following configure run then reached Kodi's optional `XSLT` dependency and f
 
 The PS4 overlay now excludes `XSLT` from optional platform dependencies. No explicit `ENABLE_XSLT` cache override is used because Kodi models that option as an AUTO/string dependency switch; exclusion is the narrower platform-level adaptation.
 
+The next configure blocker is target-side HarfBuzz while configuring required ASS/libass. At the pinned Kodi commit, ASS and HarfBuzz are required dependencies, so this blocker cannot be handled by disabling an optional feature. Kodi's `FindHarfBuzz.cmake` expects a target HarfBuzz installation in the dependency prefix; the official Kodi `tools/depends/target/harfbuzz` recipe builds HarfBuzz 14.2.0 statically with Meson for the target. The PS5 reference uses the same architectural concept through its target sysroot/pacbrew dependency set, but its PS5 libraries cannot be reused for PS4.
+
+Do not install Ubuntu `libharfbuzz-dev`: that would provide a host Linux library, not the missing PS4 target library.
+
 Until the next configure-only validation succeeds:
 - Native host tools: validated ✅
 - Kodi PS4 cross-configuration entry: validated ✅
@@ -45,17 +49,16 @@ Until the next configure-only validation succeeds:
 
 ## Next action
 
-Synchronize the WSL checkout with origin/main and run:
+Audit is complete. The next implementation step is to integrate Kodi's official target HarfBuzz dependency recipe into the PS4/OpenOrbis build without importing the full desktop dependency graph.
 
-    CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
+The intended sequence is:
+1. initialize the smallest Kodi target-dependency environment needed by HarfBuzz;
+2. build the official `freetype2-noharfbuzz` bootstrap dependency and HarfBuzz for the PS4 target;
+3. stage the resulting static library, headers and pkg-config/CMake metadata in the target dependency prefix already searched by Kodi;
+4. rerun `CONFIGURE_ONLY=1` and verify that HarfBuzz is discovered as a PS4 target library;
+5. stop again at the next blocker rather than broadening the dependency surface.
 
-Verify that:
-1. both native host tools remain available;
-2. libbluray/LibXml2 and XSLT/LibXml2 are no longer entered into the dependency path;
-3. Kodi proceeds to the next dependency or completes configuration;
-4. the PS4 host/target boundary remains intact.
-
-If configuration reveals a new blocker, document it and make that blocker the next focused step. Do not install a host package merely to satisfy a target dependency before checking whether the corresponding Kodi feature is needed for the bring-up profile.
+No implementation has been applied for this step yet. Do not install Ubuntu `libharfbuzz-dev` as a workaround.
 
 ## Major runtime risks
 
