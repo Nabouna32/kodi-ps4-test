@@ -18,7 +18,8 @@ endif()
 set(CMAKE_SYSTEM_NAME FreeBSD)
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
 
-set(PS4_TRIPLE "x86_64-scei-ps4")
+# OpenOrbis' validated Clang target for PS4 homebrew.
+set(PS4_TRIPLE "x86_64-pc-freebsd12-elf")
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_ASM_COMPILER clang)
@@ -26,8 +27,10 @@ set(CMAKE_AR llvm-ar)
 set(CMAKE_RANLIB llvm-ranlib)
 set(CMAKE_LINKER ld.lld)
 
-set(CMAKE_C_FLAGS_INIT "--target=${PS4_TRIPLE} -fPIC")
-set(CMAKE_CXX_FLAGS_INIT "--target=${PS4_TRIPLE} -fPIC")
+set(CMAKE_C_FLAGS_INIT
+    "--target=${PS4_TRIPLE} -fPIC -funwind-tables")
+set(CMAKE_CXX_FLAGS_INIT
+    "--target=${PS4_TRIPLE} -fPIC -funwind-tables -isystem ${OO_PS4_TOOLCHAIN}/include/c++/v1")
 set(CMAKE_ASM_FLAGS_INIT "--target=${PS4_TRIPLE}")
 
 set(CMAKE_SYSROOT "${OO_PS4_TOOLCHAIN}")
@@ -36,8 +39,17 @@ set(CMAKE_FIND_ROOT_PATH "${OO_PS4_TOOLCHAIN}")
 set(CMAKE_C_COMPILER_TARGET "${PS4_TRIPLE}")
 set(CMAKE_CXX_COMPILER_TARGET "${PS4_TRIPLE}")
 
+# Match the validated OpenOrbis hello_world link flow:
+# - no host C/C++ runtime;
+# - OpenOrbis' linker script controls the PS4 executable layout;
+# - target libraries are supplied explicitly below.
 set(CMAKE_EXE_LINKER_FLAGS_INIT
-    "--target=${PS4_TRIPLE} -fuse-ld=lld -pie -Wl,--script=${OO_PS4_TOOLCHAIN}/link.x")
+    "--target=${PS4_TRIPLE} -fuse-ld=lld -nostdlib -pie -Wl,--script=${OO_PS4_TOOLCHAIN}/link.x -L${OO_PS4_TOOLCHAIN}/lib")
+
+set(CMAKE_C_STANDARD_LIBRARIES_INIT
+    "-lc -lkernel")
+set(CMAKE_CXX_STANDARD_LIBRARIES_INIT
+    "-lc -lkernel -lc++")
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
