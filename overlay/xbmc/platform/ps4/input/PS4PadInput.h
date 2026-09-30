@@ -36,8 +36,6 @@ protected:
   void Process() override;
 
 private:
-  static constexpr uint8_t STICK_DEADZONE = 32;
-
   bool InitLibraries();
   bool OpenPad();
   void ClosePad();
@@ -51,6 +49,7 @@ private:
   int32_t m_pad{-1};
   int32_t m_userId{-1};
   uint32_t m_lastButtons{0};
+  uint32_t m_heldRepeat{0};
   bool m_librariesReady{false};
 };
 
