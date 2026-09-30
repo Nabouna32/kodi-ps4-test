@@ -2511,14 +2511,10 @@ built first, then add PS4 implementations behind the existing Kodi interfaces.
 The build profile has not yet been cross-compiled in this environment:
 there is no installed OpenOrbis SDK/toolchain and no PS4 hardware here.
 
-Also, the PS4 CMake tree-data integration is not yet complete: the repository's
-cmake/treedata/ps4/subdirs.txt could not be created through the connected
-GitHub write interface in this session. Until that file is present and validated,
-the new platform directory cannot be considered fully wired into Kodi's CMake
-tree.
-
-This is intentionally recorded as a blocker rather than claiming a successful
-Kodi build.
+The PS4 CMake tree-data integration is now present in
+cmake/treedata/ps4/subdirs.txt, so the platform directory is structurally wired
+into Kodi's CMake tree. This wiring has not yet been exercised by CMake, so it
+remains a configuration-time validation item rather than a confirmed build.
 
 ### CI direction
 
