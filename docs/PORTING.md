@@ -950,3 +950,137 @@ The current evidence supports making **GLES/Piglet the primary first implementat
 This is not a permanent renderer decision. Vulkan remains a separate investigation because it could become valuable later for capabilities, performance, or a future renderer backend.
 
 The next implementation step should be **R-002A — standalone GLES/Piglet + VideoOut POC**.
+
+---
+
+## 21. R-002A — standalone GLES/Piglet + VideoOut POC design — 2026-09-30
+
+### 21.1 Objective
+
+R-002A is a standalone graphics proof-of-concept. It remains independent from Kodi and establishes the minimum PS4 graphics/presentation chain required by the future Kodi port:
+
+OpenOrbis application -> Piglet configuration -> EGL 1.4 -> GLES 2.0 -> precompiled Piglet shaders -> textures/FBOs/draw calls -> VideoOut presentation -> frame synchronization.
+
+A passing POC does not prove that Kodi's complete GLES renderer is compatible. It proves that the underlying PS4 graphics and presentation primitives needed to continue the Kodi investigation are available and understood.
+
+### 21.2 Important shader compilation correction
+
+The POC must not depend on runtime GLSL compilation on a retail PS4. Public PS4 research documents that retail Piglet environments may lack the runtime shader compiler/Shacc component, while Piglet exposes a Sony-specific shader-binary path.
+
+Therefore the intended model is: shader source -> reproducible host-side Piglet-compatible compilation -> precompiled shader binary -> PS4 application -> glShaderBinary -> program link.
+
+The exact compiler/tool and binary format must be established from the OpenOrbis/Piglet sample and available tooling before implementation. Generic GLSL compiler output must not be assumed to be a valid Piglet binary.
+
+### 21.3 Existing ecosystem evidence
+
+OpenOrbis provides a dedicated Piglet application sample and includes EGL/GLES headers and PS4 graphics support. Its release history explicitly records the addition of the OpenGL/Piglet GPU rendering sample.
+
+Independent PS4 research documents a working EGL 1.4 + OpenGL ES 2.0 Piglet path and identifies the PS4-specific shader-binary mechanism.
+
+A public PS4 renderer implementation reports extensions including GL_SCE_piglet_shader_binary, GL_OES_texture_npot, GL_OES_texture_float, GL_OES_texture_half_float and GL_EXT_color_buffer_half_float. These are hypotheses for testing, not a substitute for querying the target console at runtime.
+
+### 21.4 POC scope
+
+Test A — runtime identification: log EGL version/vendor/extensions, GL version/renderer, GLSL version, GL extensions and relevant numeric limits.
+
+Test B — EGL/GLES initialization: validate Piglet initialization, EGL display, EGL initialization, API binding, config selection, window surface, GLES 2.0 context and eglMakeCurrent. Every failure must identify the operation and error code.
+
+Test C — precompiled shader path: create vertex and fragment shader objects, load Piglet-compatible binaries, check status, attach, link, validate and use the program. Preserve the shader binary as a reproducible/versioned build artifact and record the compiler/toolchain.
+
+Test D — basic geometry: render a deterministic triangle or quad using vertex attributes, VBOs, uniforms, a simple fragment shader, viewport, clear and draw call.
+
+Test E — texture upload: test RGBA 2D texture, NPOT texture, filtering, wrapping and sampling. Query float/half-float support instead of assuming it.
+
+Test F — framebuffer object: create FBO, attach a color target, render to texture, check completeness, then sample the rendered texture in a second pass.
+
+Test G — VideoOut presentation: establish the actual path from rendered image to physical display, including VideoOut opening, mode selection, framebuffer allocation, registration, flip/presentation, synchronization, ownership/lifetime and error handling. The exact API sequence must be taken from current OpenOrbis headers/samples and validated on hardware.
+
+Test H — frame pacing: run a persistent loop and measure frame submissions, synchronization behavior, CPU frame duration, failed submissions and stability over an extended run. The goal is stable presentation, not peak performance.
+
+Test I — Kodi-shaped resource operations: after the basic path works, test uniforms, multiple textures/samplers, scissor, blending, alpha blending, depth state, texture updates and FBO switching where relevant to the Kodi audit.
+
+### 21.5 Diagnostic output
+
+Every test should produce concise human-readable status and machine-readable status where practical. Suggested model:
+
+[R-002A] EGL ........ PASS
+[R-002A] GLES2 ...... PASS
+[R-002A] Shader ..... PASS
+[R-002A] Geometry ... PASS
+[R-002A] Texture .... PASS
+[R-002A] NPOT ....... PASS
+[R-002A] FBO ........ PASS
+[R-002A] VideoOut ... PASS
+[R-002A] Sync ....... PASS
+[R-002A] Kodi-like .. PASS
+
+Failures are classified as BLOCKER, LIMITATION or UNKNOWN.
+
+### 21.6 Proposed repository structure
+
+Keep the POC isolated from future Kodi source changes:
+
+poc/
+  r-002a-gles-videoout/
+    README.md
+    build files
+    include/
+    src/
+    shaders/
+    tools/
+    docs/
+
+The exact build system should follow OpenOrbis sample conventions unless a concrete reason exists to introduce CMake immediately. The POC must be independently understandable without Kodi.
+
+### 21.7 Acceptance criteria
+
+R-002A succeeds when the target PS4 demonstrates:
+
+1. EGL initialization;
+2. a current GLES 2.0 context;
+3. loading/linking of a Piglet-compatible precompiled shader pair;
+4. basic primitive rendering;
+5. texture upload and sampling;
+6. NPOT texture handling;
+7. FBO render-to-texture and second-pass sampling;
+8. final presentation through the PS4 display path;
+9. stable synchronization/frame pacing;
+10. runtime capabilities logged and preserved as project evidence.
+
+An optional feature failure must not be treated as total POC failure.
+
+### 21.8 Explicit non-goals
+
+The POC does not include Kodi source, Kodi CMake integration, Kodi window-system classes, input, audio, video decoding, hardware video surfaces, HDR implementation, Vulkan, or renderer optimization beyond basic frame pacing.
+
+### 21.9 Expected outcomes
+
+A strong pass permits progression toward Kodi integration. A partial pass identifies specific GLES/Piglet adaptations required. A fundamental blocker gives substantially more weight to the parallel Vulkan investigation. Renderer selection must follow evidence rather than API age.
+
+### 21.10 Current R-002A status
+
+Status: design complete, implementation not started.
+
+The immediate prerequisite is R-002A.0 — establish the exact OpenOrbis Piglet sample/build conventions and the reproducible precompiled shader binary toolchain/format.
+
+---
+
+## 22. R-002A research update — shader binaries and current evidence — 2026-09-30
+
+A fresh source review reinforces that precompiled shader binaries must be a first-class build artifact for this POC. OpenOrbis provides a Piglet sample and PS4 EGL/GLES support, while independent PS4 research documents that retail Piglet environments may lack runtime shader compilation and exposes a PS4-specific shader-binary mechanism.
+
+Evidence quality: High confidence that OpenOrbis provides Piglet support; high confidence that Piglet has an implementation-specific shader-binary path; medium confidence that runtime compiler availability varies by environment; open question for the exact current host-side compiler and binary format.
+
+### R-002A.0 — establish shader toolchain
+
+Before implementing the renderer:
+
+1. inspect the current OpenOrbis Piglet sample and shader-related files;
+2. identify how its shaders are built and packaged;
+3. identify the expected Piglet binary format;
+4. identify whether OpenOrbis supplies a usable host-side compiler;
+5. if not, identify a reproducible external/community tool;
+6. create one known-good vertex/fragment binary;
+7. verify that the binary can be loaded through the PS4 Piglet shader-binary API.
+
+Only after R-002A.0 succeeds should the full POC implementation proceed.
