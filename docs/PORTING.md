@@ -2377,3 +2377,64 @@ Les shaders restent externes. Aucun binaire Sony propriétaire ou dump non publi
 La première exécution sur PS4 devra conserver : version EGL, vendor/renderer/version GL, extensions, format des shaders, résultat du linkage, NPOT, FBO et première présentation.
 
 Le toolchain OpenOrbis fournit les headers, stubs et exemples nécessaires au développement homebrew sans SDK Sony officiel et documente explicitement son support Piglet/OpenGL. citeturn0search0turn0search3
+
+
+## 40. R-003.1 — first PS4 controller backend slice — 2026-09-30
+
+The first non-graphics platform slice has now been implemented as a focused PS4 DualShock 4 input bridge.
+
+### Evidence reviewed
+
+- OpenOrbis exposes `scePadInit`, `scePadOpen`, `scePadRead`, `scePadReadState`, `scePadClose`, and related controller APIs. Its public `OrbisPadData` contains button bits, both analog sticks, analog L2/R2 values, touch data, connection state, and a timestamp. urlOpenOrbis Pad.hhttps://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain/blob/master/include/orbis/Pad.h
+- OpenOrbis documents the PS4 button bit layout, including the D-pad, L1/R1, L2/R2, face buttons, L3/R3, Options and touchpad. urlOpenOrbis Pad documentationhttps://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain/blob/master/docs/MD/PS4%20Libraries/Pad.md
+- OpenOrbis' own controller sample initializes UserService, obtains the initial user, opens a standard pad with `scePadOpen`, and reads controller state. urlOpenOrbis controller samplehttps://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain/blob/master/samples/input/input/controller.cpp
+- Kodi's current input architecture centralizes input processing in `CInputManager`, while the joystick system is a separate peripheral/controller layer. urlKodi CInputManager documentationhttps://xbmc.github.io/docs.kodi.tv/master/kodi-base/d6/d06/class_c_input_manager.html
+- The PS5 Kodi reference currently uses a deliberately simple phase-1 `scePad` polling bridge that injects Kodi keyboard events, with a later real peripheral/joystick provider identified as the proper phase-2 solution. The PS4 implementation follows that proven structural idea while using the PS4 API definitions.
+
+### Implemented
+
+Added:
+
+```
+overlay/xbmc/platform/ps4/input/
+├── CMakeLists.txt
+├── PS4PadInput.h
+└── PS4PadInput.cpp
+```
+
+The bridge currently:
+
+1. initializes `scePad` and PS4 UserService;
+2. obtains the initial logged-in user;
+3. opens the standard controller;
+4. polls at 125 Hz;
+5. detects connection loss and releases previously held buttons;
+6. maps the physical D-pad and left-stick directions to Kodi navigation keys;
+7. maps the main DualShock 4 buttons to the same first-stage Kodi keyboard semantics used by the PS5 reference;
+8. provides direction auto-repeat;
+9. injects `XBMC_KEYDOWN/KEYUP` events through Kodi's application input port.
+
+This is intentionally **not yet a full Kodi joystick/peripheral provider**. Analog axes, trigger values, rumble, touchpad data, controller hot-plug/user switching and the Kodi peripheral mapping UI remain follow-up work.
+
+### Important limitation
+
+The files are now in the repository as the first PS4 platform-input slice, but the current environment has no OpenOrbis PS4 SDK/toolchain and no PS4 hardware. Therefore this commit is **source-level integration preparation, not hardware validation**.
+
+The implementation must not be considered proven until it is built with the actual OpenOrbis toolchain and exercised on a PS4.
+
+### Architecture consequence
+
+The project can proceed in parallel with graphics research. The current platform work can advance independently through:
+
+- input;
+- audio;
+- network;
+- filesystem/storage;
+- platform initialization;
+- Kodi build/overlay integration.
+
+Graphics/Piglet and hardware video remain hardware-dependent validation tracks.
+
+### Next action
+
+Proceed to **R-003.2 — PS4 audio sink audit and first implementation slice**, using official Kodi audio-sink interfaces, the PS5 `AESinkPS5` implementation as structural reference, and OpenOrbis `sceAudioOut` definitions as the PS4 API source.
