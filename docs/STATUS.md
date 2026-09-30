@@ -58,7 +58,7 @@ The intended sequence is:
 4. rerun `CONFIGURE_ONLY=1` and verify that HarfBuzz is discovered as a PS4 target library;
 5. stop again at the next blocker rather than broadening the dependency surface.
 
-The implementation is now present in the PS4 overlay and build entrypoint. It has not yet been executed in the WSL environment. Do not install Ubuntu `libharfbuzz-dev` as a workaround.
+The implementation is now present in the PS4 overlay and build entrypoint. The first WSL validation exposed a repository patch-format defect before any target dependency configuration ran: the unified-diff hunk counts in `0001-openorbis-ps4-target-depends.patch` were incorrect. The patch was corrected in commit `c0bd3fc49b075d1dcd408f2377ada34ced57b75e`. No HarfBuzz build result has been obtained yet. Do not install Ubuntu `libharfbuzz-dev` as a workaround.
 
 ## Major runtime risks
 
@@ -73,4 +73,4 @@ No PS4 runtime/platform implementation is currently claimed as working.
 
 The PS4 overlay now extends Kodi's `tools/depends/configure.ac` for `x86_64-pc-freebsd12-elf` / `--with-platform=ps4`. The build script bootstraps that generated configure system, builds only the official target dependency path needed by HarfBuzz (`freetype2-noharfbuzz` → HarfBuzz), and passes the resulting target prefix to Kodi CMake through `DEPENDS_PATH`. Host Meson/Ninja/pkg-config/Python/CMake are exposed through the existing native prefix rather than rebuilt as new project-specific tools.
 
-This is an implementation change only; WSL execution and configure-only validation are still pending.
+This is an implementation change only; WSL execution and configure-only validation are still pending. The next validation must first confirm that the corrected overlay patch applies cleanly, then observe the target dependency bootstrap.
