@@ -1459,3 +1459,93 @@ to:
 "identify and validate the exact psbc implementation used by ioQuake3."
 
 This is a significant reduction in uncertainty and should be treated as the next concrete blocker-resolution task for the Piglet release pipeline.
+
+---
+
+## 27. R-002A.4 — exact ioQuake3 psbc repository identified — 2026-09-30
+
+The previous research question has been narrowed further: the current ioQuake3-PS4 repository explicitly links the shader compiler credited in its README.
+
+### 27.1 Exact repository reference
+
+ioQuake3-PS4 credits:
+
+**psbc — https://gitgud.io/veiledmerc/psbc — Shader compilation**
+
+This is materially stronger than the previous generic evidence that a tool named psbc exists. The repository URL is now known from the ioQuake3 project's own source.
+
+The current ioQuake3 README simultaneously states that:
+
+- its renderer uses GLES 2.0 through Piglet;
+- shader sources are GLSL ES 1.00;
+- those sources are compiled offline into Piglet-native per-stage Shader Binary files;
+- 124 blobs are shipped in the PKG;
+- the normal runtime path loads those binaries through glShaderBinary().
+
+Taken together, the project documentation establishes a direct provenance chain at the project level:
+
+```text
+ioQuake3 GLSL ES 1.00
+        |
+        v
+psbc (gitgud.io/veiledmerc/psbc)
+        |
+        v
+Piglet-native shader binaries
+        |
+        v
+glShaderBinary()
+        |
+        v
+PS4 runtime
+```
+
+The exact compiler repository is therefore no longer unknown.
+
+### 27.2 What is still unverified
+
+The GitGud repository itself could not be inspected through the currently available web fetch path, so the following details remain unverified from the compiler's own source:
+
+1. exact source revision/version used by ioQuake3;
+2. build instructions and host dependencies;
+3. accepted input format;
+4. exact output container/format;
+5. command line used to produce the 124 ioQuake3 blobs;
+6. whether the compiler accepts arbitrary GLSL ES 1.00 or requires a specific preprocessing/IR step;
+7. license and redistribution terms;
+8. reproducibility on a clean development machine;
+9. compatibility with the shader requirements of Kodi.
+
+This is an access limitation, not evidence that the repository is unavailable or unsuitable.
+
+### 27.3 Important correction to confidence
+
+Confidence is now **high** that the named psbc repository is the compiler project intended by ioQuake3's documentation, because the ioQuake3 README links directly to it under the explicit credit “Shader compilation”.
+
+Confidence remains **medium** that we can immediately use it for Kodi. The missing information is implementation-level: input/output contract, exact revision, buildability and compatibility with Kodi's shaders.
+
+### 27.4 Additional evidence from the surrounding PS4 ecosystem
+
+The OpenGNM/freegnm ecosystem also references the original psbc project at the same GitGud URL, distinguishing it from the newer opengnm-psbc project. This confirms that gitgud.io/veiledmerc/psbc is a known project in the PS4 homebrew ecosystem rather than a typo or an ambiguous repository name.
+
+This still does not establish that the newer GNM-oriented opengnm-psbc is equivalent to the original psbc. They remain separate until source-level comparison proves otherwise.
+
+### 27.5 Next action
+
+The next action is now focused and should be performed before any Kodi shader work:
+
+1. obtain/inspect the exact veiledmerc/psbc source or an authoritative mirror;
+2. identify its compiler frontend and shader input contract;
+3. determine the generated Piglet binary format and format value expected by glShaderBinary();
+4. locate ioQuake3's original shader-generation provenance, including the exact psbc revision and invocation if recoverable from history/artifacts;
+5. build psbc independently;
+6. compile one minimal GLSL ES 1.00 vertex/fragment pair;
+7. compare its output characteristics with the ioQuake3 shipped blobs and, where possible, validate the generated pair on the R-002A PS4 POC.
+
+No Kodi shader conversion should be implemented until this validation is complete.
+
+### 27.6 Current blocker status
+
+The release-pipeline blocker is now reduced to **tool acquisition and validation**, not compiler discovery.
+
+R-002A can continue with the known-good shader fixture while this track is resolved. The eventual Kodi Piglet integration remains gated on a reproducible project-owned shader build path.
