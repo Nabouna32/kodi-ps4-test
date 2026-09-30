@@ -35,7 +35,12 @@ file(COPY "${PROJECT_ROOT}/cmake/scripts/ps4"
   DESTINATION "${KODI_SRC}/cmake/scripts")
 file(COPY "${PROJECT_ROOT}/overlay/xbmc/platform/ps4"
   DESTINATION "${KODI_SRC}/xbmc/platform")
-file(COPY "${PROJECT_ROOT}/overlay/tools/depends/configure.ac"
-  DESTINATION "${KODI_SRC}/tools/depends")
+execute_process(
+  COMMAND patch -p1 -i "${PROJECT_ROOT}/overlay/tools/depends/0001-openorbis-ps4-target-depends.patch"
+  WORKING_DIRECTORY "${KODI_SRC}"
+  RESULT_VARIABLE PATCH_RESULT)
+if(NOT PATCH_RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to apply OpenOrbis PS4 target-dependency patch")
+endif()
 
 message(STATUS "Applied PS4 Kodi overlay to: ${KODI_SRC}")
