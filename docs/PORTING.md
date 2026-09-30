@@ -1893,3 +1893,57 @@ The next research step should be to recover the original `veiledmerc/psbc` sourc
 In parallel, if a local legitimate OpenOrbis/SDK installation is available, the most valuable inspection is the SDK's Piglet/ESSLC/Shacc tooling. We should inspect the actual installed toolchain rather than infer proprietary tool names from community discussions.
 
 No Kodi source was modified in this step.
+
+
+## 33. R-002A.10 — public research on the Sony 4.508.021 SDK/toolchain — 2026-09-30
+
+A targeted web investigation was performed for the Sony PS4 SDK version 4.508.021, specifically looking for Piglet, Shacc and shader-compiler tooling.
+
+### 33.1 What can be established publicly
+
+The PS4 Developer Wiki explicitly identifies 4.508.021 as a PS4 DevKit Gen 3 SDK/software version. The page also indicates that public mirrors/files associated with this version exist, but it does not expose a reliable, complete inventory of the SDK's host-side tools. Therefore the wiki is evidence for the version, not for the exact contents of an installed SDK.
+
+The public reverse-engineering record confirms that the PS4 graphics stack has distinct Piglet and Shacc components. A 2018 technical write-up by flatz reports that retail Piglet lacks runtime shader compilation while a devkit build contains the compiler path involving libScePigletv2VSH and libSceShaccVSH; the same write-up reports successful GLSL compilation after loading the devkit modules. This establishes that the developer environment historically contained a shader-compilation path, but it does not identify the offline host compiler that generated the shipped Piglet binaries used by current homebrew ports.
+
+### 33.2 What we did not find
+
+Searches for exact combinations of:
+
+- 4.508.021 + Piglet;
+- 4.508.021 + Shacc;
+- 4.508.021 + ESSLC;
+- 4.508.021 + PS4 shader compiler;
+
+did not produce a trustworthy public file listing naming the host-side compiler executable or its installation path.
+
+This is important: we should not invent a tool name such as esslc or assume that libSceShaccVSH.sprx itself is the offline compiler. The evidence currently distinguishes the runtime compiler module from the unknown host-side production tool.
+
+### 33.3 Stronger clue from current ioQuake3
+
+The current ioQuake3-PS4 port explicitly states that its release PKG contains precompiled Piglet shader binaries and that neither libScePigletv2VSH.sprx nor libSceShaccVSH.sprx is required at runtime on the tested firmware. Its AGENTS documentation states that the binaries are captured from an already-compiled Piglet shader using the undocumented glPigletGetShaderBinarySCE export.
+
+This means a practical production pipeline does not necessarily need the Sony offline compiler at all:
+
+1. obtain a working devkit/runtime shader compiler environment;
+2. compile the GLSL ES 1.00 shader once;
+3. capture Piglet's own binary with glPigletGetShaderBinarySCE;
+4. ship the resulting Piglet binary;
+5. load it with glShaderBinary() on retail/homebrew runtime.
+
+That is a materially different strategy from reproducing Sony's offline compiler.
+
+### 33.4 Current conclusion
+
+The internet research does not yet justify claiming that SDK 4.508.021 contains a specific named host-side Piglet compiler.
+
+The highest-confidence findings are:
+
+- 4.508.021 is a real DevKit Gen 3 SDK version;
+- devkit Piglet/Shacc runtime compilation existed historically;
+- retail Piglet can operate without the runtime Shacc module when precompiled shader binaries are supplied;
+- ioQuake3 demonstrates a hardware-verified capture-and-ship workflow;
+- the exact host-side compiler producing the Piglet container remains unresolved.
+
+The most valuable next step is therefore not more generic web searching, but inspection of an actual legitimate SDK 4.508.021 installation if one is available. A recursive filename/search for terms such as piglet, shacc, shader, glsl, essl, pssl, compiler, and scePrecompiledShaders should identify the relevant host tools and documentation without guessing their names.
+
+No SDK/proprietary files were added to the repository.
