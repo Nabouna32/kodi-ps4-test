@@ -75,3 +75,14 @@ Status: validated as build-system evidence.
 The online PS5 reference builds TexturePacker and JsonSchemaBuilder natively, then supplies them to the cross-configure through WITH_TEXTUREPACKER, WITH_JSONSCHEMABUILDER and NATIVEPREFIX. It also disables target-side TexturePacker packaging for PS5.
 
 This confirms the host/target separation required for the PS4 build. It does not justify copying unrelated PS5 platform or packaging logic.
+
+
+## R-004.14 — Native TexturePacker integration
+
+**Status:** implementation committed; validation pending.
+
+The pinned Kodi FindTexturePacker.cmake was inspected at the exact pinned Kodi commit. It confirms that WITH_TEXTUREPACKER is a host executable/path used during cross-compilation, while FreeBSD normally enables INTERNAL_TEXTUREPACKER_INSTALLABLE. Therefore the PS4 build supplies a native TexturePacker and explicitly sets INTERNAL_TEXTUREPACKER_INSTALLABLE=FALSE rather than changing HOST_CAN_EXECUTE_TARGET.
+
+The native tool is built from tools/depends/native/TexturePacker/src with KODI_SOURCE_DIR pointing at the materialized Kodi tree, APP_NAME_LC=kodi, POSIX/Linux architecture defines, and the WSL host compilers /usr/bin/cc and /usr/bin/c++. It installs into the existing native prefix.
+
+This is a build-system implementation only. The actual WSL build/configure result remains unverified until the synchronized checkout runs the bootstrap.
