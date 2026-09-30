@@ -67,6 +67,7 @@ Use the specialized documentation map:
 - docs/ARCHITECTURE.md — architecture and technical boundaries.
 - docs/RESEARCH.md — investigations, experiments and evidence.
 - docs/PORTING.md — compact continuity index.
+- docs/CONTINUITY.md — canonical cross-conversation handoff.
 
 After every meaningful response/work phase that establishes a discovery,
 decision, implementation result, test result, blocker, correction, or changed
@@ -75,6 +76,24 @@ that phase complete.
 
 Do not rely on chat history for project continuity. A new agent or conversation
 must be able to understand the current state from Git and these documents.
+
+### Cross-conversation continuity rule
+
+`docs/CONTINUITY.md` is the canonical handoff document for starting or resuming work in a new conversation.
+
+When a conversation reaches a handoff point, or when a new conversation is explicitly being prepared, update `docs/CONTINUITY.md` before handing over. The handoff must describe the actual repository state at that moment, including:
+
+- current GitHub `main` HEAD;
+- relevant pinned external commits;
+- validated facts and their validation status;
+- current blocker;
+- important decisions and scope boundaries;
+- the exact next step proposed;
+- any important commands or validation procedure needed to resume.
+
+The handoff is continuity context, not a replacement for verification. A new conversation must read it first, then independently verify its claims against GitHub, `AGENTS.md`, the relevant project documentation, and the actual source/configuration before changing anything.
+
+If the repository state changes after the handoff is written, update `docs/CONTINUITY.md` again before the next conversation handoff. Do not leave a known stale handoff as the documented current state.
 
 ## Comparative platform research rule
 
