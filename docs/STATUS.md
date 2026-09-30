@@ -21,28 +21,27 @@ Current phase: build/toolchain validation
 
 ## Current blocker
 
-The first configure-only validation after the native TexturePacker audit did not reach CMake: WSL reported Permission denied when invoking ./scripts/build-ps4-kodi.sh. The repository mode was 100644 even though the file is an executable shell-script entry point.
+The JsonSchemaBuilder blocker is addressed in the build scripts: the native host-tools bootstrap now builds both TexturePacker and JsonSchemaBuilder from the pinned Kodi source and installs them into the shared native prefix.
 
-The mode was corrected locally to 100755 and is now being committed to main. No Kodi build logic changed.
-
-The previous Lzo2 blocker is resolved. This validation rebuilt and installed the native TexturePacker successfully, then reached Kodi's real PS4 cross-configuration. Kodi now stops because the native JsonSchemaBuilder executable is missing from the supplied native prefix.
-
-The validated host-tool model now includes a concrete requirement for both host executables:
-- TexturePacker is compiled for WSL/Linux;
-- JsonSchemaBuilder must also be compiled for WSL/Linux;
-- Kodi PS4 receives both through WITH_TEXTUREPACKER and WITH_JSONSCHEMABUILDER;
-- HOST_CAN_EXECUTE_TARGET remains false;
-- no PS4-target host build tools are built or shipped.
+The implementation has **not yet been validated in the WSL checkout**. Until configure-only validation runs successfully:
+- TexturePacker: previously validated ✅
+- JsonSchemaBuilder: implementation added, validation pending ⏳
+- Kodi PS4 cross-configuration: previous blocker was JsonSchemaBuilder
+- CCache/ClangFormat warnings: non-blocking at this stage
+- Do not start a full Kodi build until configure succeeds.
 
 ## Next action
 
-The next implementation step is to extend the focused native host-tool bootstrap to build Kodi's official JsonSchemaBuilder source alongside TexturePacker. The PS5 reference independently uses this exact two-tool host model, while official Kodi's FindJsonSchemaBuilder.cmake confirms that WITH_JSONSCHEMABUILDER expects an existing executable during cross-compilation.
-
-After that implementation is validated, rerun:
+Synchronize the WSL checkout with origin/main and run:
 
     CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 
-Do not start a full Kodi build until configuration succeeds.
+Verify that:
+1. both native host tools build and install;
+2. Kodi accepts both supplied host executables;
+3. PS4 configuration completes successfully.
+
+If configuration reveals a new blocker, document it and make it the next focused step.
 
 ## Major runtime risks
 
