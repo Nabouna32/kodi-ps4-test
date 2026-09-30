@@ -1084,3 +1084,102 @@ Before implementing the renderer:
 7. verify that the binary can be loaded through the PS4 Piglet shader-binary API.
 
 Only after R-002A.0 succeeds should the full POC implementation proceed.
+
+---
+
+## 23. R-002A.0 — OpenOrbis Piglet shader pipeline investigation — 2026-09-30
+
+The current OpenOrbis Piglet sample was inspected in detail to determine whether it provides a reproducible shader compilation pipeline.
+
+### 23.1 What the OpenOrbis sample actually provides
+
+The sample is a complete GLES 2.0 / EGL 1.4 application and is directly useful as the reference implementation for the POC.
+
+Its graphics initialization performs:
+
+- `scePigletSetConfigurationVSH()`;
+- `eglGetDisplay(EGL_DEFAULT_DISPLAY)`;
+- `eglInitialize()`;
+- `eglBindAPI(EGL_OPENGL_ES_API)`;
+- an ES 2 renderable EGL configuration;
+- a window surface;
+- a GLES 2 context;
+- `eglMakeCurrent()`.
+
+The sample then queries the runtime GL vendor/version/renderer and renders through `eglSwapBuffers()`.
+
+### 23.2 Critical shader discovery
+
+The sample does **not** compile its shaders from source.
+
+Instead it links against:
+
+`-lScePrecompiledShaders`
+
+and imports the exported `scePrecompiledShaderEntries[]` table. The sample looks up two entries:
+
+- `texmap/v_2.vert`
+- `texmap/f_2.frag`
+
+and passes their raw byte ranges directly to:
+
+`glShaderBinary(1, &shader, 0, binary, length)`
+
+The sample explicitly documents that, on PS4, shader-binary format `0` is PSSL.
+
+The OpenOrbis repository's `lib/` directory is only a generated-library placeholder; the repository does not contain a public shader compiler implementation or the source of `libScePrecompiledShaders`. The sample documentation describes these precompiled shaders as Sony WebKit shaders.
+
+Therefore the OpenOrbis sample establishes a **known-good binary consumption path**, but it does **not** establish an open, reproducible GLSL/Piglet shader compiler.
+
+### 23.3 Consequence for R-002A
+
+This splits the shader problem into two independent questions:
+
+1. **Can PS4 Piglet consume a valid precompiled shader binary?**  
+   Yes at ecosystem/sample level: the OpenOrbis sample implements exactly this path.
+
+2. **Can this project reproducibly generate its own shader binaries for Kodi's shader sources?**  
+   Still open.
+
+This distinction is important. We do not need to solve the entire shader-production problem before proving the EGL/GLES/VideoOut pipeline. The POC can initially use the OpenOrbis sample's known-good precompiled vertex/fragment pair to validate the runtime graphics path.
+
+However, shader production remains a **required prerequisite for eventual Kodi integration**, because Kodi contains its own shader set and cannot depend on Sony's WebKit shader table.
+
+### 23.4 Additional ecosystem evidence
+
+Recent PS4 homebrew development continues to report Piglet applications using precompiled shader binaries through `glShaderBinary()`, while community reports also describe differences in shader-compiler/Shacc availability between retail firmware and development environments. This reinforces the decision not to make runtime shader compilation a dependency of the port. These reports are supporting evidence only; the OpenOrbis sample is the primary implementation reference.
+
+### 23.5 Revised R-002A.0 result
+
+**Status: partially complete / sufficient to proceed with the graphics POC.**
+
+Established:
+
+- exact OpenOrbis Piglet initialization sequence;
+- exact GLES 2.0 context requirements;
+- exact precompiled shader loading mechanism;
+- shader binary format value used by the sample (`0`);
+- existence of a known-good precompiled shader pair;
+- absence of an open shader compiler in the OpenOrbis repository.
+
+Still open:
+
+- exact official Sony host compiler/tool for generating Piglet-compatible PSSL binaries;
+- whether a clean-room/community tool can reproducibly generate the same class of binaries;
+- how Kodi's GLSL ES 1.00 shader sources will be converted/compiled for Piglet;
+- compatibility requirements for shader uniforms/attributes after compilation.
+
+### 23.6 Immediate implementation strategy
+
+Proceed with the standalone R-002A POC using the OpenOrbis sample's known-good precompiled shader pair as the initial shader fixture.
+
+Do **not** copy the Sony/WebKit shader binaries into the Kodi project as if they were Kodi assets. They are a validation fixture for the POC only.
+
+In parallel, keep shader production as a separate research track. The Kodi renderer cannot be considered integration-ready until a reproducible way of producing the required shader binaries has been established.
+
+### Sources inspected
+
+- OpenOrbis Piglet sample README and source.
+- OpenOrbis Piglet sample Makefile/build script.
+- OpenOrbis `Pigletv2VSH.h` / GLES headers.
+- Public PS4 Piglet research and current community reports concerning precompiled shader binaries and Shacc availability.
