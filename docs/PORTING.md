@@ -1653,3 +1653,47 @@ This also confirms that the OpenOrbis Windows packaging tools can be driven dire
 ### Next action
 
 Perform a single on-disk verification of `hello_world.oelf` and `eboot.bin`. If both exist and are non-empty, document that result and then move to the project's CMake/Ninja toolchain validation.
+
+## 46. R-004.5 validation — FSELF artifacts confirmed — 2026-09-30
+
+The native Windows FSELF smoke test is fully validated on disk.
+
+After running OpenOrbis 0.5.4 `create-fself.exe` against the previously linked `hello_world.elf`, both expected artifacts exist and are non-empty:
+
+| Artifact | Size |
+|---|---:|
+| `hello_world.oelf` | 1,825,272 bytes |
+| `eboot.bin` | 1,211,280 bytes |
+
+This confirms the native Windows validation chain through FSELF artifact generation:
+
+```
+hello_world.cpp
+  -> Clang++ 18.1.8 + OpenOrbis headers
+  -> main.o
+  -> LLD + link.x + OpenOrbis libraries
+  -> hello_world.elf
+  -> create-fself.exe
+  -> hello_world.oelf
+  -> eboot.bin
+```
+
+### Status
+
+The OpenOrbis smoke test is now validated through:
+
+- compilation;
+- PS4-targeted ELF linkage;
+- FSELF conversion;
+- non-empty `oelf` and `eboot.bin` artifacts.
+
+Still unvalidated:
+
+- GP4/PKG generation;
+- installation/execution on a real PS4;
+- Kodi CMake/Ninja configuration;
+- full Kodi cross-build.
+
+### Next action
+
+Move to the project's **CMake/Ninja toolchain validation**. The first objective is configure-only validation, not a full Kodi build. This should expose whether the current PS4 CMake toolchain file matches the target/compiler conventions proven by the OpenOrbis smoke test.
