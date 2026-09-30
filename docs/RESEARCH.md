@@ -118,3 +118,14 @@ The current `build-ps4-native-texturepacker.sh` is **not** a bespoke replacement
 For this project that is currently justified because the PS4 cross-build needs only the host executable at this stage, while invoking the full Kodi depends graph would introduce a much larger dependency/bootstrap path solely to obtain a host utility. The PS5 reference independently uses the same focused host-tool strategy.
 
 Therefore the current helper is retained for now. It should be treated as a small PS4 build integration around Kodi's official TexturePacker source, not as a new TexturePacker implementation. A later audit of the complete Kodi depends/cmakebuildsys cross-build path can replace it only if that path provides a concrete advantage without adding unnecessary host dependency work.
+
+
+## R-004.16 — Minimal bring-up dependency policy / Blu-ray
+
+**Status:** validated decision; configure-only validation pending after implementation.
+
+The pinned Kodi source lists `Bluray>=0.9.3` as an optional dependency. The current configure failure entered Kodi's internal libbluray build and then failed to find target `LibXml2`. Blu-ray support is not part of the first bring-up objective (Kodi GUI, GLES/EGL presentation, and PS4 controller input), so installing a WSL host `libxml2-dev` package would solve the wrong class of problem and would unnecessarily expand the initial dependency surface.
+
+The PS4 platform overlay therefore forces `ENABLE_BLURAY=OFF` and excludes `Bluray` from the optional platform dependency set. This keeps the first build focused on functionality required to reach the GUI. Features can be re-enabled one by one after the minimal runtime is validated.
+
+Official Kodi documentation confirms Blu-ray handling is a media-playback feature, not a prerequisite for the general Kodi GUI. citeturn0search0turn0search9
