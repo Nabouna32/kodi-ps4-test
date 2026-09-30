@@ -41,6 +41,30 @@ The Kodi repository has its own `AGENTS.md`. When analysing or proposing
 changes intended to be contributed upstream, read and follow that file. It is
 not the instruction set for this repository.
 
+## Git synchronization and online-first research
+
+The GitHub `main` branch is the remote source of truth for the project state.
+Before each local work phase, synchronize the checkout with `origin/main` and
+verify the resulting state. Do not assume an old local checkout is current.
+
+For external repositories, prefer inspecting the online repository directly
+(GitHub/API) rather than performing broad local greps or cloning/copying large
+amounts of external source merely for research. Use local commands only when a
+small, targeted check is needed to identify a remote, validate the local
+environment, or reproduce a concrete build/runtime result.
+
+The standard local synchronization block is:
+
+```bash
+cd ~/projects/kodi-ps4-test
+
+git fetch origin
+git reset --hard origin/main
+```
+
+Do not use the synchronization block while intentional uncommitted project
+changes need to be preserved.
+
 ## Git workflow
 
 This project is developed directly on the `main` branch. For our normal
@@ -52,6 +76,14 @@ part of the current development workflow.
 ## Documentation continuity
 
 `docs/PORTING.md` is the persistent memory of the port.
+
+Documentation is part of the implementation workflow, not a final cleanup
+step. After every meaningful response/work phase that establishes a discovery,
+decision, implementation result, test result, blocker, correction, or changed
+next action, update the appropriate repository documentation before considering
+that phase complete. `AGENTS.md` must also be updated whenever the project's
+working rules themselves change.
+
 
 Keep it up to date as the project progresses. After each meaningful discovery,
 decision, implementation result, test result, blocker, correction, or change
