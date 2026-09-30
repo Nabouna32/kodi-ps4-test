@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Handoff baseline HEAD (verified immediately before this continuity update): `a26b3efdc9d092a1a036d6f9ed4f4300cd1e0c32`
+Handoff baseline HEAD (verified immediately before this continuity update): `ef62bacc92d950b5045b65c0a7f5ec84aa7ea696`
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -290,75 +290,53 @@ The PS5 script also creates `Toolchain-Native.cmake` for other native tools.
 
 **Do not copy the complete PS5 script blindly.** Use it only as supporting evidence for the focused host-tool architecture.
 
-## Immediate next step — Step 5
+## Step 5 — Native host-tools bootstrap
 
-### Goal
+### Implementation completed
 
-Complete the native host-tools bootstrap by building both:
-- `TexturePacker`
-- `JsonSchemaBuilder`
+The specialized TexturePacker-only helper was replaced by:
 
-### Proposed implementation
+    scripts/build-ps4-native-host-tools.sh
 
-Replace the specialized:
-`scripts/build-ps4-native-texturepacker.sh`
+The helper now builds both currently required Kodi host tools from the pinned source:
+- TexturePacker
+- JsonSchemaBuilder
 
-with a maintainable generic helper, likely:
-`scripts/build-ps4-native-host-tools.sh`
+It uses the WSL host compilers, Ninja, KODI_SOURCE_DIR, APP_NAME_LC=kodi, and the validated host ARCH_DEFINES, then installs both into the shared native prefix.
 
-It should:
-- build only the currently required host tools;
-- use official pinned Kodi source;
-- use WSL host compilers;
-- use Ninja;
-- install into the existing `NATIVEPREFIX`;
-- pass `KODI_SOURCE_DIR`;
-- pass `APP_NAME_LC=kodi`;
-- use the validated host `ARCH_DEFINES`;
-- avoid custom dependency bootstrapping;
-- keep host and PS4 target builds separate.
+The main build script now invokes this shared helper. The old:
 
-Main script should then conceptually invoke:
+    scripts/build-ps4-native-texturepacker.sh
+
+was removed.
+
+The implementation is committed to main.
+
+### Validation pending
+
+The WSL checkout has not yet been run through the new implementation in this conversation. The required next validation is:
 
 ```bash
-KODI_SRC="${KODI_SRC}" NATIVEPREFIX="${NATIVEPREFIX}" JOBS="${JOBS:-$(nproc)}"   bash "${ROOT}/scripts/build-ps4-native-host-tools.sh"
-```
+cd ~/projects/kodi-ps4-test
+git fetch origin
+git reset --hard origin/main
 
-Then validate only:
-
-```bash
 CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 ```
 
-Immediate objective: get Kodi configuration past JsonSchemaBuilder.
+Verify that:
+1. TexturePacker still builds and installs;
+2. JsonSchemaBuilder builds and installs as `kodi-JsonSchemaBuilder`;
+3. Kodi's PS4 cross-configuration accepts both supplied host tools;
+4. configure completes without a new blocker.
 
-### Pre-implementation verification completed
+Do not start a full Kodi build until configure succeeds.
 
-The pre-implementation audit has now been completed against the current GitHub repository:
-1. verified current `main`;
-2. read `AGENTS.md` and the relevant project documentation;
-3. confirmed the `JsonSchemaBuilder` configure blocker in the repository state and upstream mechanism;
-4. fetched the three `JsonSchemaBuilder` files from pinned Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`;
-5. compared the host-tool approach with the pinned PS5 reference;
-6. confirmed the proposed Step 5 scope without beginning implementation.
-
-The next conversation should repeat the normal source-of-truth verification before modifying anything, even though this audit is recorded here.
+If configure reveals a new blocker, update `STATUS.md`, `BUILD.md`, and this continuity document, then make that blocker the next focused step.
 
 ### Scope boundary
 
-Do not add now:
-- Vulkan/OpenGNM;
-- PS4 renderer;
-- controller;
-- audio;
-- video;
-- GP4/PKG;
-- GoldHEN runtime integration;
-- self-hosted GitHub Actions;
-- broad CMake refactoring;
-- large custom dependency bootstrap.
-
-If configure reveals a new blocker after JsonSchemaBuilder, document it and make it the next focused step.
+No Vulkan/OpenGNM, renderer, controller, audio, video, GP4/PKG, GoldHEN runtime, self-hosted CI, broad CMake refactoring, or custom dependency bootstrap was added.
 
 ## Milestones
 
