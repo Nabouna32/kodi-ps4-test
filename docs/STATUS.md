@@ -25,21 +25,24 @@ The first configure-only validation after the native TexturePacker audit did not
 
 The mode was corrected locally to 100755 and is now being committed to main. No Kodi build logic changed.
 
-The previous Lzo2 blocker remains resolved. The next validation must rebuild the native TexturePacker and continue into Kodi cross-configuration.
+The previous Lzo2 blocker is resolved. This validation rebuilt and installed the native TexturePacker successfully, then reached Kodi's real PS4 cross-configuration. Kodi now stops because the native JsonSchemaBuilder executable is missing from the supplied native prefix.
 
-The intended model remains:
+The validated host-tool model now includes a concrete requirement for both host executables:
 - TexturePacker is compiled for WSL/Linux;
-- Kodi PS4 receives it through WITH_TEXTUREPACKER;
+- JsonSchemaBuilder must also be compiled for WSL/Linux;
+- Kodi PS4 receives both through WITH_TEXTUREPACKER and WITH_JSONSCHEMABUILDER;
 - HOST_CAN_EXECUTE_TARGET remains false;
-- no PS4-target TexturePacker is built or shipped.
+- no PS4-target host build tools are built or shipped.
 
 ## Next action
 
-Synchronize the checkout with origin/main, verify that scripts/build-ps4-kodi.sh has mode 100755, then rerun:
+The next implementation step is to extend the focused native host-tool bootstrap to build Kodi's official JsonSchemaBuilder source alongside TexturePacker. The PS5 reference independently uses this exact two-tool host model, while official Kodi's FindJsonSchemaBuilder.cmake confirms that WITH_JSONSCHEMABUILDER expects an existing executable during cross-compilation.
+
+After that implementation is validated, rerun:
 
     CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 
-Record the first real configure result. Do not start a full Kodi build until configuration succeeds.
+Do not start a full Kodi build until configuration succeeds.
 
 ## Major runtime risks
 
