@@ -60,7 +60,7 @@ echo "==> bootstrapping Kodi target dependency configuration"
   cd "${KODI_SRC}/tools/depends"
   ./bootstrap
   ./configure \
-    --host=x86_64-pc-freebsd12-elf \
+    --host=x86_64-pc-freebsd12 \
     --with-platform=ps4 \
     --with-cpu=x86_64 \
     --with-toolchain="${OO_PS4_TOOLCHAIN}" \
@@ -70,7 +70,7 @@ echo "==> bootstrapping Kodi target dependency configuration"
     --disable-ccache
 )
 
-TARGET_DEPS_PREFIX="${DEPENDS_ROOT}/x86_64-pc-freebsd12-elf-release"
+TARGET_DEPS_PREFIX="${DEPENDS_ROOT}/x86_64-pc-freebsd12-release"
 EXPECTED_NATIVEPREFIX="${DEPENDS_ROOT}/x86_64-pc-linux-gnu-native"
 if [[ ! -e "${EXPECTED_NATIVEPREFIX}" ]]; then
   ln -s "${NATIVEPREFIX}" "${EXPECTED_NATIVEPREFIX}"
