@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Current main HEAD: `0401d6ed17cddaeccdb6b6ba1e0c5ad6307e5223` (docs update after the final target-dependency patch hunk correction). Always verify the current GitHub HEAD before relying on historical hashes.
+Current main HEAD: `e0855e77f3e1467863eb9107d0f798462671533e` (Autoconf PS4 host-triplet correction). Always verify the current GitHub HEAD before relying on historical hashes.
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -368,7 +368,9 @@ Integrate the smallest part of Kodi's official target dependency mechanism neede
 4. rerun configure-only and validate target-side discovery;
 5. stop at the next blocker.
 
-The smallest integration is now implemented in the repository overlay. It applies a minimal patch to Kodi's target dependency configuration for the OpenOrbis FreeBSD target, reuses the official `freetype2-noharfbuzz` and HarfBuzz recipes, adds the required FreeBSD target toolchain behavior, and stages the result in the target dependency prefix consumed by Kodi CMake. WSL execution and configure-only validation are still pending.
+The smallest integration is now implemented in the repository overlay. It applies a minimal patch to Kodi's target dependency configuration for the OpenOrbis FreeBSD target, reuses the official `freetype2-noharfbuzz` and HarfBuzz recipes, adds the required FreeBSD target toolchain behavior, and stages the result in the target dependency prefix consumed by Kodi CMake.
+
+The WSL configure-only run confirmed that this overlay patch applies cleanly. It then failed in the target dependency bootstrap because the build script passed `--host=x86_64-pc-freebsd12-elf`; Autoconf rejects that tuple, while the LLVM/OpenOrbis compiler target legitimately remains `x86_64-pc-freebsd12-elf`. The durable correction is now committed in `e0855e77f3e1467863eb9107d0f798462671533e`: Autoconf uses `x86_64-pc-freebsd12`, and the target dependency prefix is consequently `build/ps4/build/x86_64-pc-freebsd12-release`. WSL configure-only validation after this correction is pending.
 
 ## Milestones
 
