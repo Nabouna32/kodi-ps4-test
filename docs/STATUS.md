@@ -30,3 +30,8 @@ Implement the PS4 native TexturePacker host-tool bootstrap, then rerun configure
 3. Efficient or zero-copy transfer of NV12/P010 decoder surfaces into the renderer.
 
 No PS4 runtime/platform implementation is currently claimed as working.
+
+
+The native TexturePacker bootstrap has now been implemented on main. It builds tools/depends/native/TexturePacker/src with the host compiler and installs the executable into build/ps4/build/native/bin. Kodi configure is passed WITH_TEXTUREPACKER, WITH_JSONSCHEMABUILDER and NATIVEPREFIX, with target-side TexturePacker installation disabled.
+
+Validation status: implementation committed, WSL configure validation pending. Do not claim the blocker is resolved until the native host tool actually builds and Kodi configure completes.
