@@ -1773,3 +1773,53 @@ Before the POC can be considered hardware-validated, establish the exact reprodu
 Do not assume generic GLSL compiler output is a valid Piglet shader binary.
 
 **Next action:** validate the POC build and shader/presentation path on the target PS4, then capture the runtime capability output in this document.
+
+
+## 48. R-004.7 — Kodi overlay application before CMake configuration — 2026-09-30
+
+The first real Kodi CMake configure was executed after the OpenOrbis toolchain correction.
+
+### Observation
+
+CMake successfully recognized Clang 18.1.8, completed C/C++/ASM compiler identification and ABI detection, and reached Kodi's own platform selection logic.
+
+Configuration then failed because the pinned official Kodi checkout did not contain:
+
+`cmake/platform/ps4/ps4.cmake`
+
+Kodi's common `Platform.cmake` therefore could not resolve `CORE_PLATFORM_NAME=ps4`.
+
+This is not a toolchain-target failure. It demonstrates that the toolchain is accepted far enough for Kodi configuration to begin; the missing piece was the project's PS4 overlay.
+
+### Architecture correction
+
+Inspection of the PS5 reference confirmed that its overlay is copied into the Kodi source checkout before CMake configuration. The PS4 project therefore follows the same model.
+
+The build now applies these repository-owned directories into `references/kodi` before configuration:
+
+- `cmake/platform/ps4`
+- `cmake/scripts/ps4`
+- `overlay/xbmc/platform/ps4`
+
+The operation is implemented by the cross-platform CMake script `scripts/apply-kodi-overlay.cmake`.
+
+The main build script `scripts/build-ps4-kodi.sh` invokes this script before the CMake configure step.
+
+### Important workflow clarification
+
+Applying the overlay modifies the working Kodi checkout during the build. This is intentional and is part of the project's normal build workflow; it is not a prohibition against modifying `references/kodi`.
+
+The pinned submodule remains the upstream source reference. The PS4 files applied on top are owned by this repository and remain reproducible from Git.
+
+### Validation status
+
+The overlay application mechanism has been implemented on `main`.
+
+Still required:
+
+1. run the overlay script on the Windows development checkout;
+2. rerun configure-only CMake/Ninja;
+3. fix the next root cause revealed by the real Kodi configuration;
+4. only after configuration succeeds, proceed toward a full cross-build.
+
+**Current blocker:** configure-only validation has not yet been rerun with the applied overlay.
