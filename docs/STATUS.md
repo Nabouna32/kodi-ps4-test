@@ -35,7 +35,7 @@ The following configure run then reached Kodi's optional `XSLT` dependency and f
 
 The PS4 overlay now excludes `XSLT` from optional platform dependencies. No explicit `ENABLE_XSLT` cache override is used because Kodi models that option as an AUTO/string dependency switch; exclusion is the narrower platform-level adaptation.
 
-The next configure blocker is target-side HarfBuzz while configuring required ASS/libass. At the pinned Kodi commit, ASS and HarfBuzz are required dependencies, so this blocker cannot be handled by disabling an optional feature. Kodi's `FindHarfBuzz.cmake` expects a target HarfBuzz installation in the dependency prefix; the official Kodi `tools/depends/target/harfbuzz` recipe builds HarfBuzz 14.2.0 statically with Meson for the target. The PS5 reference uses the same architectural concept through its target sysroot/pacbrew dependency set, but its PS5 libraries cannot be reused for PS4.
+The next configure blocker was target-side HarfBuzz while configuring required ASS/libass. At the pinned Kodi commit, ASS and HarfBuzz are required dependencies, so this blocker cannot be handled by disabling an optional feature. Kodi's `FindHarfBuzz.cmake` expects a target HarfBuzz installation in the dependency prefix; the official Kodi `tools/depends/target/harfbuzz` recipe builds HarfBuzz 14.2.0 statically with Meson for the target. The PS5 reference uses the same architectural concept through its target sysroot/pacbrew dependency set, but its PS5 libraries cannot be reused for PS4.
 
 Do not install Ubuntu `libharfbuzz-dev`: that would provide a host Linux library, not the missing PS4 target library.
 
@@ -49,7 +49,7 @@ Until the next configure-only validation succeeds:
 
 ## Next action
 
-Audit is complete. The next implementation step is to integrate Kodi's official target HarfBuzz dependency recipe into the PS4/OpenOrbis build without importing the full desktop dependency graph.
+The HarfBuzz dependency integration is implemented in the PS4 build overlay, but it has not yet been executed in the WSL environment. Run `CONFIGURE_ONLY=1 scripts/build-ps4-kodi.sh` and inspect the target dependency bootstrap first. The expected result is that Kodi's official `freetype2-noharfbuzz` and HarfBuzz recipes build into the target dependency prefix and Kodi discovers HarfBuzz from that prefix. Stop at the next real blocker.
 
 The intended sequence is:
 1. initialize the smallest Kodi target-dependency environment needed by HarfBuzz;
@@ -67,3 +67,10 @@ No implementation has been applied for this step yet. Do not install Ubuntu `lib
 3. Efficient or zero-copy transfer of NV12/P010 decoder surfaces into the renderer.
 
 No PS4 runtime/platform implementation is currently claimed as working.
+
+
+## HarfBuzz implementation phase
+
+The PS4 overlay now extends Kodi's `tools/depends/configure.ac` for `x86_64-pc-freebsd12-elf` / `--with-platform=ps4`. The build script bootstraps that generated configure system, builds only the official target dependency path needed by HarfBuzz (`freetype2-noharfbuzz` → HarfBuzz), and passes the resulting target prefix to Kodi CMake through `DEPENDS_PATH`. Host Meson/Ninja/pkg-config/Python/CMake are exposed through the existing native prefix rather than rebuilt as new project-specific tools.
+
+This is an implementation change only; WSL execution and configure-only validation are still pending.
