@@ -1386,3 +1386,76 @@ This distinction prevents us from either:
 The next research target is now explicit: determine how the ioQuake3-PS4 project obtained its **initial** shader binaries and whether the provenance points to a publicly available compiler, an official SDK tool, or a hardware-capture/bootstrap process.
 
 In parallel, if the local PS4 SDK 4.50 installation is accessible, inspect it directly for ESSLC/Piglet/Shacc tooling rather than inferring its contents from public reports.
+
+---
+
+## 26. R-002A.3 — ioQuake3 identifies the missing shader compiler as psbc — 2026-09-30
+
+A new inspection of the current ioQuake3-PS4 repository materially narrows the shader-production question.
+
+### 26.1 ioQuake3 explicitly credits psbc for shader compilation
+
+The current ioQuake3-PS4 README lists psbc as the tool used for "Shader compilation". The same README states that its GLSL ES 1.00 sources are compiled offline into Piglet's native per-stage Shader Binary format and that 124 resulting blobs are shipped in the PKG.
+
+This is the first direct evidence in the project investigation connecting the shipped ioQuake3 Piglet shader binaries to a named external compiler.
+
+### 26.2 Important distinction: psbc vs OpenGNM opengnm-psbc
+
+There are now at least two similarly named PS4 shader projects and they must not be conflated.
+
+- ioQuake3's psbc is explicitly credited by ioQuake3 for its shader compilation.
+- PS4-OpenGNM/opengnm-psbc is a separate project whose documented input is SPIR-V and whose output is the GNM shader binary consumed by sceGnmSet*Shader. It is therefore a GNM/Vulkan-track compiler, not evidence that it produces the Piglet glShaderBinary() payload required by this project.
+- A separate current lateleite/psbc project also describes itself as a PS4 Shader Binary compiler based on Mesa, but its published interface is SPIR-V -> PlayStation Shader Binary and its public documentation is GNM-oriented. It must therefore not yet be assumed to be the exact Piglet compiler used by ioQuake3.
+
+### 26.3 ioQuake3 build-system finding
+
+The current ioQuake3 Makefile does not compile the shader binaries as part of the normal Makefile build. The repository already contains the generated fixes/shaderbin/ assets, while the Makefile packages those files.
+
+Its normal build therefore has this structure:
+
+existing shader binaries -> PKG packaging
+
+rather than:
+
+GLSL source -> compiler -> shader binaries -> PKG
+
+This explains why simply reproducing the ioQuake3 Makefile does not reveal the original compilation command.
+
+The renderer source confirms that the runtime loader reads each blob from /app0/fixes/shaderbin/, reads the captured format value stored alongside it, and passes the binary to glShaderBinary().
+
+### 26.4 New hypothesis
+
+The strongest current hypothesis is:
+
+ioQuake3 GLSL ES 1.00 -> psbc -> Piglet native shader binaries
+
+Confidence: medium-high that psbc is the named tool responsible for the ioQuake3 shader compilation workflow, because the project explicitly credits it. Confidence remains low-medium on the exact version, source repository state, command line and whether this psbc can compile arbitrary Kodi shaders.
+
+### 26.5 Immediate next action
+
+The next research step is no longer to search randomly for orbis-esslc first.
+
+We should identify the exact psbc repository referenced by ioQuake3, inspect its source/history/documentation, and establish:
+
+1. its input language(s);
+2. whether it accepts GLSL ES 1.00 directly or requires an intermediate representation;
+3. its output format;
+4. whether its output is specifically compatible with Piglet glShaderBinary();
+5. its license;
+6. how ioQuake3 generated its original 124 blobs;
+7. whether it can compile a minimal shader suitable for our POC;
+8. whether it can become a reproducible Kodi build dependency.
+
+Only after this investigation should we decide whether to adopt psbc, adapt it, or implement another compiler path.
+
+### 26.6 Consequence for the project
+
+The shader problem has moved from:
+
+"unknown compiler"
+
+to:
+
+"identify and validate the exact psbc implementation used by ioQuake3."
+
+This is a significant reduction in uncertainty and should be treated as the next concrete blocker-resolution task for the Piglet release pipeline.
