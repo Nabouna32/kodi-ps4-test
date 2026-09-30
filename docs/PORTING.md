@@ -2447,3 +2447,126 @@ A static source review after the initial file creation found and corrected a sta
 The current source uses the file-local STICK_DEADZONE consistently.
 
 This remains **not compile-validated** because the OpenOrbis/Kodi build environment is not available in the current session. The correction was made before treating the slice as source-reviewed.
+
+## 41. R-004.1 — Kodi minimal bring-up build profile — 2026-09-30
+
+The immediate implementation objective is now explicitly:
+
+> Produce the first reproducible PS4 Kodi cross-build containing Kodi's core
+> application and only the platform pieces required for the first on-console
+> bring-up. Optional subsystems and binary add-ons stay disabled until Kodi
+> starts reliably with the PS4 renderer and controller.
+
+This is deliberately different from trying to port every Kodi feature at once.
+
+### Build strategy
+
+Kodi's upstream CMake system exposes ENABLE_<OPTION> switches for optional
+features, and binary add-ons are handled by a separate add-on build system.
+Therefore the first PS4 profile disables optional desktop integrations and
+Python/binary add-on work rather than attempting to port them prematurely.
+
+The new project files are:
+
+- cmake/toolchains/openorbis-ps4-kodi.cmake
+- cmake/platform/ps4/ps4.cmake
+- cmake/scripts/ps4/ArchSetup.cmake
+- cmake/scripts/ps4/PathSetup.cmake
+- cmake/scripts/ps4/Macros.cmake
+- cmake/scripts/ps4/Install.cmake
+- overlay/xbmc/platform/ps4/main.cpp
+- overlay/xbmc/platform/ps4/PlatformPS4.{h,cpp}
+- scripts/build-ps4-kodi.sh
+
+The profile currently disables at least:
+
+- Python;
+- Kodi test execution;
+- optical/DVD CSS support;
+- event clients;
+- AirTunes;
+- CEC;
+- D-Bus;
+- PipeWire;
+- PulseAudio;
+- sndio;
+- ALSA.
+
+The PS4 controller bridge is included directly in the PS4 platform target so
+that it is part of the first platform build rather than being an orphaned
+source tree.
+
+### Important scope decision
+
+The target is not a tiny Kodi fork. It remains official Kodi plus a PS4
+platform overlay.
+
+The minimal profile only controls what is compiled and linked. It does not
+remove Kodi's normal core UI, settings, database, filesystem, media-engine,
+skin or application architecture. The goal is to get those common components
+built first, then add PS4 implementations behind the existing Kodi interfaces.
+
+### Current limitation
+
+The build profile has not yet been cross-compiled in this environment:
+there is no installed OpenOrbis SDK/toolchain and no PS4 hardware here.
+
+Also, the PS4 CMake tree-data integration is not yet complete: the repository's
+cmake/treedata/ps4/subdirs.txt could not be created through the connected
+GitHub write interface in this session. Until that file is present and validated,
+the new platform directory cannot be considered fully wired into Kodi's CMake
+tree.
+
+This is intentionally recorded as a blocker rather than claiming a successful
+Kodi build.
+
+### CI direction
+
+OpenOrbis is designed to build PS4 homebrew without Sony's proprietary SDK and
+provides the headers, stubs and build tools needed for this workflow. A private
+self-hosted runner can therefore become the first real cross-build CI executor.
+The repository should keep the normal public CI independent from the private
+PS4 toolchain.
+
+The intended progression is:
+
+1. local/runner toolchain bootstrap;
+2. configure-only Kodi PS4 build;
+3. full cross-build;
+4. package eboot.bin/PKG;
+5. only then deploy to hardware;
+6. after the first successful boot, re-enable subsystems one at a time.
+
+### Re-enablement order
+
+After the first successful Kodi launch with controller and GUI:
+
+1. audio;
+2. filesystem/storage;
+3. networking;
+4. software video playback;
+5. required binary add-ons;
+6. Python add-ons, if useful;
+7. hardware video decoding;
+8. advanced display/HDR/VRR features.
+
+Each re-enabled component must be validated separately. A subsystem that fails
+must not be hidden by simply enabling more components around it.
+
+### Evidence
+
+Kodi documents that ENABLE_<OPTION>=OFF disables optional functionality and
+that binary add-ons are handled separately. citeturn1search0turn1search1
+
+OpenOrbis explicitly provides a PS4 homebrew toolchain without the official Sony
+SDK, including headers, library stubs and build tools. citeturn0search2turn0search4
+
+### Next action
+
+R-004.2: complete the Kodi CMake tree integration, then perform the first
+OpenOrbis configure/build on a real toolchain runner. The first result should be
+treated as diagnostic: every missing header, library, CMake target or unresolved
+symbol becomes an explicit PS4 porting item.
+
+The project must not start porting optional Kodi plug-ins before this base build
+is reproducible.
