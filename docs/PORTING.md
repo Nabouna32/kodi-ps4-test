@@ -1697,3 +1697,34 @@ Still unvalidated:
 ### Next action
 
 Move to the project's **CMake/Ninja toolchain validation**. The first objective is configure-only validation, not a full Kodi build. This should expose whether the current PS4 CMake toolchain file matches the target/compiler conventions proven by the OpenOrbis smoke test.
+
+
+## 47. R-004.6 — OpenOrbis CMake toolchain aligned with validated Windows smoke test — 2026-09-30
+
+The repository's PS4 CMake toolchain was corrected to match the OpenOrbis build conventions already validated on the native Windows development environment.
+
+### Changes
+
+`cmake/toolchains/openorbis-ps4-kodi.cmake` now uses:
+
+- `x86_64-pc-freebsd12-elf`, matching the target triple used successfully by the OpenOrbis 0.5.4 `hello_world` compilation and documented OpenOrbis Windows build examples;
+- `-fPIC` and `-funwind-tables` for C/C++;
+- the OpenOrbis libc++ include directory for C++ compilation;
+- `-nostdlib`, `-pie`, `link.x`, and the OpenOrbis library directory for executable linking;
+- explicit `-lc -lkernel` for C and `-lc -lkernel -lc++` for C++.
+
+The previous unvalidated `x86_64-scei-ps4` target was removed.
+
+### Validation status
+
+The change has been inspected as a single focused commit and the branch is based directly on the current `main`.
+
+**Not yet validated:** an actual CMake/Ninja configure on the Windows development machine. The next test remains configure-only; this implementation must not yet be considered a working Kodi CMake configuration until that test succeeds.
+
+### Evidence
+
+The target triple and compiler/linker conventions are consistent with OpenOrbis's documented/sample Windows workflow. The OpenOrbis `link.x` script is also the linker script used by the validated native smoke test.
+
+### Next action
+
+Run the configure-only CMake/Ninja validation against the real OpenOrbis installation. If configuration fails, fix the first root cause revealed by CMake before attempting a full Kodi build.
