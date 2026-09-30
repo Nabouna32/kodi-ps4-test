@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Handoff baseline HEAD (verified immediately before this continuity update): `4c931ec95d59614f1bfe05770213d152c009eeb3`
+Handoff baseline HEAD (verified immediately before this continuity update): `3b977b77bf054fd85ca70880ede179658a8d0a76`
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -259,6 +259,8 @@ The next blocker was Kodi's optional Bluray dependency. Its internal libbluray c
 - excludes `Bluray` from optional platform dependencies;
 - forces `ENABLE_BLURAY=OFF`.
 
+The following configure run then entered Kodi's optional `XSLT` dependency and failed through the internal libxslt path because LibXml2 was unavailable. The pinned Kodi source confirms that `XSLT` is in `optional_deps`, while its internal build path requires LibXml2. XSLT is not required for the first bring-up milestone, so the project deliberately does **not** install `libxml2-dev` for this optional feature. The PS4 overlay now excludes `XSLT` from optional platform dependencies.
+
 This establishes the current bring-up policy: start with only what is required for Kodi GUI + GLES/EGL + PS4 controller input, then re-enable additional Kodi subsystems one at a time with separate validation.
 
 ## JsonSchemaBuilder research
@@ -318,7 +320,7 @@ WSL validation after the host-tool correction confirmed:
 3. the pinned Kodi finder accepts that executable;
 4. Kodi enters PS4 cross-configuration.
 
-The next configure blocker was optional Bluray/libbluray, which attempted to find target LibXml2. The PS4 overlay now disables that feature for the minimal bring-up profile.
+The next configure blockers were optional Bluray/libbluray and optional XSLT/libxslt, both entering LibXml2-dependent paths. The PS4 overlay now excludes both from the minimal bring-up profile.
 
 Required next validation:
 
@@ -332,7 +334,7 @@ CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 
 Verify that:
 1. native host tools remain available;
-2. Bluray/libbluray is no longer configured;
+2. Bluray/libbluray and XSLT/libxslt are no longer configured;
 3. Kodi proceeds to the next dependency or completes configuration;
 4. the host/target boundary remains intact.
 
