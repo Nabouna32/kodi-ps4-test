@@ -1183,3 +1183,150 @@ In parallel, keep shader production as a separate research track. The Kodi rende
 - OpenOrbis Piglet sample Makefile/build script.
 - OpenOrbis `Pigletv2VSH.h` / GLES headers.
 - Public PS4 Piglet research and current community reports concerning precompiled shader binaries and Shacc availability.
+
+
+---
+
+## 24. R-002A.1 — SDK 4.50 and open-source shader pipeline investigation — 2026-09-30
+
+This investigation follows the discovery of the official PS4 SDK 4.50 family and new open-source evidence about Piglet shader binaries.
+
+### 24.1 Official PS4 SDK 4.50
+
+The PS4 Developer wiki documents SDK version **4.508.021** as an official PS4 DevKit/TestKit software version. Public documentation confirms that the official SDK is a licensed/proprietary Sony development suite, so the Kodi repository must not redistribute SDK files or proprietary shader tools.
+
+The exact contents of a locally available “PS4 SDK 4.50 Offline” installation have **not yet been inspected in this project**. In particular, the presence and behavior of tools such as `orbis-esslc`, `orbis-wave-esslc`, or Shacc/Piglet shader tooling remain unverified from the installation itself.
+
+A current community report from a PS4 Piglet developer specifically asks which official tool produces native Piglet shader binaries and mentions `orbis-esslc` / `orbis-wave-esslc` as candidates. This is supporting evidence, not proof of the exact SDK 4.50 pipeline.
+
+**Conclusion:** SDK 4.50 remains a valuable research reference, but we must inspect the actual installation before claiming that it solves Kodi shader production.
+
+### 24.2 Major new evidence: ioQuake3-PS4
+
+The open-source `ioQuake3-PS4` project provides a hardware-verified Piglet renderer using OpenOrbis and is directly relevant to Kodi.
+
+Its documented renderer uses:
+
+- GLES 2.0 through Piglet;
+- GLSL ES 1.00 (`#version 100`);
+- offline-compiled per-stage Piglet shader binaries;
+- `glShaderBinary()` at runtime;
+- no runtime shader compilation requirement for normal release builds.
+
+The project reports **124 shader blobs / 62 programs / approximately 1.5 MB** of shader binaries shipped with the application. It also implements a debug capture path using the undocumented Piglet export `glPigletGetShaderBinarySCE`, resolved with `eglGetProcAddress`.
+
+The captured blobs are stored in the application package and loaded directly from the package at runtime. This is strong evidence that a practical Piglet application can operate without requiring ShaccVSH during normal runtime.
+
+### 24.3 Important shader-format nuance
+
+There is an important discrepancy that must not be simplified away:
+
+- the OpenOrbis Piglet sample calls `glShaderBinary()` with format `0` and documents this as PSSL;
+- current ioQuake3-PS4 documentation reports that its capture path uses the format reported by the Piglet driver, with **0x9270** observed on its tested console.
+
+Therefore the project must **not hard-code a guessed shader-binary format**. The exact binary container and accepted format value must be determined from the target Piglet environment and chosen production pipeline.
+
+The OpenOrbis sample's shader pair is therefore a valid runtime fixture, but it is not enough by itself to define Kodi's eventual shader asset format.
+
+### 24.4 What ioQuake3 does and does not prove
+
+Established:
+
+1. A real PS4 application can use a programmable GLES 2.0/Piglet renderer.
+2. GLSL ES 1.00 sources can be turned into Piglet-native stage binaries offline.
+3. Those binaries can be shipped with the application and loaded with `glShaderBinary()`.
+4. Normal runtime operation does not need ShaccVSH.
+5. Piglet-specific limitations can be worked around at the renderer level.
+
+Not yet established:
+
+1. Which exact host compiler produced ioQuake3's original shader binaries.
+2. Whether that compiler is open-source.
+3. Whether that compiler is part of the official SDK 4.50.
+4. Whether the resulting pipeline can compile Kodi's complete shader set without source-level adaptation.
+
+Therefore ioQuake3 is currently a **strong reference implementation**, not yet a complete open-source shader-production solution.
+
+### 24.5 Relevant Piglet limitations discovered from ioQuake3
+
+The project reports hardware-verified Piglet-specific limitations including:
+
+- depth-only FBOs returning `GL_FRAMEBUFFER_UNSUPPORTED`;
+- HDR being forced to RGBA8 because `GL_RGBA16F` is unavailable in its GLES 2 path;
+- renderer-specific shader adaptations;
+- runtime shader compilation removed from the normal release path.
+
+These findings reinforce the R-002A requirement to test FBOs, float/half-float formats and HDR-related behavior rather than assuming generic GLES 2.0 support is sufficient.
+
+### 24.6 Open-source alternative: OpenGNM / opengnm-psbc
+
+The open-source `PS4-OpenGNM` stack now provides an OpenGNM library, `opengnm-psbc` and a Vulkan 1.0 PS4 ICD. `opengnm-psbc` uses Mesa NIR/ACO and supports PS4 base GFX7 and PS4 Pro GFX8/NEO targets. Its VS/PS output has been hardware-validated on PS4 FW 9.00.
+
+This is highly relevant to the **future Vulkan/GNM research track**, but it does **not currently solve the Piglet shader-production problem**. Its output is the GNM shader-binary format consumed by `sceGnmSet*Shader`, not the Piglet shader-binary path consumed by `glShaderBinary()`.
+
+### 24.7 Updated shader strategy
+
+The shader problem is now divided into three independent paths:
+
+```text
+Path A — Piglet runtime validation
+OpenOrbis known-good Piglet binary
+        ↓
+glShaderBinary()
+        ↓
+Piglet
+```
+
+```text
+Path B — Piglet production for Kodi
+Kodi GLSL ES 1.00
+        ↓
+??? reproducible host compiler
+        ↓
+Piglet-native shader binary
+        ↓
+glShaderBinary()
+```
+
+```text
+Path C — future Vulkan/GNM research
+SPIR-V
+        ↓
+opengnm-psbc
+        ↓
+GNM shader binary
+        ↓
+GNM / Vulkan-PS4
+```
+
+Path A is sufficiently established to proceed with R-002A. Path B remains the prerequisite for eventual Kodi renderer integration. Path C is a promising open-source alternative for a future Vulkan/GNM renderer and must not be conflated with Piglet.
+
+### 24.8 Updated project assessment
+
+The investigation increases confidence in the practical viability of GLES/Piglet. The strongest new evidence is the existence of a current open-source, hardware-verified PS4 application that uses the same GLES 2.0/Piglet family, GLSL ES 1.00, precompiled Piglet shader binaries and `glShaderBinary()`, without requiring ShaccVSH during normal runtime.
+
+The remaining unknown is sharply defined:
+
+> **What reproducible toolchain should this project use to transform Kodi's GLSL ES 1.00 sources into the same class of Piglet-native shader binaries?**
+
+This is currently a build/toolchain problem, not evidence of a fundamental renderer blocker.
+
+### 24.9 Next research action
+
+Before writing a Kodi-specific shader compiler or adapting all Kodi shaders:
+
+1. inspect the local PS4 SDK 4.50 installation, if available, for Piglet/ESSLC/Shacc tooling;
+2. inspect ioQuake3's build/history and shader-generation provenance to identify how its initial binaries were produced;
+3. compare the resulting binary format and `glShaderBinary()` format handling;
+4. investigate whether a clean-room/open-source Piglet compiler exists or can be derived from documented/reverse-engineered formats;
+5. only then define the long-term Kodi shader build pipeline.
+
+R-002A runtime graphics work can proceed independently using a known-good shader fixture.
+
+### Sources
+
+- PS4 Developer wiki — SDK `4.508.021`.
+- OpenOrbis Piglet sample and project documentation.
+- `ioQuake3-PS4` renderer documentation and source.
+- `PS4-OpenGNM/opengnm-psbc` documentation and hardware-validation notes.
+- Community discussion concerning official Piglet shader compilation tooling.
