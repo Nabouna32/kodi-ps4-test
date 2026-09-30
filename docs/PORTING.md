@@ -251,7 +251,7 @@ When a future conversation begins, the assistant should first inspect Git and th
 
 **Latest validated milestone:** the WSL2/Linux OpenOrbis + LLVM 21 compilation/link/FSELF chain works with a minimal PS4 executable, and the WSL development environment now exposes the complete LLVM 21 tool suite through PATH.
 
-**Next planned action:** resume native Kodi configure validation from a clean WSL build directory. Renderer/video implementation remains blocked on the dedicated GLES/Piglet and video investigations described below.
+**Next planned action:** validate the clean Kodi-source staging workflow from WSL, then resume native Kodi configure validation. Renderer/video implementation remains blocked on the dedicated GLES/Piglet and video investigations described below.
 
 ---
 
@@ -613,19 +613,21 @@ Configure validation has now reached Kodi's native dependency setup.
 
 ## 21. R-004.7 — Kodi overlay application before CMake configuration — 2026-09-30
 
+### Observation
+
 The first Kodi CMake configure initially failed because the pinned official Kodi checkout did not contain the PS4 platform overlay.
 
-The project now applies these repository-owned directories into \`references/kodi\` before configuration:
+The project owns these PS4 overlay directories:
 
-- \`cmake/platform/ps4\`
-- \`cmake/scripts/ps4\`
-- \`overlay/xbmc/platform/ps4\`
+- `cmake/platform/ps4`
+- `cmake/scripts/ps4`
+- `overlay/xbmc/platform/ps4`
 
-The operation is implemented by \`scripts/apply-kodi-overlay.cmake\`, and \`scripts/build-ps4-kodi.sh\` invokes it before CMake configuration.
+The overlay is applied by `scripts/apply-kodi-overlay.cmake` to the Kodi source tree used for the configure step.
 
-The overlay application was successfully executed on the Windows development checkout.
+The original implementation applied it directly to `references/kodi`. That was later identified as undesirable because `references/kodi` is a pinned external submodule and should remain identical to its GitHub-pinned commit after a build.
 
----
+The build workflow was therefore changed in R-004.12 to materialize a clean tracked snapshot of the pinned Kodi commit under `build/ps4/kodi-source` before applying the overlay.
 
 ## 22. R-004.8 — Native Kodi dependency prefix — 2026-09-30
 
@@ -897,3 +899,80 @@ The WSL environment is now suitable for the repository's LLVM 21 CMake toolchain
 ### Next action
 
 Return to the Kodi configure investigation. Start from the repository's real current Git state, inspect `AGENTS.md` and the relevant PS4 build/toolchain files, clean only the generated `build/ps4` tree as required, reapply the Kodi overlay, and rerun **configure-only** before attempting a full Kodi build.
+
+## 27. R-004.12 — Keep the pinned Kodi submodule clean — 2026-10-01
+
+### Problem
+
+The PS4 build overlay was previously copied directly into `references/kodi`. Because `references/kodi` is a Git submodule containing the pinned upstream Kodi source, every configure/build preparation could leave the submodule dirty even though those changes were generated from files already versioned in the parent repository.
+
+This violated the project's reproducibility and source-of-truth goal:
+
+```
+GitHub main
+    |
+    +-- pinned references/kodi
+    |
+    +-- repository-owned PS4 overlay
+```
+
+The build should not mutate the pinned submodule.
+
+### Decision
+
+The build now creates a clean source snapshot from the exact checked-out Kodi submodule commit:
+
+```
+references/kodi
+      |
+      | git archive HEAD
+      v
+build/ps4/kodi-source
+      |
+      | apply PS4 overlay
+      v
+CMake configure/build
+```
+
+`scripts/build-ps4-kodi.sh` now:
+
+1. treats `references/kodi` as the upstream source snapshot;
+2. removes/recreates `build/ps4/kodi-source`;
+3. materializes the tracked Kodi `HEAD` with `git archive`;
+4. applies the repository-owned PS4 overlay to that generated source tree;
+5. configures Kodi from the generated source tree.
+
+This keeps the external Kodi submodule untouched while preserving a reproducible build input.
+
+### Git hygiene
+
+A root `.gitignore` now ignores `build/`, because the directory contains generated build trees, staged Kodi sources, native dependencies and other local artifacts.
+
+The intended post-build repository state is therefore:
+
+- `references/kodi`: clean submodule at the pinned commit;
+- `build/`: ignored generated content;
+- repository-owned overlay/docs/scripts: tracked normally.
+
+### Validation status
+
+The workflow change is committed directly to `main`.
+
+Remote commits for this step:
+
+- `a187a4c6bbb83af299a4d135125587c01d8158b9` — isolate the Kodi overlay from the submodule;
+- `3d4028df1956d4d300a34f4088c3d0ea826d17f7` — ignore local build artifacts;
+- documentation update is being committed with this section.
+
+The local WSL checkout must now be synchronized to `origin/main` and the build workflow rerun. Runtime/build validation has **not** yet been claimed.
+
+### Next action
+
+From a synchronized WSL checkout, run the PS4 configure workflow again. Verify that:
+
+- `references/kodi` remains clean after overlay application;
+- `build/` is ignored;
+- `build/ps4/kodi-source` contains the overlay;
+- CMake reaches the same native dependency stage without mutating the submodule.
+
+Only after this validation should the TexturePacker host-tool integration be addressed.
