@@ -34,4 +34,4 @@ No PS4 runtime/platform implementation is currently claimed as working.
 
 The native TexturePacker bootstrap has now been implemented on main. It builds tools/depends/native/TexturePacker/src with the host compiler and installs the executable into build/ps4/build/native/bin. Kodi configure is passed WITH_TEXTUREPACKER, WITH_JSONSCHEMABUILDER and NATIVEPREFIX, with target-side TexturePacker installation disabled.
 
-Validation status: implementation committed, WSL configure validation pending. Do not claim the blocker is resolved until the native host tool actually builds and Kodi configure completes.
+Validation status: implementation committed, WSL configure validation pending. The build script now supports CONFIGURE_ONLY=1 so the host-tool bootstrap and Kodi cross-configuration can be validated without starting the full Kodi build. Do not claim the blocker is resolved until the native host tool actually builds and Kodi configure completes.
