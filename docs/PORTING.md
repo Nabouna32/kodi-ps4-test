@@ -684,3 +684,129 @@ Deliverable:
 6. recommendation based on evidence, without prematurely locking the architecture.
 
 No Kodi code should be modified until this comparison is complete and the renderer direction has been validated.
+
+
+---
+
+## 19. Renderer audit correction — 2026-09-30
+
+The first pass of the Vulkan investigation produced an important correction to the planned architecture.
+
+### 19.1 Current Kodi does not provide a native application Vulkan renderer
+
+The current official Kodi source exposes the application render-system selection around **GL/GLES**, and the rendering tree contains \`rendering/gl\` and \`rendering/gles\`. The current CMake documentation also describes application builds with \`APP_RENDER_SYSTEM=gl\` or \`APP_RENDER_SYSTEM=gles\`.
+
+Kodi's public API does contain a Vulkan hardware-framebuffer context type for addons/Game API integration, but that is **not evidence of a native Kodi application Vulkan render backend**.
+
+Therefore the previous wording "Kodi Vulkan renderer" was too strong and is corrected here.
+
+### 19.2 Consequence for the PS4 project
+
+There are now three distinct options, not two equivalent existing Kodi backends:
+
+1. **Reuse/adapt Kodi's existing GLES renderer**
+   - smallest conceptual divergence from Kodi;
+   - requires proving compatibility with PS4 Piglet;
+   - remains the first renderer to test.
+
+2. **Introduce a new native Kodi Vulkan renderer**
+   - technically possible to investigate using the PS4-OpenGNM Vulkan ICD;
+   - would be a substantially larger Kodi change because Kodi does not currently expose an equivalent application renderer backend;
+   - must not be selected merely because Vulkan is newer.
+
+3. **Use Vulkan only for a standalone PS4 graphics POC**
+   - useful to validate the PS4 Vulkan stack independently;
+   - does not imply that Kodi itself should become Vulkan-based.
+
+This makes the immediate research order clearer: **GLES/Piglet remains the lowest-change Kodi path, while Vulkan becomes a parallel feasibility experiment and a possible future backend.**
+
+### 19.3 What the first Kodi test actually needs
+
+The first Kodi build cannot realistically stop at "CMake compiles". A useful milestone must provide enough PS4 platform integration for Kodi to initialize its windowing/rendering stack.
+
+The first Kodi milestone should therefore target:
+
+    Kodi source
+      |
+    PS4 toolchain / CMake
+      |
+    PS4 platform selection
+      |
+    CWinSystemPS4 + EGL/GLES
+      |
+    Kodi CRenderSystemGLES
+      |
+    PS4 VideoOut presentation
+      |
+    TV
+
+The following platform pieces will likely be required progressively for a real Kodi process:
+
+- application entry point;
+- PS4 platform identification and CMake integration;
+- window system / EGL context;
+- render-system registration;
+- filesystem/path handling;
+- timing/thread primitives where Kodi requires platform overrides;
+- input integration sufficient to operate the application;
+- audio integration as required by Kodi initialization;
+- logging/runtime support;
+- packaging and executable startup.
+
+We should **not** implement every subsystem before the first boot. The objective is to identify the minimum dependency closure required for:
+
+> **build → launch → initialize Kodi → initialize GPU → render Kodi UI → present to the TV.**
+
+That is the first meaningful Kodi milestone.
+
+### 19.4 Standalone GPU POC remains valuable
+
+The standalone GPU POC comes before that milestone because it isolates the highest-risk graphics dependency.
+
+The POC should test:
+
+- EGL initialization with Piglet/GLES;
+- basic shader compilation;
+- vertex/texture upload;
+- framebuffer/render target creation;
+- presentation through VideoOut;
+- synchronization/frame pacing.
+
+A separate Vulkan POC can run in parallel:
+
+- Vulkan instance/device creation;
+- required Vulkan 1.0 features;
+- command buffer and graphics pipeline;
+- SPIR-V shader compilation;
+- VideoOut-backed swapchain/presentation.
+
+The Vulkan POC is therefore an **evidence-gathering experiment**, not yet a commitment to a Kodi Vulkan backend.
+
+### 19.5 Updated implementation order
+
+The implementation path is now:
+
+1. **R-001A — GLES/Piglet capability audit**
+2. **R-001B — Vulkan/PS4-OpenGNM feasibility audit**
+3. **R-002A — standalone GLES/VideoOut POC**
+4. **R-002B — standalone Vulkan/VideoOut POC**
+5. **R-003 — minimal Kodi PS4 platform/bootstrap**
+6. **R-004 — integrate the validated renderer**
+7. **R-005 — input/audio/storage/network**
+8. **R-006 — software video playback**
+9. **R-007 — hardware video decoder and frame interop**
+10. **R-008 — performance, synchronization, packaging and real-hardware validation**
+
+This deliberately avoids spending weeks adapting unrelated Kodi subsystems before the GPU presentation path is proven.
+
+### 19.6 Current renderer decision
+
+**No renderer has been selected yet.**
+
+Current evidence supports:
+
+- **GLES/Piglet:** lowest-change path to an application renderer, but compatibility with modern Kodi remains unproven.
+- **Vulkan/OpenGNM:** technically credible PS4 graphics path, but would require either a new Kodi application Vulkan backend or another integration strategy because current Kodi does not provide the equivalent native application renderer.
+- **PS5 renderer:** remains a structural reference, not something to transplant.
+
+The next technical task is therefore the **GLES/Piglet capability audit**, followed by the standalone POC. The Vulkan path remains active as a parallel research track.
