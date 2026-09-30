@@ -2643,3 +2643,81 @@ introduced progressively after the base application works. citeturn0search
 The repository already contains the Kodi submodule declaration and PS4 build
 overlay. What is missing is the executable build environment and the first real
 configure/build result. This is the next blocker to remove.
+
+## 43. R-004.3 — OpenOrbis build-machine bootstrap — 2026-09-30
+
+The project is now ready for the first real cross-build environment.
+
+### Validated toolchain requirements
+
+OpenOrbis provides a PS4 homebrew toolchain without requiring the proprietary Sony SDK. Its current installation documentation requires:
+
+- an OpenOrbis toolchain installation;
+- Clang;
+- LLVM LLD;
+- the `OO_PS4_TOOLCHAIN` environment variable pointing to the toolchain root;
+- the OpenOrbis `bin` directory available on `PATH` when using its command-line tools.
+
+The official documentation provides Windows and Linux installation paths and recommends the pre-built OpenOrbis release/installer rather than rebuilding the complete toolchain from source. This project will follow that approach for the first runner.
+
+### Runner architecture
+
+The first private PS4 build runner should be a dedicated x64 machine with:
+
+```
+GitHub Actions
+      |
+      v
+private self-hosted runner
+      |
+      +-- Git + submodules
+      +-- CMake + Ninja
+      +-- Clang + LLD
+      +-- OpenOrbis
+      +-- OO_PS4_TOOLCHAIN
+      |
+      v
+Kodi official source
+      +
+PS4 overlay
+      |
+      v
+PS4 executable / later PKG
+```
+
+The runner does not need to contain the Kodi source permanently. Each job checks out the repository and initializes the pinned `references/kodi` submodule.
+
+### Initial validation order
+
+Do not start with a full Kodi build. Validate the environment in this order:
+
+1. OpenOrbis installation is present.
+2. `OO_PS4_TOOLCHAIN/link.x` exists.
+3. Clang and LLD are callable.
+4. A minimal OpenOrbis sample compiles and links.
+5. The project submodules initialize at their pinned revisions.
+6. Kodi host-side configure prerequisites are available.
+7. The PS4 CMake configure is attempted.
+8. Only after configure succeeds is the full Kodi cross-build attempted.
+
+The repository now includes `scripts/check-openorbis.sh` for the first environment check. It deliberately performs no build and does not modify the toolchain.
+
+### Windows vs Linux
+
+OpenOrbis officially documents both Windows and Linux. GitHub also supports x64 self-hosted runners on both platforms.
+
+For the first installation, use **one native environment consistently** rather than mixing Windows, WSL and native tools in the same build. If the build machine is Windows, the initial runner can be native Windows. If Kodi exposes Linux-specific host-build requirements during configure, we can reassess and move the runner to a dedicated Ubuntu/WSL environment based on the actual error rather than guessing in advance.
+
+### Security / repository policy
+
+The self-hosted runner is a trusted build machine. Do not expose it to arbitrary pull requests from untrusted forks. The OpenOrbis toolchain itself may be installed on the runner, but proprietary Sony SDK material must never be committed or copied into this public repository.
+
+### Current blocker
+
+The remaining blocker is environmental, not architectural: OpenOrbis and the self-hosted runner must be installed on an actual build machine. Once that exists, the next project result should be the first real OpenOrbis sample build followed immediately by Kodi CMake configure.
+
+### Sources
+
+- OpenOrbis PS4 Toolchain installation documentation: https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain
+- GitHub self-hosted runner requirements: https://docs.github.com/en/actions/reference/runners/self-hosted-runners
+
