@@ -132,3 +132,12 @@ The native host-tools bootstrap is now shared by TexturePacker and JsonSchemaBui
 The pinned Kodi source provides two levels of native-tool support. The complete `tools/depends/native/Makefile` builds TexturePacker as part of Kodi's native dependency graph and expects a configured `NATIVEPREFIX/share/config.site`. The dedicated TexturePacker Makefile then invokes the official TexturePacker CMake project with the host-build variables.
 
 For the PS4 cross-build we currently use the latter CMake project directly, matching the focused host-tool strategy used by the PS5 reference. This is not a replacement implementation: the source remains Kodi's own `tools/depends/native/TexturePacker/src`. The choice avoids bootstrapping Kodi's entire native-dependency graph just to obtain one host executable. The decision is revisitable if the broader Kodi depends/cmakebuildsys path later becomes necessary for additional native tools.
+
+
+## Minimal PS4 bring-up dependency profile
+
+The first target is deliberately smaller than a complete Kodi feature set. The initial runtime milestone is Kodi reaching the GUI with GLES/EGL presentation and PS4 controller input. Optional subsystems should remain disabled when they are not required to reach that milestone, then be re-enabled and validated one at a time.
+
+The PS4 overlay therefore disables optional integrations such as Blu-ray, optical media, Python add-ons, desktop audio/network integrations, and other platform facilities that are not yet integrated. This is intentional dependency minimization, not a permanent feature decision.
+
+When configure reports a missing dependency, first determine whether the corresponding Kodi feature is required for the current bring-up milestone. Do not install a host package merely to satisfy an optional target feature. For example, the first libbluray configuration attempted to require target LibXml2; Blu-ray is outside the first milestone, so the correct action is to keep ENABLE_BLURAY=OFF until Blu-ray support is explicitly brought back into scope.
