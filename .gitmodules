@@ -1,0 +1,6 @@
+[submodule "references/kodi"]
+	path = references/kodi
+	url = https://github.com/xbmc/xbmc.git
+[submodule "references/kodi-ps5"]
+	path = references/kodi-ps5
+	url = https://github.com/VivaLaVent/kodi-ps5.git

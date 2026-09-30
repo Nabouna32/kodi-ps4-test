@@ -2217,4 +2217,131 @@ En attendant cet environnement, aucune raison ne justifie de bloquer le projet s
 
 Aucun code Kodi n'est modifié dans cette étape.
 
-\n## 37. R-002A.14 — intégrer le port PS5 de VivaLaVent comme référence comparative — 2026-09-30\n\nLe port **Kodi 22 PS5 de VivaLaVent** doit être traité comme une référence de travail de premier ordre pour la suite du port PS4, en complément du Kodi upstream et des références OpenOrbis. Le PS5 n'est pas considéré comme une architecture à copier : les différences de GPU, API graphique, VideoOut, mémoire, sandbox et décodeur rendent certaines implémentations spécifiques au PS5.\n\n### 37.1 Pourquoi cette comparaison est particulièrement utile\n\nLe dépôt PS5 est un overlay explicite sur un checkout Kodi upstream : il sépare les changements de plateforme (\`overlay/xbmc/platform/ps5\`, \`xbmc/windowing/ps5\`), les patches Kodi, les extensions du driver OpenGL et les shims système. Il documente également une chaîne de build reproductible et une architecture de rendu/vidéo complète.\n\nCela nous donne un troisième point de comparaison :\n\n\`\`\`\nKodi upstream\n     |\\\\\n     | \\\\\n     |  +-- VivaLaVent / PS5 : port fonctionnel + décisions d'intégration\n     |\n     +----- PS4 : notre implémentation à reconstruire selon les contraintes PS4\n\`\`\`\n\nLa comparaison devra répondre à chaque fois à la question : **« cette décision vient-elle de Kodi, d'une contrainte PlayStation commune, d'une contrainte PS5 uniquement, ou d'une contrainte PS4 ? »**\n\n### 37.2 Éléments PS5 à étudier avant d'implémenter leur équivalent PS4\n\nPriorité élevée :\n\n- \`CWinSystemPS5\` et \`CWinSystemPS5GLContext\` : initialisation EGL et intégration de la fenêtre Kodi ;\n- renderer GLES/OpenGL et passage des ressources Kodi vers le driver console ;\n- pipeline vidéo \`CDVDVideoCodecPS5\` / \`CVideoBufferPS5\` / renderer, notamment l'ownership des surfaces et le zero-copy ;\n- synchronisation A/V et frame pacing ;\n- intégration VideoOut et changement des attributs de scanout ;\n- audio/input/storage uniquement après le socle graphique ;\n- organisation des patches Kodi et séparation entre overlay plateforme, shims et dépendances.\n\nLa documentation PS5 décrit notamment un rendu OpenGL 4.6 via ps5-opengl, EGL default display, un décodeur VideoDec2 et des textures zero-copy reposant sur des extensions du driver. Ces mécanismes ne doivent pas être transposés directement au PS4 : ils servent à identifier les **interfaces Kodi à satisfaire** et les endroits où une abstraction PS4 propre doit être introduite. \n\n### 37.3 Comparaison graphique : PS5 ne remplace pas le POC Piglet\n\nLe port PS5 utilise une pile OpenGL 4.6 Core fournie par ps5-opengl, alors que notre hypothèse PS4 actuelle est **EGL + GLES2 + Piglet**. Le POC R-002A reste donc indispensable : il doit mesurer la surface réellement disponible sur PS4 plutôt que déduire sa compatibilité de l'expérience PS5.\n\nEn revanche, le code PS5 peut nous servir à construire une matrice de comparaison directement exploitable :\n\n| Sujet | Kodi upstream | PS5 VivaLaVent | PS4 à déterminer |\n|---|---|---|---|\n| Window system | abstrait Kodi | \`CWinSystemPS5\` + EGL | \`CWinSystemPS4\` + EGL/Piglet |\n| GL API | selon backend | OpenGL 4.6 Core | GLES2/Piglet d'abord |\n| Shader path | sources/compilation selon backend | driver PS5 | blobs Piglet / pipeline à déterminer |\n| Presentation | backend plateforme | VideoOut/driver PS5 | EGL swap puis VideoOut si nécessaire |\n| Video decode | backends Kodi | VideoDec2 + buffers zero-copy | candidat libSceAvPlayer, puis validation |\n| Video surfaces | abstractions Kodi | textures zero-copy spécifiques | propriété/ownership à établir |\n| Frame pacing | Kodi + backend | logique PS5 spécifique | à mesurer dans R-002A puis intégrer |\n| HDR | backend Kodi | scanout HDR PS5 spécifique | à déterminer, hors premier POC |\n\nCette table est une **matrice de travail**, pas une équivalence d'implémentation.\n\n### 37.4 Utilisation concrète pendant le port\n\nAvant d'écrire une nouvelle couche PS4 importante, nous devons chercher son analogue dans trois endroits :\n\n1. Kodi upstream : contrat et comportement attendu par Kodi ;\n2. port PS5 : exemple concret d'adaptation PlayStation récente et fonctionnelle ;\n3. écosystème PS4/OpenOrbis : API et contraintes réellement disponibles.\n\nLorsque les trois divergent, la décision doit privilégier l'abstraction Kodi et les contraintes réelles PS4, avec le code PS5 comme **preuve de conception** et non comme spécification.\n\n### 37.5 Conséquence pour R-002A.14\n\nLe standalone POC doit rester indépendant de Kodi, mais sa conception doit désormais prévoir des tests qui correspondent aux opérations dont le port PS5 dépend réellement : textures, FBO, présentation, capacités GL/EGL et cadence d'affichage. Cela permettra ensuite de comparer les résultats PS4 aux exigences concrètes du renderer PS5 sans refaire les essais directement dans Kodi.\n\nLe dépôt PS5 contient également une documentation de comparaison avec Kodi upstream et une matrice de validation vidéo ; ces documents seront exploités plus tard pour éviter de réinventer les critères de validation du port PS4.\n\n### 37.6 Règle de référence pour la suite\n\n**Kodi upstream = contrat fonctionnel.**  \n**VivaLaVent/kodi-ps5 = référence d'intégration PlayStation concrète.**  \n**OpenOrbis + expérimentations PS4 = source de vérité pour ce qui est réellement possible sur PS4.**\n\nAucun code Kodi n'est modifié dans cette étape.\n
+
+## 37. R-002A.14 — intégrer le port PS5 de VivaLaVent comme référence comparative — 2026-09-30
+
+Le port **Kodi 22 PS5 de VivaLaVent** doit être traité comme une référence de travail de premier ordre pour la suite du port PS4, en complément du Kodi upstream et des références OpenOrbis. Le PS5 n'est pas considéré comme une architecture à copier : les différences de GPU, API graphique, VideoOut, mémoire, sandbox et décodeur rendent certaines implémentations spécifiques au PS5.
+
+### 37.1 Pourquoi cette comparaison est particulièrement utile
+
+Le dépôt PS5 est un overlay explicite sur un checkout Kodi upstream : il sépare les changements de plateforme (\`overlay/xbmc/platform/ps5\`, \`xbmc/windowing/ps5\`), les patches Kodi, les extensions du driver OpenGL et les shims système. Il documente également une chaîne de build reproductible et une architecture de rendu/vidéo complète.
+
+Cela nous donne un troisième point de comparaison :
+
+\`\`\`
+Kodi upstream
+     |\\\\
+     | \\\\
+     |  +-- VivaLaVent / PS5 : port fonctionnel + décisions d'intégration
+     |
+     +----- PS4 : notre implémentation à reconstruire selon les contraintes PS4
+\`\`\`
+
+La comparaison devra répondre à chaque fois à la question : **« cette décision vient-elle de Kodi, d'une contrainte PlayStation commune, d'une contrainte PS5 uniquement, ou d'une contrainte PS4 ? »**
+
+### 37.2 Éléments PS5 à étudier avant d'implémenter leur équivalent PS4
+
+Priorité élevée :
+
+- \`CWinSystemPS5\` et \`CWinSystemPS5GLContext\` : initialisation EGL et intégration de la fenêtre Kodi ;
+- renderer GLES/OpenGL et passage des ressources Kodi vers le driver console ;
+- pipeline vidéo \`CDVDVideoCodecPS5\` / \`CVideoBufferPS5\` / renderer, notamment l'ownership des surfaces et le zero-copy ;
+- synchronisation A/V et frame pacing ;
+- intégration VideoOut et changement des attributs de scanout ;
+- audio/input/storage uniquement après le socle graphique ;
+- organisation des patches Kodi et séparation entre overlay plateforme, shims et dépendances.
+
+La documentation PS5 décrit notamment un rendu OpenGL 4.6 via ps5-opengl, EGL default display, un décodeur VideoDec2 et des textures zero-copy reposant sur des extensions du driver. Ces mécanismes ne doivent pas être transposés directement au PS4 : ils servent à identifier les **interfaces Kodi à satisfaire** et les endroits où une abstraction PS4 propre doit être introduite. 
+
+### 37.3 Comparaison graphique : PS5 ne remplace pas le POC Piglet
+
+Le port PS5 utilise une pile OpenGL 4.6 Core fournie par ps5-opengl, alors que notre hypothèse PS4 actuelle est **EGL + GLES2 + Piglet**. Le POC R-002A reste donc indispensable : il doit mesurer la surface réellement disponible sur PS4 plutôt que déduire sa compatibilité de l'expérience PS5.
+
+En revanche, le code PS5 peut nous servir à construire une matrice de comparaison directement exploitable :
+
+| Sujet | Kodi upstream | PS5 VivaLaVent | PS4 à déterminer |
+|---|---|---|---|
+| Window system | abstrait Kodi | \`CWinSystemPS5\` + EGL | \`CWinSystemPS4\` + EGL/Piglet |
+| GL API | selon backend | OpenGL 4.6 Core | GLES2/Piglet d'abord |
+| Shader path | sources/compilation selon backend | driver PS5 | blobs Piglet / pipeline à déterminer |
+| Presentation | backend plateforme | VideoOut/driver PS5 | EGL swap puis VideoOut si nécessaire |
+| Video decode | backends Kodi | VideoDec2 + buffers zero-copy | candidat libSceAvPlayer, puis validation |
+| Video surfaces | abstractions Kodi | textures zero-copy spécifiques | propriété/ownership à établir |
+| Frame pacing | Kodi + backend | logique PS5 spécifique | à mesurer dans R-002A puis intégrer |
+| HDR | backend Kodi | scanout HDR PS5 spécifique | à déterminer, hors premier POC |
+
+Cette table est une **matrice de travail**, pas une équivalence d'implémentation.
+
+### 37.4 Utilisation concrète pendant le port
+
+Avant d'écrire une nouvelle couche PS4 importante, nous devons chercher son analogue dans trois endroits :
+
+1. Kodi upstream : contrat et comportement attendu par Kodi ;
+2. port PS5 : exemple concret d'adaptation PlayStation récente et fonctionnelle ;
+3. écosystème PS4/OpenOrbis : API et contraintes réellement disponibles.
+
+Lorsque les trois divergent, la décision doit privilégier l'abstraction Kodi et les contraintes réelles PS4, avec le code PS5 comme **preuve de conception** et non comme spécification.
+
+### 37.5 Conséquence pour R-002A.14
+
+Le standalone POC doit rester indépendant de Kodi, mais sa conception doit désormais prévoir des tests qui correspondent aux opérations dont le port PS5 dépend réellement : textures, FBO, présentation, capacités GL/EGL et cadence d'affichage. Cela permettra ensuite de comparer les résultats PS4 aux exigences concrètes du renderer PS5 sans refaire les essais directement dans Kodi.
+
+Le dépôt PS5 contient également une documentation de comparaison avec Kodi upstream et une matrice de validation vidéo ; ces documents seront exploités plus tard pour éviter de réinventer les critères de validation du port PS4.
+
+### 37.6 Règle de référence pour la suite
+
+**Kodi upstream = contrat fonctionnel.**  
+**VivaLaVent/kodi-ps5 = référence d'intégration PlayStation concrète.**  
+**OpenOrbis + expérimentations PS4 = source de vérité pour ce qui est réellement possible sur PS4.**
+
+Aucun code Kodi n'est modifié dans cette étape.
+
+
+## 38. R-002A.15 — référentiels Kodi intégrés comme sous-modules Git — 2026-09-30
+
+Le projet passe maintenant de la théorie à une base de travail directement exploitable : les deux référentiels de référence sont attachés au dépôt sous forme de **git submodules**.
+
+### 38.1 Référentiels et révisions épinglées
+
+- `references/kodi/` → `https://github.com/xbmc/xbmc.git`
+  - branche de référence : `master`
+  - révision épinglée : `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
+- `references/kodi-ps5/` → `https://github.com/VivaLaVent/kodi-ps5.git`
+  - branche de référence : `main`
+  - révision épinglée : `0ea36e36d738aa045c1b8ed63c24a0314c7f72a5`
+
+Les révisions sont enregistrées dans le gitlink du dépôt principal. Elles constituent donc un état reproductible : une mise à jour du dépôt principal ne doit pas déplacer silencieusement les références.
+
+### 38.2 Pourquoi des sous-modules plutôt qu'une copie complète
+
+Kodi est un dépôt très volumineux. Le recopier dans l'historique de `kodi-ps4-test` dupliquerait inutilement son contenu et rendrait les commits du projet beaucoup plus lourds.
+
+Les sous-modules donnent néanmoins aux agents et développeurs les deux arborescences localement après un clone avec :
+
+```bash
+git clone --recurse-submodules https://github.com/Nabouna32/kodi-ps4-test.git
+```
+
+ou, pour un clone déjà existant :
+
+```bash
+git submodule update --init --recursive
+```
+
+Le dépôt principal conserve ainsi exactement **quelle version** de Kodi et du port PS5 a servi à une analyse donnée.
+
+### 38.3 Règle de comparaison pratique
+
+Pour toute implémentation de plateforme PS4, comparer systématiquement :
+
+1. `references/kodi/` : contrat et architecture upstream ;
+2. `references/kodi-ps5/` : implémentation PlayStation concrète ;
+3. code PS4/OpenOrbis du projet : APIs et contraintes réellement disponibles.
+
+Les deux premiers répertoires sont des références externes. Ils ne doivent pas être modifiés depuis ce projet.
+
+### 38.4 Statut
+
+Le dépôt contient maintenant la mécanique Git nécessaire pour travailler directement sur les sources de référence. Aucun code Kodi PS4 n'a encore été introduit.
+
+**Prochaine étape pratique :** initialiser les sous-modules dans l'environnement de travail, vérifier les révisions obtenues et commencer le premier audit de code comparatif ciblé, au lieu de rester uniquement sur l'analyse documentaire.
