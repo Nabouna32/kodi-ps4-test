@@ -17,26 +17,29 @@ Current phase: build/toolchain validation
   - libpng-dev
   - libgif-dev
   - libjpeg-dev
+- The PS4 configure entry script is versioned as executable (100755), so it can be invoked directly from a fresh checkout.
 
 ## Current blocker
 
-The previous configure attempt stopped while configuring the native TexturePacker host tool because Lzo2 was not installed on the WSL host.
+The first configure-only validation after the native TexturePacker audit did not reach CMake: WSL reported Permission denied when invoking ./scripts/build-ps4-kodi.sh. The repository mode was 100644 even though the file is an executable shell-script entry point.
 
-That host dependency is now installed. The build-system audit is now complete. The current native TexturePacker helper is retained because it uses Kodi's official TexturePacker CMake source and follows the same focused host-tool model as the PS5 reference. The next validation must rebuild the native TexturePacker and continue into Kodi cross-configuration.
+The mode was corrected locally to 100755 and is now being committed to main. No Kodi build logic changed.
+
+The previous Lzo2 blocker remains resolved. The next validation must rebuild the native TexturePacker and continue into Kodi cross-configuration.
 
 The intended model remains:
 - TexturePacker is compiled for WSL/Linux;
-- Kodi PS4 receives it through `WITH_TEXTUREPACKER`;
-- `HOST_CAN_EXECUTE_TARGET` remains false;
+- Kodi PS4 receives it through WITH_TEXTUREPACKER;
+- HOST_CAN_EXECUTE_TARGET remains false;
 - no PS4-target TexturePacker is built or shipped.
 
 ## Next action
 
-Synchronize the checkout with `origin/main`, rerun:
+Synchronize the checkout with origin/main, verify that scripts/build-ps4-kodi.sh has mode 100755, then rerun:
 
     CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 
-Then record the first real result. Do not start a full Kodi build until configuration succeeds.
+Record the first real configure result. Do not start a full Kodi build until configuration succeeds.
 
 ## Major runtime risks
 
