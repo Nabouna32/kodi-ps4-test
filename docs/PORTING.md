@@ -537,3 +537,150 @@ If that succeeds, the Kodi window-system/platform layer becomes the next impleme
 In parallel, `libSceAvPlayer` should be investigated as the first PS4 hardware-video candidate, while preserving Kodi's existing codec/buffer architecture.
 
 The PS5 port has now been validated as a **strong architectural reference**, but not as a codebase to transplant wholesale.
+
+
+---
+
+## 17. Vulkan investigation — 2026-09-30
+
+The Vulkan question must remain open rather than being dismissed in favor of GLES.
+
+### 17.1 New evidence: an actual PS4 Vulkan stack exists
+
+The current PS4 homebrew ecosystem contains the **PS4-OpenGNM** graphics stack. Its published architecture describes:
+
+- `opengnm`: a GNM/GPA compatibility layer;
+- `opengnm-psbc`: SPIR-V → PS4 shader-binary compilation using Mesa NIR/ACO;
+- `vulkan-ps4`: a Vulkan 1.0 ICD targeting PS4;
+- example applications such as triangle/cube/glTF rendering.
+
+The stack explicitly builds `libvulkan_ps4.so` for the OpenOrbis PS4 environment. This is substantially stronger evidence than the earlier generic statement that "PS4 Vulkan exists": there is now a concrete open-source implementation to study. citeturn0search13turn0search7
+
+### 17.2 What this means for Kodi
+
+Vulkan is now a **serious candidate for investigation**, but it is not automatically the correct first renderer.
+
+There are two distinct questions:
+
+1. **Can Vulkan run on PS4?**
+   - Current public evidence: yes, via an independent PS4 Vulkan ICD/graphics stack.
+
+2. **Can Kodi's current Vulkan renderer run on that implementation?**
+   - Not yet demonstrated.
+   - The ICD targets Vulkan 1.0, so Kodi's actual minimum Vulkan feature/extension requirements must be audited.
+   - Kodi's renderer may rely on extensions/features that the PS4 ICD does not implement.
+   - Video-frame interop is an additional problem independent of basic GUI rendering.
+
+Therefore Vulkan should be treated as a **parallel research track**, not yet selected as the renderer.
+
+### 17.3 Vulkan vs Piglet/GLES research tracks
+
+We should now explicitly compare:
+
+| Question | GLES/Piglet | Vulkan/OpenGNM |
+|---|---|---|
+| PS4 runtime exists | Yes | Yes |
+| Open-source PS4 implementation | OpenOrbis ecosystem | PS4-OpenGNM ecosystem |
+| API generation | GLES 2.0-era surface | Vulkan 1.0 |
+| Kodi renderer compatibility | Unknown | Unknown |
+| Existing PS4 renderer examples | Yes | Yes |
+| Toolchain integration | OpenOrbis | OpenOrbis |
+| Main uncertainty | Modern Kodi GLES feature requirements | Vulkan 1.0 feature/extension coverage + ICD maturity |
+| Potential advantage | More direct Sony/Piglet path | Modern explicit API and potentially cleaner fit for modern Kodi |
+| Main risk | ES2 limitations | Third-party ICD completeness/performance/maintenance |
+
+The key point is that **Vulkan may actually be worth investigating before committing to GLES**, because the existence of `vulkan-ps4` changes the architecture options materially.
+
+### 17.4 Revised renderer strategy
+
+The project should not yet choose between GLES and Vulkan.
+
+Instead:
+
+**R-001A — GLES capability audit**
+- Kodi GLES minimum API/version
+- required extensions
+- shader requirements
+- FBO/texture requirements
+- video texture paths
+- Piglet limitations
+
+**R-001B — Vulkan capability audit**
+- Kodi Vulkan minimum version
+- required extensions
+- descriptor/resource requirements
+- synchronization primitives
+- swapchain/presentation assumptions
+- shader model
+- external-memory/video-frame interoperability
+- compatibility with the public PS4 Vulkan ICD
+
+**R-002A — GLES proof of concept**
+- EGL context
+- textured triangle/quad
+- VideoOut presentation
+- texture upload
+- frame pacing
+
+**R-002B — Vulkan proof of concept**
+- instance/device creation
+- required extensions
+- swapchain/presentation
+- SPIR-V shader
+- textured triangle
+- frame pacing
+
+The first renderer should be selected **from evidence produced by these audits and POCs**, not by assuming that the older or newer API is inherently better.
+
+### 17.5 Important architectural consequence
+
+The Kodi platform layer should be designed so that the renderer backend is replaceable:
+
+```
+             Kodi
+               |
+        CWinSystemPS4
+               |
+       +-------+-------+
+       |               |
+   GLES/Piglet     Vulkan/ICD
+       |               |
+       +-------+-------+
+               |
+          PS4 VideoOut
+```
+
+This avoids making the entire PS4 port dependent on one graphics API before the hardware/software evidence is sufficient.
+
+### 17.6 Current recommendation
+
+**Do not implement either renderer yet.**
+
+The next research action should be a **side-by-side capability audit of Kodi's current GLES and Vulkan renderers against the two PS4 implementations**.
+
+This is now more valuable than investigating only GLES.
+
+### 17.7 Evidence quality / caution
+
+The PS4-OpenGNM project is an external community implementation, not an official Sony SDK and not part of OpenOrbis itself. Its existence demonstrates feasibility of a Vulkan path in the PS4 homebrew ecosystem, but it does not establish production maturity or compatibility with Kodi.
+
+OpenOrbis itself still describes its GPU rendering support as an area of ongoing development, so the OpenOrbis toolchain should not be treated as proof that every graphics API path is equally complete. citeturn0search0turn0search1
+
+---
+
+## 18. Next action
+
+The next audit is expanded from **R-001** to:
+
+> **R-001 — PS4 graphics backend comparison: Kodi GLES/Piglet vs Kodi Vulkan/PS4-OpenGNM.**
+
+Deliverable:
+
+1. exact renderer requirements in the current Kodi source;
+2. exact PS4 capabilities exposed by Piglet/OpenOrbis;
+3. exact Vulkan 1.0 capabilities exposed/claimed by PS4-OpenGNM;
+4. incompatibilities and missing features;
+5. estimated adaptation surface;
+6. recommendation based on evidence, without prematurely locking the architecture.
+
+No Kodi code should be modified until this comparison is complete and the renderer direction has been validated.
