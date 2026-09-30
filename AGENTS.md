@@ -41,6 +41,14 @@ The Kodi repository has its own `AGENTS.md`. When analysing or proposing
 changes intended to be contributed upstream, read and follow that file. It is
 not the instruction set for this repository.
 
+## Git workflow
+
+This project is developed directly on the `main` branch. For our normal
+project work, commit directly to `main`; do not create feature, research,
+fix, or temporary branches and do not introduce pull requests as a normal
+workflow. Historical branches may exist from earlier work, but they are not
+part of the current development workflow.
+
 ## Documentation continuity
 
 `docs/PORTING.md` is the persistent memory of the port.
