@@ -31,10 +31,15 @@ The next configure blocker was libbluray: Kodi's optional `Bluray` dependency at
 
 The PS4 overlay now explicitly excludes Bluray from optional platform dependencies and forces `ENABLE_BLURAY=OFF`.
 
+The following configure run then reached Kodi's optional `XSLT` dependency and failed through its internal libxslt path because LibXml2 was unavailable. The pinned Kodi source confirms that XSLT is listed under `optional_deps`, while its internal build path requires LibXml2. XSLT is not required for the first bring-up milestone, so the durable correction is to exclude `XSLT` from the PS4 optional dependency set rather than install `libxml2-dev` just to satisfy this optional feature.
+
+The PS4 overlay now excludes `XSLT` from optional platform dependencies. No explicit `ENABLE_XSLT` cache override is used because Kodi models that option as an AUTO/string dependency switch; exclusion is the narrower platform-level adaptation.
+
 Until the next configure-only validation succeeds:
 - Native host tools: validated ✅
 - Kodi PS4 cross-configuration entry: validated ✅
 - Blu-ray/libbluray: intentionally disabled for bring-up ✅
+- XSLT/libxslt: intentionally excluded for bring-up ✅
 - CCache/ClangFormat warnings: non-blocking
 - Full Kodi build: not started
 
@@ -46,7 +51,7 @@ Synchronize the WSL checkout with origin/main and run:
 
 Verify that:
 1. both native host tools remain available;
-2. libbluray/LibXml2 is no longer entered into the dependency path;
+2. libbluray/LibXml2 and XSLT/LibXml2 are no longer entered into the dependency path;
 3. Kodi proceeds to the next dependency or completes configuration;
 4. the PS4 host/target boundary remains intact.
 
