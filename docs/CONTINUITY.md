@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Handoff baseline HEAD (verified immediately after HarfBuzz integration refinement): `74c951fafe19355600cb68f1c8226d42bdb5326c`
+Current main HEAD: `4463bd5d4d605624520006857f101ea3567495bd` (docs update after correcting the HarfBuzz overlay patch). Always verify the current GitHub HEAD before relying on historical hashes.
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -331,6 +331,8 @@ git reset --hard origin/main
 
 CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 ```
+
+The previous run stopped at the overlay application step with `patch: **** malformed patch`; this was a repository patch-format defect, not a HarfBuzz/toolchain result. The corrected patch must now be applied and the target dependency bootstrap observed from the real WSL environment.
 
 Verify that:
 1. native host tools remain available;
