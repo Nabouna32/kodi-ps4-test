@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Handoff baseline HEAD (verified immediately before this continuity update): `3b977b77bf054fd85ca70880ede179658a8d0a76`
+Handoff baseline HEAD (verified during this research phase): `9ec1469457c0b9af0a9285cb19aa0c0b95e9858c`
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -343,6 +343,30 @@ Do not start a full Kodi build until configure succeeds. If a new blocker appear
 ### Scope boundary
 
 No Vulkan/OpenGNM, renderer, controller, audio, video, GP4/PKG, GoldHEN runtime, self-hosted CI, broad CMake refactoring, or custom dependency bootstrap was added.
+
+## Current HarfBuzz blocker
+
+The latest configure-only run reaches required ASS/libass and fails because target HarfBuzz libraries are not available. This is a required dependency, not an optional feature to disable.
+
+Audit completed against the exact pinned Kodi commit, the pinned PS5 reference, and public OpenOrbis information:
+- Kodi's `FindHarfBuzz.cmake` searches the target dependency prefix and does not itself build HarfBuzz.
+- Kodi provides an official target recipe at `tools/depends/target/harfbuzz` for HarfBuzz 14.2.0, built statically with Meson.
+- The official target dependency graph uses `freetype2-noharfbuzz` to bootstrap the FreeType/HarfBuzz cycle, then builds HarfBuzz and normal FreeType.
+- PS5 uses target-side HarfBuzz in its pacbrew/sysroot; that establishes the dependency architecture but its PS5 binaries are not reusable for PS4.
+- OpenOrbis does not provide Kodi's third-party HarfBuzz target library.
+
+Do **not** install Ubuntu `libharfbuzz-dev`; the missing artifact is the PS4 target library.
+
+### Proposed next implementation step
+
+Integrate the smallest part of Kodi's official target dependency mechanism needed for HarfBuzz into the PS4/OpenOrbis build:
+1. initialize the required target-dependency build environment;
+2. build `freetype2-noharfbuzz` and HarfBuzz for PS4;
+3. stage the target library/headers/metadata in the dependency prefix Kodi already searches;
+4. rerun configure-only and validate target-side discovery;
+5. stop at the next blocker.
+
+No HarfBuzz implementation has been applied yet.
 
 ## Milestones
 
