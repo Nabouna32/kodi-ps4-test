@@ -1330,3 +1330,59 @@ R-002A runtime graphics work can proceed independently using a known-good shader
 - `ioQuake3-PS4` renderer documentation and source.
 - `PS4-OpenGNM/opengnm-psbc` documentation and hardware-validation notes.
 - Community discussion concerning official Piglet shader compilation tooling.
+
+---
+
+## 25. R-002A.2 — shader compilation is a packaging prerequisite for a usable Kodi PKG — 2026-09-30
+
+The previous distinction between the runtime graphics POC and long-term shader production is now clarified.
+
+### 25.1 Important build distinction
+
+A PS4 PKG can technically be assembled without compiling shader sources: the package tool can bundle the executable and whatever files are available.
+
+However, that is **not sufficient to produce a usable Kodi graphics build**.
+
+For a Piglet release path where runtime GLSL compilation is not available/reliable, the final application needs the precompiled Piglet shader binaries corresponding to the shader sources used by Kodi. Those binaries must be present in the PKG and successfully loaded through glShaderBinary().
+
+Therefore:
+
+- **C/C++ compilation of the application:** does not intrinsically require the Piglet shader compiler.
+- **PKG assembly:** does not intrinsically require the shader compiler.
+- **A functional Kodi PKG using the intended retail-safe Piglet path:** **does require Kodi's shader binaries to have been produced beforehand**.
+- **Final end-to-end R-002A validation:** cannot be considered complete until at least one complete, project-owned shader production path exists, or a deliberately documented debug-only runtime compilation path is proven on the target environment.
+
+This means shader production is not merely a later optimization/build convenience. It is part of the renderer's **release build pipeline**.
+
+### 25.2 ioQuake3 evidence strengthens this conclusion
+
+The current ioQuake3-PS4 implementation ships its Piglet shader blobs inside the application package and loads them at runtime. Its normal release path does not depend on ShaccVSH. This confirms the practical model we should target for Kodi: compile once on the host, ship the resulting binaries, load them on the PS4.
+
+Its debug capture mechanism can help generate Piglet-native blobs on hardware when a source shader can still be compiled, but this is a **capture mechanism**, not a reproducible host-side compiler. It therefore cannot by itself solve Kodi's build pipeline.
+
+### 25.3 Consequence for the R-002A plan
+
+We should not block the first EGL/GLES/VideoOut experiments on having every Kodi shader compiled.
+
+Instead, use a staged approach:
+
+1. **Runtime POC:** use a known-good Piglet shader fixture to validate EGL/GLES/texture/FBO/VideoOut.
+2. **Toolchain investigation:** identify the actual host-side Piglet compiler from the available SDK/toolchain or establish a clean-room alternative.
+3. **Minimal project-owned shader:** compile one trivial project shader from source and load it with glShaderBinary().
+4. **Kodi shader pilot:** compile a small representative subset of Kodi's GLES shaders and validate uniforms/attributes/program linking.
+5. **Full shader inventory:** compile all shaders required by the chosen Kodi renderer configuration.
+6. **Only then:** treat the Piglet renderer as ready for a production Kodi PKG.
+
+### 25.4 Current blocker classification
+
+The shader compiler is therefore a **release-pipeline blocker for a production Kodi Piglet PKG**, but it is **not a blocker for the standalone graphics POC**.
+
+This distinction prevents us from either:
+- falsely declaring Piglet production-ready without a shader pipeline, or
+- unnecessarily postponing all graphics experiments while the compiler question remains open.
+
+### 25.5 New immediate action
+
+The next research target is now explicit: determine how the ioQuake3-PS4 project obtained its **initial** shader binaries and whether the provenance points to a publicly available compiler, an official SDK tool, or a hardware-capture/bootstrap process.
+
+In parallel, if the local PS4 SDK 4.50 installation is accessible, inspect it directly for ESSLC/Piglet/Shacc tooling rather than inferring its contents from public reports.
