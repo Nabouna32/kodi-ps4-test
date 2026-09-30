@@ -54,13 +54,37 @@ Current native prefix:
 
 CMake already finds native flatc and JsonSchemaBuilder there.
 
-## TexturePacker blocker
+## Native TexturePacker host tool
 
-Kodi cross-configure reaches native flatc, native JsonSchemaBuilder and internal TexturePacker setup, then fails because TEXTUREPACKER_EXECUTABLE is missing.
+TexturePacker is a **host build tool**. For the PS4 cross-build it must be compiled for WSL/Linux and available as a host executable before Kodi's target configuration/build uses it.
 
-The PS5 reference demonstrates the required host/target split: build TexturePacker natively, install it under the native prefix, and pass its location with WITH_TEXTUREPACKER. HOST_CAN_EXECUTE_TARGET must remain false.
+The repository builds Kodi's pinned TexturePacker source with the normal WSL host compiler and installs the resulting executable into:
 
-The PS5 workflow is a reference for this build-system boundary only; PS5 packaging/platform changes must not be copied wholesale.
+    build/ps4/build/native/bin/TexturePacker
+
+The PS4 configure receives that host tool through `WITH_TEXTUREPACKER`. `HOST_CAN_EXECUTE_TARGET` remains false, and `INTERNAL_TEXTUREPACKER_INSTALLABLE=FALSE` prevents Kodi from trying to build/package a target-side TexturePacker.
+
+This is intentionally limited to the host/target build boundary. No PS5 platform code is copied for this purpose.
+
+### Host dependencies
+
+The TexturePacker host build uses the normal Ubuntu development packages for the libraries required by the pinned Kodi source:
+
+- `liblzo2-dev`
+- `libpng-dev`
+- `libgif-dev`
+- `libjpeg-dev`
+
+These are **WSL host dependencies**, not PS4 target dependencies. No project-local replacement or dependency workaround is used for them.
+
+The packages were installed and verified on the current Ubuntu 26.04.1 WSL environment on 2026-10-01:
+
+    libgif-dev:amd64        5.2.2-1ubuntu3.2
+    libjpeg-dev:amd64       8c-2ubuntu12
+    liblzo2-dev:amd64       2.10-3build2
+    libpng-dev:amd64        1.6.57-1
+
+The actual TexturePacker build and subsequent Kodi configure still require validation after these packages are installed.
 
 ## Build workflow
 
