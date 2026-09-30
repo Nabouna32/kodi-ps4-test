@@ -810,3 +810,143 @@ Current evidence supports:
 - **PS5 renderer:** remains a structural reference, not something to transplant.
 
 The next technical task is therefore the **GLES/Piglet capability audit**, followed by the standalone POC. The Vulkan path remains active as a parallel research track.
+
+
+---
+
+## 20. R-001A — Kodi GLES vs PS4 Piglet capability audit — 2026-09-30
+
+### 20.1 Upstream Kodi renderer baseline
+
+The current official Kodi source has a dedicated GLES renderer in \`xbmc/rendering/gles\`, including:
+
+- \`CRenderSystemGLES\`;
+- \`CGLESShader\`;
+- GUI composite shaders;
+- GLES-specific screenshot handling;
+- GLES GUI texture integration.
+
+The build system enables this renderer when an \`OpenGLES\` target is available. Kodi's Linux build documentation explicitly supports \`APP_RENDER_SYSTEM=gles\`.
+
+The shipped GUI shaders under \`system/shaders/GLES/2.0\` use **GLSL ES 1.00 / \`#version 100\`**, including the main vertex shader and standard GUI fragment shaders.
+
+This is an important positive result: the core Kodi GUI shader language level is aligned with the documented PS4 Piglet baseline rather than requiring GLSL ES 3.x for the basic GUI renderer.
+
+### 20.2 Basic API compatibility looks promising
+
+Kodi's GLES renderer relies heavily on functionality already present in GLES 2.0:
+
+- vertex attributes;
+- GLSL ES 1.00 shaders;
+- \`glUseProgram\`, uniforms and attributes;
+- \`glViewport\` / \`glScissor\`;
+- blending;
+- depth testing;
+- texture sampling;
+- framebuffer rendering through the GLES abstraction;
+- \`glGetString\` capability discovery.
+
+The OpenOrbis Piglet sample documents Piglet as **OpenGL ES 2.0 + EGL 1.4**, and the official toolchain includes a working Piglet sample with packaged PS4 application structure.
+
+Therefore the basic Kodi GUI rendering API is **not obviously blocked by the ES 2.0 baseline**.
+
+### 20.3 Important compatibility finding: current Kodi already contains ES2 shader variants
+
+This significantly reduces the concern raised in the first audit.
+
+The current Kodi shader tree contains an explicit \`GLES/2.0\` set, and the core GUI shaders use \`#version 100\`. We therefore should not assume that modern Kodi automatically requires GLES 3.x merely because some newer features exist elsewhere.
+
+The correct next question is now narrower:
+
+> Which optional/current Kodi rendering paths actually execute GLES 3.x-only operations or depend on extensions absent from Piglet?
+
+### 20.4 Identified GLES 2.0 pressure point: HDR GUI composite LUTs
+
+Current Kodi's \`CGuiCompositeShaderGLES::CreateLUTTexture()\` prefers:
+
+\`\`\`
+GL_R16F + GL_RED + GL_FLOAT
+\`\`\`
+
+and falls back to:
+
+\`\`\`
+GL_LUMINANCE + GL_FLOAT
+\`\`\`
+
+The source explicitly comments that \`GL_R16F\` is a GLES 3.0 core format, while the fallback exists for GLES 2.0-style implementations.
+
+This means the **basic GUI renderer can potentially remain GLES 2.0**, while newer HDR compositing needs careful runtime validation.
+
+For PS4 Piglet, the first POC should therefore test both:
+
+- normal SDR GUI rendering;
+- the HDR/composite path separately.
+
+We must not disable HDR globally yet; we first need to establish exactly what Piglet accepts.
+
+### 20.5 Piglet-specific evidence
+
+OpenOrbis's current Piglet sample explicitly identifies the implementation as GLES 2.0 / EGL 1.4 and demonstrates an application using Piglet. This provides a concrete PS4 target for the Kodi renderer rather than a purely theoretical API match.
+
+A separate PS4 ioQuake3 port also reports successful use of a programmable GLES 2.0 renderer on Piglet, with GLSL ES 1.00 shader binaries. This is useful external evidence that the ES2 programmable pipeline is practical on real PS4 homebrew hardware, although it does not prove Kodi compatibility.
+
+### 20.6 Current audit result
+
+| Area | Kodi requirement | Piglet evidence | Assessment |
+|---|---|---|---|
+| EGL | required by PS4 window/context layer | EGL 1.4 documented | promising |
+| GLES baseline | GLES renderer | GLES 2.0 documented | promising |
+| GLSL | core GUI uses GLSL ES 1.00 | ES2 Piglet | promising |
+| vertex attributes | used extensively | GLES2 core | compatible |
+| uniforms/samplers | used extensively | GLES2 core | compatible |
+| blending/scissor/depth | used | GLES2 core | compatible |
+| FBO/render targets | used | must validate on Piglet | open |
+| NPOT textures | used/expected | sample includes NPOT texture | promising |
+| float/half-float textures | HDR path uses them | ES2 support is extension-dependent | **needs runtime test** |
+| HDR GUI composite | current Kodi uses LUT textures + PQ/HLG shader | no Kodi-specific validation | **open** |
+| video texture path | substantial Kodi-specific behavior | not audited yet | **open / high priority** |
+| zero-copy video surfaces | platform-dependent | not audited | **open** |
+
+### 20.7 What this changes
+
+The GLES path is now more credible than after the first broad audit.
+
+We **do not currently have evidence of a fundamental API mismatch** between Kodi's basic GLES GUI renderer and Piglet's ES2 baseline.
+
+However, that does not mean Kodi will work unchanged. The remaining risk has moved from:
+
+> "Kodi may fundamentally require newer GLES."
+
+to:
+
+> "Specific Kodi texture, FBO, video, HDR, extension and presentation paths may require capabilities or behavior that Piglet does not provide."
+
+That is a much more tractable engineering problem.
+
+### 20.8 Next POC requirements
+
+The first PS4 graphics POC should therefore be designed to answer the remaining questions directly:
+
+1. EGL 1.4 initialization;
+2. GLES 2.0 context;
+3. GLSL ES 1.00 shader compilation;
+4. basic VBO/vertex-attribute rendering;
+5. texture upload including NPOT;
+6. FBO creation and render-to-texture;
+7. float/half-float texture capability query;
+8. VideoOut presentation and synchronization;
+9. extension enumeration;
+10. a minimal test of the Kodi-style shader/resource operations.
+
+Only after this POC passes should we adapt the Kodi window system around the proven path.
+
+### 20.9 Current R-001A conclusion
+
+**Status: promising, not yet validated.**
+
+The current evidence supports making **GLES/Piglet the primary first implementation path**.
+
+This is not a permanent renderer decision. Vulkan remains a separate investigation because it could become valuable later for capabilities, performance, or a future renderer backend.
+
+The next implementation step should be **R-002A — standalone GLES/Piglet + VideoOut POC**.
