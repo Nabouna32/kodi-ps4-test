@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Current main HEAD: `e0855e77f3e1467863eb9107d0f798462671533e` (Autoconf PS4 host-triplet correction). Always verify the current GitHub HEAD before relying on historical hashes.
+Current main HEAD: `aaec01d7af531623865a3be30aabe602085cc6aa` (docs update after the Autoconf PS4 host-triplet correction). Always verify the current GitHub HEAD before relying on historical hashes.
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
