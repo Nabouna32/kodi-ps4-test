@@ -49,7 +49,7 @@ Until the next configure-only validation succeeds:
 
 ## Next action
 
-The HarfBuzz dependency integration is implemented in the PS4 build overlay, but it has not yet been executed successfully in the WSL environment. Two consecutive WSL attempts stopped before target dependency configuration because the repository-owned unified-diff patch was malformed. The first correction fixed one set of hunk counts; the second WSL run exposed another malformed hunk around the Android/FreeBSD case boundary. The patch has now been corrected again in commit `321e94e43e894f642979035a3e1889450694e4ff`.
+The HarfBuzz dependency integration is implemented in the PS4 build overlay, but it has not yet been executed successfully in the WSL environment. Two consecutive WSL attempts stopped before target dependency configuration because the repository-owned unified-diff patch was malformed. The first correction fixed one set of hunk counts; the second WSL run exposed another malformed hunk around the Android/FreeBSD case boundary; inspection then found a third incorrect hunk count in `Toolchain.cmake.in`. The patch has now been corrected again in commit `14a0ba05e8b7dce99234c7c3dea8339cd395499a`.
 
 No HarfBuzz build result has been obtained yet. The next validation must first confirm that the current patch applies cleanly, then observe the target dependency bootstrap. Do not install Ubuntu `libharfbuzz-dev` as a workaround.
 
