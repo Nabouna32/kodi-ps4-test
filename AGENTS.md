@@ -31,13 +31,27 @@ Initialize them with:
 git submodule update --init --recursive
 ```
 
-Do not modify files inside these submodules as part of this repository's
-implementation. Changes to upstream Kodi or the PS5 reference belong in their
-own repositories.
+The reference repositories are external sources of truth and are not themselves
+part of this project's committed implementation. The build system may, however,
+copy or apply this project's overlay to the Kodi checkout when preparing a
+build tree. This build-time operation is part of the normal port workflow and
+is not a repository-level prohibition.
 
 The Kodi repository has its own `AGENTS.md`. When analysing or proposing
 changes intended to be contributed upstream, read and follow that file. It is
 not the instruction set for this repository.
+
+## Documentation continuity
+
+`docs/PORTING.md` is the persistent memory of the port.
+
+Keep it up to date as the project progresses. After each meaningful discovery,
+decision, implementation result, test result, blocker, correction, or change
+in next action, record the relevant information there.
+
+Do not rely on chat history for project continuity. A new agent or conversation
+must be able to understand the current state, important discoveries, decisions,
+and next actions from the repository and its documentation.
 
 ## Practical development rule
 
@@ -64,14 +78,6 @@ separate future/research path unless a later decision changes this.
 Do not add Sony proprietary SDK files, dumps, binaries, or other non-public
 artifacts to this repository.
 
-## Documentation continuity
-
-Update `docs/PORTING.md` after meaningful discoveries, decisions,
-implementation results, tests, blockers, or changes in next actions.
-
-A future agent must be able to resume the project from the repository and
-documentation without relying on chat history.
-
 ## Quality and review
 
 Prefer small, verifiable commits. Before considering a task complete:
@@ -80,7 +86,7 @@ Prefer small, verifiable commits. Before considering a task complete:
 - run appropriate validation;
 - fix failures caused by the change;
 - verify the final repository state;
-- record relevant results in the continuity documentation.
+- record relevant results in `docs/PORTING.md`.
 
 Avoid unrelated cleanup, speculative refactors, and changes outside the
 validated task.
