@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Current verified HEAD: `a26b3efdc9d092a1a036d6f9ed4f4300cd1e0c32`
+Handoff baseline HEAD (verified immediately before this continuity update): `a26b3efdc9d092a1a036d6f9ed4f4300cd1e0c32`
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
