@@ -42,7 +42,7 @@ uint32_t StickToDpad(uint8_t x, uint8_t y)
 
   if (x < 128 - STICK_DEADZONE)
     bits |= ORBIS_PAD_BUTTON_LEFT;
-  else if (x > 128 + CPS4PadInput::STICK_DEADZONE)
+  else if (x > 128 + STICK_DEADZONE)
     bits |= ORBIS_PAD_BUTTON_RIGHT;
 
   if (y < 128 - CPS4PadInput::STICK_DEADZONE)
