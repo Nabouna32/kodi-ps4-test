@@ -12,6 +12,11 @@ if [[ ! -f "${OO_PS4_TOOLCHAIN}/link.x" ]]; then
   exit 1
 fi
 
+cmake \
+  -DPROJECT_ROOT="${ROOT}" \
+  -DKODI_SRC="${KODI_SRC}" \
+  -P "${ROOT}/scripts/apply-kodi-overlay.cmake"
+
 cmake -S "${KODI_SRC}" -B "${BUILD_DIR}" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_TOOLCHAIN_FILE="${ROOT}/cmake/toolchains/openorbis-ps4-kodi.cmake" \
