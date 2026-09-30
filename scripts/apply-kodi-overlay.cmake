@@ -35,5 +35,7 @@ file(COPY "${PROJECT_ROOT}/cmake/scripts/ps4"
   DESTINATION "${KODI_SRC}/cmake/scripts")
 file(COPY "${PROJECT_ROOT}/overlay/xbmc/platform/ps4"
   DESTINATION "${KODI_SRC}/xbmc/platform")
+file(COPY "${PROJECT_ROOT}/overlay/tools/depends/configure.ac"
+  DESTINATION "${KODI_SRC}/tools/depends")
 
 message(STATUS "Applied PS4 Kodi overlay to: ${KODI_SRC}")
