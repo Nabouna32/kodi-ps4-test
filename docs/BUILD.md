@@ -72,3 +72,10 @@ scripts/build-ps4-kodi.sh:
 5. builds with Ninja.
 
 The next build-system change is the dedicated native TexturePacker bootstrap. Configure-only validation must pass before the full build is attempted.
+
+
+Native TexturePacker bootstrap
+
+The PS4 build now materializes Kodi first, then builds Kodi's TexturePacker source natively with the WSL host compiler (/usr/bin/cc and /usr/bin/c++). The tool is installed into the existing native prefix at build/ps4/build/native/bin/TexturePacker. The cross-configure receives WITH_TEXTUREPACKER and WITH_JSONSCHEMABUILDER from that same prefix and explicitly sets INTERNAL_TEXTUREPACKER_INSTALLABLE=FALSE so a PS4-target TexturePacker is not built or shipped. This follows Kodi's actual FindTexturePacker host/target boundary and the PS5 reference without copying PS5-specific platform code.
+
+The implementation has been committed to main, but configure-only validation on the WSL checkout is still required. The next local test must start by synchronizing with origin/main, then run scripts/build-ps4-kodi.sh far enough to observe native TexturePacker configuration and Kodi cross-configuration.
