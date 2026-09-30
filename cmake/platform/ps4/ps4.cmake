@@ -15,6 +15,7 @@ set(PLATFORM_OPTIONAL_DEPS_EXCLUDE
     Avahi
     Bluetooth
     CAP
+    Bluray
     CEC
     DBus
     LircClient
@@ -30,6 +31,7 @@ set(ENABLE_OPTICAL OFF CACHE BOOL "PS4: optical media disabled" FORCE)
 set(ENABLE_DVDCSS OFF CACHE BOOL "PS4: DVD CSS disabled" FORCE)
 set(ENABLE_EVENTCLIENTS OFF CACHE BOOL "PS4: event clients disabled" FORCE)
 set(ENABLE_TESTING OFF CACHE BOOL "PS4: host tests disabled" FORCE)
+set(ENABLE_BLURAY OFF CACHE BOOL "PS4 bring-up: Blu-ray support disabled" FORCE)
 
 # These facilities depend on later PS4 platform work. Keep the build honest
 # instead of allowing host libraries to leak into the cross build.
