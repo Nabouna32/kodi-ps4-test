@@ -103,3 +103,10 @@ Native TexturePacker bootstrap
 The PS4 build now materializes Kodi first, then builds Kodi's TexturePacker source natively with the WSL host compiler (/usr/bin/cc and /usr/bin/c++). The tool is installed into the existing native prefix at build/ps4/build/native/bin/TexturePacker. The cross-configure receives WITH_TEXTUREPACKER and WITH_JSONSCHEMABUILDER from that same prefix and explicitly sets INTERNAL_TEXTUREPACKER_INSTALLABLE=FALSE so a PS4-target TexturePacker is not built or shipped. This follows Kodi's actual FindTexturePacker host/target boundary and the PS5 reference without copying PS5-specific platform code.
 
 The implementation has been committed to main, but configure-only validation on the WSL checkout is still required. The next local test must start by synchronizing with origin/main, then run scripts/build-ps4-kodi.sh far enough to observe native TexturePacker configuration and Kodi cross-configuration.
+
+
+## Native TexturePacker mechanism audit
+
+The pinned Kodi source provides two levels of native-tool support. The complete `tools/depends/native/Makefile` builds TexturePacker as part of Kodi's native dependency graph and expects a configured `NATIVEPREFIX/share/config.site`. The dedicated TexturePacker Makefile then invokes the official TexturePacker CMake project with the host-build variables.
+
+For the PS4 cross-build we currently use the latter CMake project directly, matching the focused host-tool strategy used by the PS5 reference. This is not a replacement implementation: the source remains Kodi's own `tools/depends/native/TexturePacker/src`. The choice avoids bootstrapping Kodi's entire native-dependency graph just to obtain one host executable. The decision is revisitable if the broader Kodi depends/cmakebuildsys path later becomes necessary for additional native tools.

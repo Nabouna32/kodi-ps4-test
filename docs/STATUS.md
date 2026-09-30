@@ -22,7 +22,7 @@ Current phase: build/toolchain validation
 
 The previous configure attempt stopped while configuring the native TexturePacker host tool because Lzo2 was not installed on the WSL host.
 
-That host dependency is now installed. The next validation must rebuild the native TexturePacker and continue into Kodi cross-configuration.
+That host dependency is now installed. The build-system audit is now complete. The current native TexturePacker helper is retained because it uses Kodi's official TexturePacker CMake source and follows the same focused host-tool model as the PS5 reference. The next validation must rebuild the native TexturePacker and continue into Kodi cross-configuration.
 
 The intended model remains:
 - TexturePacker is compiled for WSL/Linux;

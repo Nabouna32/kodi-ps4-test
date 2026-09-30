@@ -34,3 +34,8 @@ Official Kodi remains the upstream source. VivaLaVent/kodi-ps5 is a technical re
 Every meaningful discovery, decision, implementation result, test result, blocker, correction or changed next action must be recorded in the appropriate specialized document before the work phase is considered complete.
 
 For historical continuity, the repository Git history remains authoritative for the exact evolution of these documents and implementations.
+
+
+## Current build-system checkpoint
+
+The official Kodi native TexturePacker mechanism and the PS5 host-tool implementation have been compared. The PS4 project keeps a focused native TexturePacker bootstrap that builds Kodi's own CMake source for WSL/Linux, because the full Kodi native-dependency orchestration is broader than the current need. The PS5 approach provides independent evidence for this host/target separation. The next checkpoint is executable configure-only validation after synchronizing WSL with `origin/main`.
