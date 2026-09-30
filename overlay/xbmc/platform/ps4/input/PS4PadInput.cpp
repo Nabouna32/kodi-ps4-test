@@ -34,12 +34,13 @@ constexpr uint32_t DIRECTION_BITS =
 constexpr auto POLL_INTERVAL = 8ms; // Match the PS5 reference's 125 Hz phase-1 bridge.
 constexpr auto REPEAT_DELAY = 400ms;
 constexpr auto REPEAT_RATE = 80ms;
+constexpr uint8_t STICK_DEADZONE = 32;
 
 uint32_t StickToDpad(uint8_t x, uint8_t y)
 {
   uint32_t bits = 0;
 
-  if (x < 128 - CPS4PadInput::STICK_DEADZONE)
+  if (x < 128 - STICK_DEADZONE)
     bits |= ORBIS_PAD_BUTTON_LEFT;
   else if (x > 128 + CPS4PadInput::STICK_DEADZONE)
     bits |= ORBIS_PAD_BUTTON_RIGHT;
@@ -132,7 +133,7 @@ bool CPS4PadInput::InitLibraries()
   params.priority = ORBIS_KERNEL_PRIO_FIFO_LOWEST;
 
   result = sceUserServiceInitialize(&params);
-  if (result != 0)
+  if (result != 0 && result != ORBIS_USER_SERVICE_ERROR_ALREADY_INITIALIZED)
   {
     CLog::Log(LOGERROR, "CPS4PadInput: sceUserServiceInitialize failed: {:#x}",
               static_cast<uint32_t>(result));
@@ -165,6 +166,7 @@ bool CPS4PadInput::OpenPad()
   }
 
   m_lastButtons = 0;
+  m_heldRepeat = 0;
   CLog::Log(LOGINFO, "CPS4PadInput: opened DualShock 4 for user {}", m_userId);
   return true;
 }
@@ -176,6 +178,7 @@ void CPS4PadInput::ClosePad()
 
   m_pad = -1;
   m_lastButtons = 0;
+  m_heldRepeat = 0;
 }
 
 uint32_t CPS4PadInput::StickToDpad(uint8_t x, uint8_t y)
@@ -205,6 +208,7 @@ void CPS4PadInput::PollPad()
           EmitButton(bit, false);
       }
       m_lastButtons = 0;
+      m_heldRepeat = 0;
     }
     return;
   }
@@ -254,29 +258,30 @@ void CPS4PadInput::Process()
   }
 
   auto nextRepeat = std::chrono::steady_clock::now() + REPEAT_DELAY;
-  uint32_t repeatButton = 0;
 
   while (!m_bStop)
   {
     const uint32_t previous = m_lastButtons;
     PollPad();
-
     const uint32_t directions = m_lastButtons & DIRECTION_BITS;
-    if (directions != 0 && directions == (m_lastButtons & DIRECTION_BITS) &&
-        previous != m_lastButtons)
-    {
-      repeatButton = directions & (directions - 1) ? 0 : directions;
-      nextRepeat = std::chrono::steady_clock::now() + REPEAT_DELAY;
-    }
-    else if (directions == 0)
-    {
-      repeatButton = 0;
-    }
+    const uint32_t previousDirections = previous & DIRECTION_BITS;
 
-    if (repeatButton != 0 && (m_lastButtons & repeatButton) != 0 &&
-        std::chrono::steady_clock::now() >= nextRepeat)
+    if (directions != previousDirections)
     {
-      EmitButton(repeatButton, true);
+      if (directions != 0 && (directions & (directions - 1)) == 0)
+      {
+        m_heldRepeat = directions;
+        nextRepeat = std::chrono::steady_clock::now() + REPEAT_DELAY;
+      }
+      else
+      {
+        m_heldRepeat = 0;
+      }
+    }
+    else if (m_heldRepeat != 0 && (m_lastButtons & m_heldRepeat) != 0 &&
+             std::chrono::steady_clock::now() >= nextRepeat)
+    {
+      EmitButton(m_heldRepeat, true);
       nextRepeat = std::chrono::steady_clock::now() + REPEAT_RATE;
     }
 
