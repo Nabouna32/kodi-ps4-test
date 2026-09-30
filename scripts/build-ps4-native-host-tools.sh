@@ -45,9 +45,6 @@ done
 
 for tool in "${TOOLS[@]}"; do
   executable="${NATIVEPREFIX}/bin/${tool}"
-  if [[ "${tool}" == "JsonSchemaBuilder" ]]; then
-    executable="${NATIVEPREFIX}/bin/kodi-JsonSchemaBuilder"
-  fi
 
   if [[ ! -x "${executable}" ]]; then
     echo "Native ${tool} was not installed at ${executable}" >&2

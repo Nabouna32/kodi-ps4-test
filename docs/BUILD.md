@@ -96,11 +96,7 @@ JsonSchemaBuilder is built from:
 
     tools/depends/native/JsonSchemaBuilder/src
 
-with APP_NAME_LC=kodi, so Kodi installs:
-
-    build/ps4/build/native/bin/kodi-JsonSchemaBuilder
-
-This is the executable expected by the pinned Kodi FindJsonSchemaBuilder.cmake during cross-compilation.
+with APP_NAME_LC=kodi. With CMake 4.2.3, the pinned source's `install(TARGETS ... RENAME ...)` generates `JsonSchemaBuilder` rather than applying the requested rename. The pinned Kodi `FindJsonSchemaBuilder.cmake` explicitly searches for both `kodi-JsonSchemaBuilder` and `JsonSchemaBuilder`, so the PS4 bootstrap accepts the upstream-supported `JsonSchemaBuilder` name rather than adding a custom post-install rename.
 
 ### Shared bootstrap
 

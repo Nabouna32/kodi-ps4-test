@@ -21,12 +21,12 @@ Current phase: build/toolchain validation
 
 ## Current blocker
 
-The JsonSchemaBuilder blocker is addressed in the build scripts: the native host-tools bootstrap now builds both TexturePacker and JsonSchemaBuilder from the pinned Kodi source and installs them into the shared native prefix.
+The native host-tools bootstrap now builds both TexturePacker and JsonSchemaBuilder from the pinned Kodi source and installs them into the shared native prefix. During WSL validation, JsonSchemaBuilder compiled successfully but CMake 4.2.3 generated the install rule as `JsonSchemaBuilder` despite `APP_NAME_LC=kodi`. A clean `/tmp` CMake configure reproduced the same result, ruling out a stale build cache. The pinned Kodi `FindJsonSchemaBuilder.cmake` explicitly accepts both `kodi-JsonSchemaBuilder` and `JsonSchemaBuilder`, so the bootstrap is being corrected to accept the actual upstream-supported executable name rather than adding a rename workaround.
 
-The implementation has **not yet been validated in the WSL checkout**. Until configure-only validation runs successfully:
-- TexturePacker: previously validated ✅
-- JsonSchemaBuilder: implementation added, validation pending ⏳
-- Kodi PS4 cross-configuration: previous blocker was JsonSchemaBuilder
+Until configure-only validation runs successfully:
+- TexturePacker: validated ✅
+- JsonSchemaBuilder: compilation/install validated as `JsonSchemaBuilder`; bootstrap correction pending ⏳
+- Kodi PS4 cross-configuration: blocked only by the helper's incorrect executable-name expectation
 - CCache/ClangFormat warnings: non-blocking at this stage
 - Do not start a full Kodi build until configure succeeds.
 
@@ -38,8 +38,8 @@ Synchronize the WSL checkout with origin/main and run:
 
 Verify that:
 1. both native host tools build and install;
-2. Kodi accepts both supplied host executables;
-3. PS4 configuration completes successfully.
+2. the supplied JsonSchemaBuilder directory contains the executable name accepted by the pinned Kodi finder;
+3. Kodi's PS4 configuration completes successfully.
 
 If configuration reveals a new blocker, document it and make it the next focused step.
 

@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Handoff baseline HEAD (verified immediately before this continuity update): `ef62bacc92d950b5045b65c0a7f5ec84aa7ea696`
+Handoff baseline HEAD (verified immediately before this continuity update): `252c4fa0613c2d0fac73b9e5fdb47125c97183e4`
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -312,9 +312,11 @@ was removed.
 
 The implementation is committed to main.
 
-### Validation pending
+### Validation — current blocker
 
-The WSL checkout has not yet been run through the new implementation in this conversation. The required next validation is:
+WSL validation reached the native JsonSchemaBuilder build successfully. CMake 4.2.3 installed it as `JsonSchemaBuilder`, not `kodi-JsonSchemaBuilder`, despite `APP_NAME_LC=kodi`. A clean `/tmp` CMake configure reproduced the same result, ruling out a stale build cache. The pinned Kodi `FindJsonSchemaBuilder.cmake` was fetched directly and confirms that `find_program()` accepts both `${APP_NAME_LC}-JsonSchemaBuilder` and `JsonSchemaBuilder`. Therefore the correct fix is to make the helper accept the upstream-supported plain executable name; no rename workaround is needed.
+
+The required next validation is:
 
 ```bash
 cd ~/projects/kodi-ps4-test
@@ -326,8 +328,8 @@ CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 
 Verify that:
 1. TexturePacker still builds and installs;
-2. JsonSchemaBuilder builds and installs as `kodi-JsonSchemaBuilder`;
-3. Kodi's PS4 cross-configuration accepts both supplied host tools;
+2. JsonSchemaBuilder builds and installs as `JsonSchemaBuilder`, which the pinned Kodi finder accepts;
+3. Kodi's PS4 cross-configuration accepts the supplied host tools;
 4. configure completes without a new blocker.
 
 Do not start a full Kodi build until configure succeeds.
