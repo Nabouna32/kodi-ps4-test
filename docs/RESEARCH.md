@@ -79,10 +79,19 @@ This confirms the host/target separation required for the PS4 build. It does not
 
 ## R-004.14 — Native TexturePacker integration
 
-**Status:** implementation committed; validation pending.
+**Status:** host prerequisites installed; build/configure validation pending.
 
-The pinned Kodi FindTexturePacker.cmake was inspected at the exact pinned Kodi commit. It confirms that WITH_TEXTUREPACKER is a host executable/path used during cross-compilation, while FreeBSD normally enables INTERNAL_TEXTUREPACKER_INSTALLABLE. Therefore the PS4 build supplies a native TexturePacker and explicitly sets INTERNAL_TEXTUREPACKER_INSTALLABLE=FALSE rather than changing HOST_CAN_EXECUTE_TARGET.
+The pinned Kodi `FindTexturePacker.cmake` was inspected at the exact pinned Kodi commit. It confirms that `WITH_TEXTUREPACKER` is a host executable/path used during cross-compilation, while FreeBSD normally enables `INTERNAL_TEXTUREPACKER_INSTALLABLE`. Therefore the PS4 build supplies a native TexturePacker and explicitly sets `INTERNAL_TEXTUREPACKER_INSTALLABLE=FALSE` rather than changing `HOST_CAN_EXECUTE_TARGET`.
 
-The native tool is built from tools/depends/native/TexturePacker/src with KODI_SOURCE_DIR pointing at the materialized Kodi tree, APP_NAME_LC=kodi, POSIX/Linux architecture defines, and the WSL host compilers /usr/bin/cc and /usr/bin/c++. It installs into the existing native prefix.
+The native tool is built from `tools/depends/native/TexturePacker/src` with `KODI_SOURCE_DIR` pointing at the materialized Kodi tree, `APP_NAME_LC=kodi`, POSIX/Linux architecture defines, and the WSL host compilers `/usr/bin/cc` and `/usr/bin/c++`. It installs into the existing native prefix.
 
-This is a build-system implementation only. The actual WSL build/configure result remains unverified until the synchronized checkout runs the bootstrap.
+The first synchronized configure-only validation reached native TexturePacker configuration but failed because `LZO2_LIBRARY` and `LZO2_INCLUDE_DIR` were missing. This was a host dependency issue, not a PS4 toolchain failure.
+
+The following Ubuntu 26.04.1 host packages are now installed and verified:
+
+    liblzo2-dev
+    libpng-dev
+    libgif-dev
+    libjpeg-dev
+
+No project-local replacement for these libraries was introduced. The next validation is to rerun the native host-tool build and continue through Kodi cross-configuration.
