@@ -2566,3 +2566,80 @@ symbol becomes an explicit PS4 porting item.
 
 The project must not start porting optional Kodi plug-ins before this base build
 is reproducible.
+
+## 42. R-004.2 — Toolchain runner and Kodi source strategy — 2026-09-30
+
+The next operational step is to install OpenOrbis on a dedicated build machine
+and turn that machine into a private GitHub Actions self-hosted runner.
+
+### Kodi source ownership
+
+The project does NOT need to vendor or duplicate the complete Kodi source tree.
+`references/kodi` is already a Git submodule pointing at the official Kodi
+repository. The superproject records the exact Kodi commit through the
+submodule gitlink, so a CI checkout with submodules can reproduce the same
+upstream source tree.
+
+This keeps the project structure:
+
+    kodi-ps4-test/
+      overlay/                 PS4-specific implementation
+      cmake/                   PS4 build integration
+      scripts/                 build/package automation
+      docs/                    continuity and research
+      references/kodi/         exact upstream Kodi checkout (submodule)
+      references/kodi-ps5/     comparative PS5 reference (submodule)
+
+The final PS4 PKG contains the compiled Kodi application and its runtime data;
+the full Git source tree is a build input, not something that must be copied
+into the PKG.
+
+### First runner
+
+Use OpenOrbis first, not the Sony SDK. The OpenOrbis documentation provides
+Windows and Linux installation paths, requires Clang/LLD and the
+`OO_PS4_TOOLCHAIN` environment variable, and includes the tools needed to
+produce the PS4 executable/package chain. citeturn0search0turn0search1
+
+Runner responsibilities:
+
+1. checkout `kodi-ps4-test` including submodules;
+2. verify the pinned Kodi submodule commit;
+3. install/verify OpenOrbis and LLVM/LLD;
+4. configure Kodi for the PS4 minimal profile;
+5. build Kodi;
+6. generate the PS4 executable and eventually the PKG;
+7. publish build artifacts privately where appropriate.
+
+The runner must not contain proprietary Sony SDK files for the OpenOrbis build.
+A later private Sony-SDK runner can be added separately if the SDK is legally
+available and a PS4-specific feature genuinely requires it.
+
+### Why self-hosted
+
+A normal GitHub-hosted runner should remain useful for repository/static checks,
+but the PS4 cross-toolchain is a machine-specific dependency. A private
+self-hosted runner gives the project a deterministic environment without
+putting the OpenOrbis installation into the Git repository.
+
+### Immediate order
+
+R-004.2 is therefore:
+
+1. prepare the OpenOrbis build machine;
+2. install the GitHub Actions self-hosted runner;
+3. verify a trivial OpenOrbis sample builds there;
+4. verify Kodi's submodule checkout and host-tool prerequisites;
+5. run Kodi CMake configure;
+6. fix the first real configuration/build errors;
+7. only after a successful cross-build, add PKG packaging to CI.
+
+Do not add the complete binary-add-on set yet. Kodi's add-on CMake system can
+fetch/build individual add-ons from pinned repositories later, so they can be
+introduced progressively after the base application works. citeturn0search3
+
+### Current status
+
+The repository already contains the Kodi submodule declaration and PS4 build
+overlay. What is missing is the executable build environment and the first real
+configure/build result. This is the next blocker to remove.
