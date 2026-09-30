@@ -1728,3 +1728,48 @@ The target triple and compiler/linker conventions are consistent with OpenOrbis'
 ### Next action
 
 Run the configure-only CMake/Ninja validation against the real OpenOrbis installation. If configuration fails, fix the first root cause revealed by CMake before attempting a full Kodi build.
+
+
+---
+
+## 21. R-002A — standalone GLES/Piglet + VideoOut POC design — 2026-09-30
+
+R-002A is a standalone graphics proof-of-concept, independent from Kodi. Its purpose is to establish the minimum PS4 graphics/presentation chain required by the future Kodi port:
+
+`OpenOrbis -> Piglet -> EGL 1.4 -> GLES 2.0 -> precompiled Piglet shaders -> textures/FBOs -> presentation`.
+
+The POC reuses the OpenOrbis Piglet bootstrap rather than inventing a separate EGL path. It probes:
+
+- GL/EGL identification and extensions;
+- NPOT texture upload;
+- RGBA8 framebuffer completeness;
+- float-texture support;
+- half-float-related capabilities;
+- the existing precompiled Piglet shader/render/presentation path.
+
+Runtime GLSL compilation is intentionally not required. The OpenOrbis sample demonstrates a precompiled shader-binary path, so the Kodi shader pipeline must eventually produce Piglet-compatible binaries as build artifacts.
+
+The repository now contains the source-level probe in `poc/gles-piglet/` and notes in `docs/GLES-POC-NOTES.md`.
+
+**Status:** source/build harness added; target-PS4 runtime validation remains pending.
+
+### R-002A acceptance direction
+
+A successful runtime POC must demonstrate EGL/GLES initialization, Piglet shader loading/linking, primitive rendering, texture upload, NPOT handling, FBO operation, presentation and stable synchronization. Optional capability failures should be recorded individually rather than treated as an automatic total failure.
+
+---
+
+## 22. R-002A.0 — shader binary prerequisite — 2026-09-30
+
+Before the POC can be considered hardware-validated, establish the exact reproducible shader-binary workflow:
+
+1. inspect the current OpenOrbis Piglet sample and shader-related files;
+2. identify the expected Piglet binary format;
+3. identify the host-side compiler/tool;
+4. produce one known-good vertex/fragment binary;
+5. verify loading through the PS4 Piglet shader-binary API;
+6. record the tool/version and build command.
+
+Do not assume generic GLSL compiler output is a valid Piglet shader binary.
+
+**Next action:** validate the POC build and shader/presentation path on the target PS4, then capture the runtime capability output in this document.
