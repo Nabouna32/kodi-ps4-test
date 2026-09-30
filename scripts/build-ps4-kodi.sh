@@ -2,8 +2,9 @@
 set -euo pipefail
 
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-KODI_SRC="${ROOT}/references/kodi"
+KODI_UPSTREAM_SRC="${ROOT}/references/kodi"
 BUILD_DIR="${ROOT}/build/ps4"
+KODI_SRC="${BUILD_DIR}/kodi-source"
 
 : "${OO_PS4_TOOLCHAIN:?Set OO_PS4_TOOLCHAIN to the OpenOrbis installation root}"
 
@@ -11,6 +12,12 @@ if [[ ! -f "${OO_PS4_TOOLCHAIN}/link.x" ]]; then
   echo "Invalid OO_PS4_TOOLCHAIN: ${OO_PS4_TOOLCHAIN}" >&2
   exit 1
 fi
+
+rm -rf "${KODI_SRC}"
+mkdir -p "${KODI_SRC}"
+
+echo "==> materializing pinned Kodi source into ${KODI_SRC}"
+git -C "${KODI_UPSTREAM_SRC}" archive --format=tar HEAD | tar -x -C "${KODI_SRC}"
 
 cmake \
   -DPROJECT_ROOT="${ROOT}" \
