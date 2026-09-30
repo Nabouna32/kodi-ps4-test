@@ -1,7 +1,7 @@
 diff --git a/tools/depends/configure.ac b/tools/depends/configure.ac
 --- a/tools/depends/configure.ac
 +++ b/tools/depends/configure.ac
-@@ -266,0 +267,9 @@
+@@ -266,0 +267,10 @@
 +  x86_64*-*-freebsd*)
 +    use_toolchain="${use_toolchain:-/opt/OpenOrbis/PS4Toolchain}"
 +    platform_cc=clang
@@ -12,7 +12,7 @@ diff --git a/tools/depends/configure.ac b/tools/depends/configure.ac
 +      use_linker=ld.lld
 +    fi
 +  ;;
-@@ -415,0 +416,12 @@
+@@ -415,0 +416,13 @@
 +  x86_64*-*-freebsd*)
 +    if test "x$use_cpu" = "xauto"; then
 +      use_cpu="x86_64"
