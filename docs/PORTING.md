@@ -1947,3 +1947,46 @@ The highest-confidence findings are:
 The most valuable next step is therefore not more generic web searching, but inspection of an actual legitimate SDK 4.508.021 installation if one is available. A recursive filename/search for terms such as piglet, shacc, shader, glsl, essl, pssl, compiler, and scePrecompiledShaders should identify the relevant host tools and documentation without guessing their names.
 
 No SDK/proprietary files were added to the repository.
+
+## 34. R-002A.11 — nouvelle vérification publique de la piste SDK 4.508.021 — 2026-09-30
+
+Une nouvelle recherche web ciblée a été effectuée sur les combinaisons exactes `4.508.021` + Piglet, Shacc, ESSLC et shader compiler.
+
+### 34.1 Résultat
+
+Aucune nouvelle source publique fiable ne permet d'identifier un exécutable hôte précis ni son chemin d'installation dans le SDK 4.508.021.
+
+Les recherches exactes ne produisent pas de résultat exploitable permettant de remplacer l'incertitude documentée en section 33 par un nom de programme supposé.
+
+### 34.2 Décision de recherche
+
+Il n'est pas pertinent de poursuivre une recherche web générique sur des noms de compilateurs hypothétiques. La prochaine vérification doit porter sur **une installation locale légitime du SDK 4.508.021**, si elle est disponible.
+
+Recherche à effectuer dans cette installation :
+
+- noms contenant `piglet`;
+- `shacc`;
+- `shader`;
+- `glsl`;
+- `essl`;
+- `pssl`;
+- `compiler`;
+- `scePrecompiledShaders`;
+- documentation et scripts de build associés.
+
+Cette inspection devra distinguer explicitement :
+
+1. modules runtime PS4 (`.sprx`);
+2. bibliothèques/outils host ;
+3. compilateurs offline ;
+4. outils de capture/dump ;
+5. formats de sortie réellement destinés à Piglet.
+
+### 34.3 Impact
+
+La stratégie R-002A ne change pas.
+
+Le chemin immédiatement exploitable reste la preuve de concept GLES/Piglet avec des blobs Piglet connus et, si nécessaire, une génération/capture effectuée dans un environnement de développement légitime.
+
+Aucun fichier SDK ou fichier propriétaire n'est ajouté au dépôt.
+
