@@ -69,3 +69,11 @@ The LLVM/Clang/LLD 18.1.8 configure-only experiment reproduced the exact same Op
 The host LLVM major version is therefore not sufficient to explain the blocker. No repository pin or compatibility workaround was added.
 
 The next checkpoint is a direct comparison of the OpenOrbis v0.5.4 libc++/math header integration and its expected upstream build environment.
+
+## Current toolchain checkpoint — OpenOrbis C++ include-order root cause
+
+The repeated cmath failure has been traced to the generated PS4 C++ include order.
+
+The current overlay emits the SDK C include directory before the OpenOrbis libc++ directory. OpenOrbis' libc++ cmath relies on its own math.h wrapper, which uses #include_next and includes <stdlib.h> before cmath imports ::abs.
+
+The immediate checkpoint is a minimal compile proving that reversing the C++ include order resolves the error. Only that narrow ordering change should then be applied to the repository.
