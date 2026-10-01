@@ -35,6 +35,8 @@ file(COPY "${PROJECT_ROOT}/cmake/scripts/ps4"
   DESTINATION "${KODI_SRC}/cmake/scripts")
 file(COPY "${PROJECT_ROOT}/overlay/xbmc/platform/ps4"
   DESTINATION "${KODI_SRC}/xbmc/platform")
+file(COPY "${PROJECT_ROOT}/overlay/tools/depends/target/zlib/Makefile"
+  DESTINATION "${KODI_SRC}/tools/depends/target/zlib")
 execute_process(
   COMMAND patch --dry-run -p1 -i "${PROJECT_ROOT}/overlay/tools/depends/0001-openorbis-ps4-target-depends.patch"
   WORKING_DIRECTORY "${KODI_SRC}"
