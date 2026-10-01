@@ -987,3 +987,31 @@ There are two unresolved possibilities: CMake's cross-compilation test is failin
 ### Next single diagnostic
 
 Use the actual OpenOrbis target compiler/sysroot to compile and link the iconv API directly, then inspect the target libc/archive symbols and header definitions. Do not modify the repository before that evidence is classified.
+
+
+## Latest handoff — 2026-10-01 — OpenOrbis iconv direct test
+
+The Iconv investigation now has a stronger PS4-side result.
+
+### Validated facts
+
+A standalone C program using the exact iconv API relevant to CMake's implicit detection was tested with the installed OpenOrbis toolchain:
+
+- `<iconv.h>` is present in `$OO_PS4_TOOLCHAIN/include`;
+- the C compiler does not see that header when only the sysroot is supplied;
+- explicitly adding `-isystem $OO_PS4_TOOLCHAIN/include` makes compilation succeed;
+- linking with `-fuse-ld=lld`, `-lc` and `-lkernel` succeeds;
+- the resulting ELF is FreeBSD x86-64;
+- the only linker warning is the expected missing `_start` entry point in this minimal test.
+
+This is consistent with Kodi Autoconf's earlier result that `iconv_open` is supplied by libc.
+
+### Current conclusion
+
+The current evidence points to a **CMake/C cross-toolchain include-path propagation problem**, not a missing PS4 libiconv library.
+
+This remains a detection/integration diagnosis. It is not yet a justification for forcing `Iconv_IS_BUILT_IN` or adding GNU libiconv, and it does not yet establish semantic sufficiency for every Kodi legacy encoding.
+
+### Next single step
+
+Create a minimal CMake reproduction using the repository's exact PS4 toolchain and CMake 4.2.3. Reproduce the `Iconv_IS_BUILT_IN` check and compare the generated C test command with the successful standalone Clang command. Only after that comparison should the repository toolchain be changed.
