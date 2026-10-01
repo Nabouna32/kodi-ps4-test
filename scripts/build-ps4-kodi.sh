@@ -45,7 +45,9 @@ echo "==> bootstrapping Kodi target dependency configuration"
 echo "==> building Kodi native dependency toolchain"
 make -C "${KODI_SRC}/tools/depends/native" \
   -j"${JOBS}" \
-  native JsonSchemaBuilder
+  native
+make -C "${KODI_SRC}/tools/depends/native/JsonSchemaBuilder" \
+  -j"${JOBS}"
 
 TARGET_DEPS_PREFIX="${DEPENDS_ROOT}/x86_64-pc-freebsd12-release"
 NATIVEPREFIX="${DEPENDS_ROOT}/x86_64-linux-gnu-native"
