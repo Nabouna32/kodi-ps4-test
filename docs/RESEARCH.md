@@ -343,3 +343,37 @@ The PS5 reference provides a useful comparison. Its PS5 toolchain explicitly set
 For the PS4 build, the target HarfBuzz `.pc` is already installed under the Kodi target prefix. The remaining diagnostic question is whether the target prefix also contains the required `freetype2.pc` from the `freetype2-noharfbuzz` bootstrap dependency. If it does, the likely integration gap is simply that the PS4 CMake configure has no target `PKG_CONFIG_LIBDIR`. If it does not, the FreeType recipe's package metadata/install behavior must be understood before changing discovery configuration.
 
 No repository implementation change is justified yet.
+
+
+## R-004.27 — Target pkg-config routing root cause and minimal fix
+
+**Status:** root cause confirmed; repository fix implemented; WSL configure-only validation pending.
+
+The target dependency prefix contains the required pkg-config metadata in two different FreeBSD-style locations:
+
+- `lib/pkgconfig/freetype2.pc`
+- `libdata/pkgconfig/harfbuzz.pc`
+
+A controlled lookup using only the target `libdata/pkgconfig` directory finds HarfBuzz itself and reports its dependency on `freetype2 >= 12.0.6`, but cannot find FreeType because `freetype2.pc` is in the sibling `lib/pkgconfig` directory. This exactly explains why Kodi's `FindHarfBuzz.cmake` rejected the otherwise correctly built HarfBuzz package.
+
+The repository PS4 CMake toolchain previously did not configure target-specific pkg-config routing. Consequently, Kodi's `SEARCH_EXISTING_PACKAGES()` fallback could invoke the host `pkg-config` without an isolated target metadata set.
+
+The minimal repository fix is now implemented in `cmake/toolchains/openorbis-ps4-kodi.cmake`: when `DEPENDS_PATH` is available, `PKG_CONFIG_LIBDIR` is set to both:
+
+    <DEPENDS_PATH>/lib/pkgconfig:<DEPENDS_PATH>/libdata/pkgconfig
+
+This is deliberately `PKG_CONFIG_LIBDIR`, not a host-contaminating `PKG_CONFIG_PATH`, so target package discovery is restricted to the PS4 dependency prefix. The two directories are included because the current Kodi target dependency graph demonstrably installs FreeType and HarfBuzz metadata in different locations.
+
+The approach is consistent with the PS5 reference, which explicitly isolates target pkg-config metadata with `PKG_CONFIG_LIBDIR`, while adapting the paths to the actual PS4/Kodi target prefix rather than copying the PS5 layout.
+
+### Implementation
+
+Commit:
+
+    7b5d60af7e0e63dcbc8d59f049720069e56d3ad5
+
+No Kodi upstream source, HarfBuzz source, FreeType recipe, OpenOrbis header, compiler flag, linker flag, or target library was changed.
+
+### Required validation
+
+Run the existing clean `CONFIGURE_ONLY=1` workflow from current `main`. The expected result is that Kodi's `FindHarfBuzz.cmake` resolves HarfBuzz and its FreeType dependency and proceeds beyond the previous blocker. Do not start a full Kodi build until configure-only validation succeeds.
