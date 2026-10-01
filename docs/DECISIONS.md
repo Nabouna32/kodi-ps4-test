@@ -67,3 +67,21 @@ The LLVM/Clang/LLD 18.1.8 experiment was executed against the real Kodi HarfBuzz
 Therefore LLVM 18 is not accepted as the fix for the current OpenOrbis v0.5.4 header mismatch.
 
 The repository continues to avoid hard-coding an Ubuntu-specific LLVM version until a real compatibility requirement is demonstrated. LLVM 18 remains installed only as an available diagnostic baseline.
+
+## D-013 — Preserve OpenOrbis libc++ header precedence over SDK C headers
+
+The current HarfBuzz failure is caused by C++ header search order, not by a HarfBuzz source defect or a required LLVM version change.
+
+OpenOrbis' forked libc++ provides a math.h wrapper that includes the SDK C math.h with #include_next and includes <stdlib.h> for C++. The libc++ cmath header expects that wrapper to be selected before the SDK C include directory.
+
+Therefore, when validated, the PS4 C++ build must place:
+
+    $OO_PS4_TOOLCHAIN/include/c++/v1
+
+before:
+
+    $OO_PS4_TOOLCHAIN/include
+
+for C++ header lookup.
+
+No OpenOrbis header copy, HarfBuzz patch, or compiler-version workaround is justified for this issue.
