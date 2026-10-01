@@ -175,3 +175,21 @@ LLVM/Clang/LLD 18.1.8 has now been installed in parallel through Ubuntu packages
 LLVM 21 remains installed and has not been removed. The repository toolchain still uses generic compiler names and does not hard-code a host LLVM version.
 
 LLVM 18 is currently an experiment to validate the OpenOrbis v0.5.4 header/libc++ compatibility hypothesis. It is not yet established as the permanent host LLVM version. The next validation must select LLVM 18 explicitly without changing repository files, then rerun the smallest relevant build/configuration path.
+
+## LLVM 18 compatibility experiment — negative result
+
+LLVM/Clang/LLD 18.1.8 was installed alongside LLVM/LLD 21.1.8 and selected explicitly through:
+
+    PATH=/usr/lib/llvm-18/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH
+
+The existing configure-only PS4 build was then rerun without repository changes.
+
+HarfBuzz still fails at the OpenOrbis target header boundary:
+
+    include/c++/v1/cmath:341:9: error: no member named 'abs' in the global namespace
+
+with the compiler identifying include/math.h and its fabs declaration.
+
+This experiment does not establish LLVM 18 as a compatible or required host version for the Kodi PS4 build. The repository continues to use generic compiler names and does not pin an LLVM major version.
+
+**Next:** diagnose the OpenOrbis v0.5.4 libc++/math header integration directly. Do not introduce a Kodi-side header workaround yet.
