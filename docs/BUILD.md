@@ -288,3 +288,23 @@ Do not modify the repository or add libiconv until this experiment identifies th
 
 ### Follow-up diagnostic — Iconv header/log lookup
 The OpenOrbis toolchain does contain `include/iconv.h`. The first attempted `grep` produced no CMake log output because the shell command was split across lines after the grep pattern, so the filename was not passed to `grep` as intended. No conclusion can yet be drawn about the actual `Iconv_IS_BUILT_IN` compile failure. The next action is to rerun the log inspection with each `grep` command on one line and verify the actual CMake build-tree log location before reproducing the test.
+
+
+## Iconv investigation — official Kodi vs PS5 reference
+
+The Iconv blocker was audited against the actual pinned Kodi sources and the PS5 reference rather than by copying the PS5 solution.
+
+Official Kodi determines `NEED_LIBICONV` from its Autoconf test of `iconv_open`. The current PS4 target result is `none required`, so Kodi's own target dependency graph does not stage libiconv. Its CMake finder then delegates to CMake's standard Iconv finder, which currently rejects the PS4 configuration.
+
+The PS5 reference intentionally overrides that discovery because PS5's libc iconv behavior is insufficient for Kodi's legacy encodings; it links GNU libiconv and uses a modified finder. This is a PS5-specific technical reference, not evidence that PS4 needs the same implementation.
+
+### Current decision boundary
+
+Do not yet:
+
+- add PS4 libiconv;
+- force `Iconv_IS_BUILT_IN`;
+- patch Kodi's `FindIconv.cmake`;
+- copy the PS5 Iconv overlay.
+
+The next validation is a minimal direct OpenOrbis target iconv compile/link plus inspection of the target libc symbols/headers. This will distinguish a CMake cross-detection problem from a real PS4 libc/iconv limitation.
