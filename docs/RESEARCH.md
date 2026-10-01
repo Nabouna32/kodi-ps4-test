@@ -322,3 +322,11 @@ Corrected order:
 Result: the minimal program including `<cmath>` and calling `std::abs(double)` compiles successfully.
 
 This experimentally validates the previously identified root cause. The correct fix is therefore in the repository's C++ include ordering, not in HarfBuzz, Kodi source, or OpenOrbis headers.
+
+## R-004.25 — C++ include-order correction implemented
+
+**Status: implementation complete; WSL validation pending.**
+
+The validated root cause from R-004.24 was implemented in the two repository-owned PS4 target integrations. C++ target flags now place OpenOrbis libc++ (`include/c++/v1`) before the SDK C headers (`include`). C compilation retains the SDK include path without the libc++ precedence requirement.
+
+The change is intentionally limited to include ordering. No target triple, sysroot, linker, CRT, library, Kodi or HarfBuzz changes were made.
