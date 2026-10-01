@@ -387,3 +387,32 @@ CMake 4.2's implicit-iconv test fails while Kodi Autoconf considers iconv availa
 Run a minimal direct OpenOrbis target iconv compile/link and inspect the target libc/archive symbols relevant to `iconv_open`, `iconv` and `iconv_close`. This is the next single diagnostic step before any repository implementation.
 
 No repository source is changed by this investigation. Full Kodi build remains blocked until configure-only succeeds.
+
+
+## Latest validation — 2026-10-01 — OpenOrbis iconv API direct test
+
+The direct target experiment narrowed the Iconv blocker substantially.
+
+A standalone C program including `<iconv.h>` initially failed to compile with the OpenOrbis sysroot alone because `$OO_PS4_TOOLCHAIN/include/iconv.h` was not visible to the C compiler.
+
+When the OpenOrbis C SDK include directory was explicitly added, compilation succeeded. The same test then linked successfully with:
+
+`-fuse-ld=lld -lc -lkernel`
+
+and produced a FreeBSD x86-64 PIE ELF. The only linker diagnostic was the expected minimal-test warning about the missing `_start` entry point.
+
+Therefore the OpenOrbis target libc exposes the iconv API used by CMake's implicit detection test, and the current evidence does not justify adding GNU libiconv.
+
+### Current blocker
+
+Kodi CMake's `FindIconv.cmake` still reports:
+
+`Could NOT find Iconv (missing: Iconv_LIBRARY)`
+
+despite the direct target test succeeding once the SDK C include path is visible.
+
+The remaining issue is to reproduce CMake's exact implicit-iconv test and determine why the repository's C cross-compilation environment does not expose the OpenOrbis C headers to that test.
+
+### Next action
+
+Run the minimal CMake reproduction using the repository PS4 toolchain. Do not modify the Kodi dependency graph or add host `libiconv-dev` before this experiment is classified.
