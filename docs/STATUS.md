@@ -25,9 +25,9 @@ The native host-tools bootstrap is validated for the currently required tools:
 - TexturePacker: installed and accepted by Kodi
 - JsonSchemaBuilder: installed as `JsonSchemaBuilder`, which the pinned Kodi finder accepts
 
-Kodi now reaches the real PS4 cross-configuration, with `Cross-Compiling: TRUE`, `System type: FreeBSD`, `Core system type: ps4`, and `ARCH x86_64-ps4`.
+Kodi reaches and completes the real PS4 cross-configuration, with `Cross-Compiling: TRUE`, `System type: FreeBSD`, `Core system type: ps4`, and `ARCH x86_64-ps4`.
 
-The next configure blocker was libbluray: Kodi's optional `Bluray` dependency attempted to find target LibXml2 while configuring the internal libbluray build. Blu-ray playback is not required for the first bring-up milestone (Kodi GUI + GLES + PS4 controller), so the durable correction is to disable Blu-ray in the PS4 bring-up profile rather than install an unrelated host dependency.
+The earlier configure blocker was libbluray: Kodi's optional `Bluray` dependency attempted to find target LibXml2 while configuring the internal libbluray build. Blu-ray playback is not required for the first bring-up milestone (Kodi GUI + GLES + PS4 controller), so the durable correction is to disable Blu-ray in the PS4 bring-up profile rather than install an unrelated host dependency.
 
 The PS4 overlay now explicitly excludes Bluray from optional platform dependencies and forces `ENABLE_BLURAY=OFF`.
 
@@ -49,11 +49,11 @@ Until the next configure-only validation succeeds:
 
 ## Next action
 
-The exact pinned Kodi source was re-audited at commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`. The final `case $use_platform` allowlist blocker was corrected in the repository-owned overlay. The next blocker is Kodi's target architecture detection in `tools/depends/m4/xbmc_arch.m4`: the target host is `x86_64-pc-freebsd12`, but the pinned source accepts `amd64-*-freebsd*` and `i386-*-freebsd*`, not `x86_64-*-freebsd*`.
+The exact pinned Kodi source remains at commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`. The repository-owned overlay now gets through Kodi's platform and target-architecture checks, and the latest WSL run confirmed that the `tools/depends` configure phase completes.
 
-The repository-owned patch `overlay/tools/depends/0001-openorbis-ps4-target-depends.patch` was updated in commit `eadc6b5cf3a45328a2dc34bebecfd559df5be7ba` to add the missing `x86_64-*-freebsd*` target architecture branch. The branch emits the same `TARGET_POSIX -DTARGET_FREEBSD` definitions already used for FreeBSD targets; it does not alter the native Linux build case. No Kodi upstream source or submodule file was modified.
+The current blocker is the generated native CMake path used by Kodi's target dependency Makefiles: Kodi expects `x86_64-linux-gnu-native`, while our script exposed the compatibility path as `x86_64-pc-linux-gnu-native`. The durable fix belongs in `scripts/build-ps4-kodi.sh`, not in Kodi or the dependency recipe.
 
-This change is structurally audited against the exact pinned source. Local WSL execution is still required to validate that the unified patch applies cleanly and that configuration proceeds beyond target architecture detection. The authoritative validation command is:
+The architecture correction is already validated by WSL. The remaining authoritative validation is the native-prefix correction. The authoritative validation command is:
 
 ```bash
 cd ~/projects/kodi-ps4-test

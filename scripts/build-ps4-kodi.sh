@@ -71,7 +71,7 @@ echo "==> bootstrapping Kodi target dependency configuration"
 )
 
 TARGET_DEPS_PREFIX="${DEPENDS_ROOT}/x86_64-pc-freebsd12-release"
-EXPECTED_NATIVEPREFIX="${DEPENDS_ROOT}/x86_64-pc-linux-gnu-native"
+EXPECTED_NATIVEPREFIX="${DEPENDS_ROOT}/x86_64-linux-gnu-native"
 if [[ ! -e "${EXPECTED_NATIVEPREFIX}" ]]; then
   ln -s "${NATIVEPREFIX}" "${EXPECTED_NATIVEPREFIX}"
 fi
