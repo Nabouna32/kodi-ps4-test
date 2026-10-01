@@ -39,3 +39,8 @@ For historical continuity, the repository Git history remains authoritative for 
 ## Current build-system checkpoint
 
 The official Kodi native TexturePacker mechanism and the PS5 host-tool implementation have been compared. The PS4 project keeps a focused native TexturePacker bootstrap that builds Kodi's own CMake source for WSL/Linux, because the full Kodi native-dependency orchestration is broader than the current need. The PS5 approach provides independent evidence for this host/target separation. The next checkpoint is executable configure-only validation after synchronizing WSL with `origin/main`.
+## Current build-system checkpoint — host CMake
+
+The native dependency investigation established that the official Kodi CMake bootstrap explicitly requests system CURL. The first direct bootstrap failed because WSL lacked the CURL development package. `libcurl4-openssl-dev` is now installed and verified through pkg-config.
+
+This is a host-tool prerequisite, not a PS4 dependency. The next checkpoint is to rerun the unchanged CMake bootstrap and verify the generated native Makefile before proceeding to the remaining explicit native-tool targets.
