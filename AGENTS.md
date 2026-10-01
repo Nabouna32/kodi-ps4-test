@@ -154,3 +154,8 @@ When an official Kodi native recipe requires a host library (for example CMake b
 This rule applies only to the **host**. It must not blur the target boundary: a Linux/WSL package must never be used as a substitute for a PS4 target library. PS4 target dependencies remain built for the OpenOrbis/FreeBSD target and live in the target dependency prefix.
 
 When a dependency is optional for the current bring-up milestone, classify it first and avoid installing it only to unblock an unnecessary feature. When the dependency is genuinely required by a host build tool, installing it is the preferred normal solution.
+## Source inspection rule
+
+When the information needed to diagnose or implement a change already exists in a checked-in repository, inspect the actual file or repository source directly (GitHub/online source or the checked-out file). Do not ask the user to run broad grep searches to discover source-code behavior that we can inspect ourselves. Prefer direct file inspection and targeted source retrieval.
+
+Local shell commands remain appropriate for generated build artifacts, runtime state, toolchain/environment validation, and other information that does not exist as checked-in source. For those cases, prefer a direct targeted command such as cat, sed, or a specific file query rather than a broad recursive search.
