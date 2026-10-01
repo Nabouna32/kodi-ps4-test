@@ -253,3 +253,8 @@ The pinned official Kodi source provides `tools/depends/target/fribidi/Makefile`
 The current PS4 build script does not invoke this recipe; it currently requests only the target `harfbuzz` dependency. The next change must therefore be evaluated as target dependency graph integration, not as a CMake finder workaround. Host Linux FriBidi packages must not be used to satisfy the PS4 target.
 
 The PS5 reference confirms the target-side dependency pattern through its `ps5-payload-libfribidi` dependency, but it is not a source of PS4 binaries.
+
+
+## FriBidi implementation — 2026-10-01
+
+The PS4 target dependency bootstrap now requests the official Kodi `fribidi` recipe together with `harfbuzz` before the Kodi CMake configure stage. This is the minimal dependency-graph correction for the `FindFriBidi.cmake` blocker. Implementation commit: `2afb9021ad1b35f1d2698d94cdacf80fe16e7100`. WSL validation is pending; do not start the full Kodi build until configure-only succeeds.
