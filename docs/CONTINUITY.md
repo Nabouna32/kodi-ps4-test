@@ -476,3 +476,32 @@ Do not start the target HarfBuzz build or full Kodi build until this native-tool
 ### Handoff procedure
 
 A new conversation must first read this file, `AGENTS.md`, `docs/STATUS.md`, `docs/BUILD.md`, `docs/DECISIONS.md`, `docs/RESEARCH.md` and `docs/PORTING.md`, then verify current `main` and the actual repository state. Historical hashes in this document are context only; GitHub `main` is authoritative.
+
+
+## Latest handoff — 2026-10-01 — PS4 Meson linker flag correction
+
+The target HarfBuzz bootstrap reached Meson but failed during linker detection because the PS4 overlay generated:
+
+    -fuse-ld=ld.lld
+
+with the WSL Clang 21 toolchain, which reports that linker name as invalid for `-fuse-ld`. Direct inspection of pinned Kodi `tools/depends/configure.ac` confirmed that its generated `cross-file.meson` forwards `platform_ldflags` into Meson's `c_link_args` and `cpp_link_args`. The source of the bad flag was therefore our repository-owned PS4 overlay, not Meson itself.
+
+The minimal correction was committed to `main`:
+
+    943f8cbf895ffcf69743d73ff1ecb4ba300c2618
+
+    fix: use lld driver for PS4 Meson linker
+
+The PS4 overlay now uses:
+
+    -fuse-ld=lld
+
+while preserving the OpenOrbis PS4 target, `link.x`, sysroot, CRT and PS4 libraries unchanged.
+
+The fix is implemented but **not yet runtime/build-validated on WSL**.
+
+### Immediate next step
+
+Run the configure-only build from a clean current `main` and inspect the generated native/target state. The critical verification is that the generated HarfBuzz cross-file contains `-fuse-ld=lld`, then Meson passes linker detection and HarfBuzz configuration/build proceeds.
+
+Do not change any additional linker/toolchain flags unless this validation demonstrates a separate failure.
