@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Current main HEAD at handoff preparation: `df18c90` (`docs: refresh current main handoff head`). Always verify the current GitHub HEAD before relying on historical hashes.
+Current main HEAD at handoff preparation: `f19f3ef32dfef27d901671cf4413cdad2ca17ce5` (`docs: record PS4 platform validation fix`). Always verify the current GitHub HEAD before relying on historical hashes.
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -379,22 +379,32 @@ This is the **current exact blocker**. It is not a compiler, OpenOrbis, HarfBuzz
 
 ### Next action
 
-1. Inspect the exact pinned final `case $use_platform` block and all `target_platform` consumers.
-2. Add `ps4)` to the repository-owned overlay at the exact pinned insertion point.
-3. Re-audit the patch against the exact pinned Kodi source.
-4. Run:
-   ```bash
-   cd ~/projects/kodi-ps4-test
-   git fetch origin
-   git reset --hard origin/main
-   export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
-   export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
-   CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
-   ```
-5. Verify that `tools/depends` proceeds beyond platform validation and reaches the actual target dependency build/discovery.
-6. Stop at the next blocker and classify it before broadening scope.
+The current exact blocker is Kodi's final `case $use_platform` allowlist in `tools/depends/configure.ac`. The PS4 branch already reaches `target_platform=ps4`, but the final allowlist rejected it as `unsupported platform (ps4)`.
 
-Do not start a full Kodi build until configure succeeds.
+The repository-owned patch `overlay/tools/depends/0001-openorbis-ps4-target-depends.patch` was updated in commit `24941fa574a4f43a99c0441bc5f77b21d68d82f4` to add only:
+
+``
+  ps4)
+    ;;
+``
+
+at the exact pinned validation block. This modifies only our overlay patch; the Kodi submodule/upstream source remains untouched.
+
+Documentation was refreshed in commit `f19f3ef32dfef27d901671cf4413cdad2ca17ce5`. The patch change is structurally audited against Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`, but WSL must still perform the authoritative apply/configure validation.
+
+Run:
+
+```bash
+cd ~/projects/kodi-ps4-test
+git fetch origin
+git reset --hard origin/main
+export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
+export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
+CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
+```
+
+Then stop at the next blocker and classify it before making another change. Do not start a full Kodi build until configure succeeds.
+
 
 ## Milestones
 
