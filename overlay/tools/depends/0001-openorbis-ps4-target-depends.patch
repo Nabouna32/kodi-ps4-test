@@ -24,7 +24,7 @@ diff --git a/tools/depends/configure.ac b/tools/depends/configure.ac
 +    platform_cflags="--target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -isysroot $use_toolchain -isystem $use_toolchain/include"
 +    platform_cxxflags="$platform_cflags -isystem $use_toolchain/include/c++/v1"
 +    optimize_flags="-O2"
-+    platform_ldflags="--target=x86_64-pc-freebsd12-elf -fuse-ld=ld.lld -nostdlib -pie -Wl,--script=$use_toolchain/link.x -Wl,--eh-frame-hdr -L$use_toolchain/lib $use_toolchain/lib/crt1.o -lc -lkernel -lc++"
++    platform_ldflags="--target=x86_64-pc-freebsd12-elf -fuse-ld=lld -nostdlib -pie -Wl,--script=$use_toolchain/link.x -Wl,--eh-frame-hdr -L$use_toolchain/lib $use_toolchain/lib/crt1.o -lc -lkernel -lc++"
 +  ;;
 diff --git a/tools/depends/configure.ac b/tools/depends/configure.ac
 --- a/tools/depends/configure.ac
