@@ -633,3 +633,47 @@ Only after this comparison should a repository adaptation be considered.
 ### Scope boundary
 
 Do not patch HarfBuzz, suppress the abs error, or modify OpenOrbis headers as a workaround before the header integration root cause is established. Renderer, controller, audio, video, packaging, runtime and self-hosted CI remain out of scope.
+
+## Latest handoff — 2026-10-01 — OpenOrbis C++ header root cause identified
+
+The LLVM 18 experiment did not change the failure. The investigation then compared the installed OpenOrbis v0.5.4 header behavior with the OpenOrbis libc++ fork.
+
+### Root cause
+
+OpenOrbis ships a forked libc++ (OpenOrbis/llvm-project). Its libcxx/include/cmath does:
+
+    #include <math.h>
+    ...
+    using ::abs;
+
+Its corresponding libcxx/include/math.h is a wrapper that:
+- performs #include_next <math.h> to reach the SDK C math header;
+- includes <stdlib.h> for C++;
+- therefore provides the global abs declaration expected by cmath.
+
+Our PS4 target flags currently put:
+
+    -isystem $OO_PS4_TOOLCHAIN/include
+    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
+
+The first directory therefore wins when cmath asks for <math.h>, so it gets the raw SDK C math.h instead of libc++'s wrapper. That raw header exposes fabs but not abs, exactly matching the compiler diagnostic.
+
+This also explains why changing LLVM 21 to LLVM 18 had no effect.
+
+Independent OpenOrbis compatibility documentation confirms the required design: libc++'s directory must be ahead of the SDK C headers because libc++ wraps the C headers and relies on #include_next.
+
+### Validation still required
+
+Do not modify the repository yet. Run a minimal <cmath> cross-compile twice:
+- current order: SDK C include first;
+- corrected order: libc++ include first.
+
+Expected:
+- current order reproduces using ::abs;
+- corrected order compiles.
+
+If confirmed, the implementation should change only the PS4 C++ include ordering in the generated target flags/toolchain integration. No HarfBuzz or OpenOrbis header modification is planned.
+
+### Scope boundary
+
+Renderer, controller, audio, video, packaging, runtime and self-hosted CI remain out of scope.
