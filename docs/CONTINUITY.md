@@ -373,24 +373,23 @@ The WSL configure-only run confirmed:
 - the compiler test succeeds;
 - cross-compilation is detected.
 
-The remaining blocker is the final Kodi platform validation in `tools/depends/configure.ac`: the command passes `--with-platform=ps4`, the PS4 branch sets `target_platform=ps4`, but the final `case $use_platform` currently accepts only the upstream platform names and rejects `ps4` with `unsupported platform (ps4)`.
+The final Kodi platform validation blocker in `tools/depends/configure.ac` was corrected in the repository-owned overlay: `ps4)` is now accepted by the final `case $use_platform` allowlist. The next configure run exposed the next target-side architecture blocker in `tools/depends/m4/xbmc_arch.m4`: the target host is `x86_64-pc-freebsd12`, while the pinned source only matches `amd64-*-freebsd*` and `i386-*-freebsd*`.
 
 This is the **current exact blocker**. It is not a compiler, OpenOrbis, HarfBuzz, or patch-format failure.
 
 ### Next action
 
-The current exact blocker is Kodi's final `case $use_platform` allowlist in `tools/depends/configure.ac`. The PS4 branch already reaches `target_platform=ps4`, but the final allowlist rejected it as `unsupported platform (ps4)`.
+The repository-owned patch `overlay/tools/depends/0001-openorbis-ps4-target-depends.patch` was updated in commit `eadc6b5cf3a45328a2dc34bebecfd559df5be7ba` to add only:
 
-The repository-owned patch `overlay/tools/depends/0001-openorbis-ps4-target-depends.patch` was updated in commit `24941fa574a4f43a99c0441bc5f77b21d68d82f4` to add only:
+```
+  x86_64-*-freebsd*)
+     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_FREEBSD")
+     ;;
+```
 
-``
-  ps4)
-    ;;
-``
+to the **target** (`$host`) architecture case. The native Linux (`$build`) case is intentionally unchanged. This modifies only our overlay patch; the Kodi submodule/upstream source remains untouched.
 
-at the exact pinned validation block. This modifies only our overlay patch; the Kodi submodule/upstream source remains untouched.
-
-Documentation was refreshed in commit `f19f3ef32dfef27d901671cf4413cdad2ca17ce5`. The patch change is structurally audited against Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`, but WSL must still perform the authoritative apply/configure validation.
+The change is structurally audited against Kodi commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`, but WSL must perform the authoritative apply/configure validation.
 
 Run:
 
