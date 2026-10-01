@@ -98,3 +98,11 @@ Therefore the PS4 C++ target integration must use:
     -isystem $OO_PS4_TOOLCHAIN/include
 
 Only the ordering is to change. Target triple, sysroot, linker, CRT and libraries remain unchanged.
+
+## D-015 — Implement the validated OpenOrbis libc++ include ordering
+
+**Status: implemented; validation pending.**
+
+The validated D-014 ordering is now applied to both repository-owned PS4 C++ integrations. C++ uses OpenOrbis libc++ headers before the SDK C headers. C target flags retain the SDK C include path independently.
+
+No other compiler, linker or dependency behavior was changed.
