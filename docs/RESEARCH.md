@@ -437,3 +437,6 @@ Do not:
 - copy the PS5 iconv/libiconv solution.
 
 The immediate goal is only to establish why CMake's exact implicit-iconv test fails while Kodi's target Autoconf test succeeds.
+
+### Follow-up diagnostic — Iconv header/log lookup
+The OpenOrbis toolchain does contain `include/iconv.h`. The first attempted `grep` produced no CMake log output because the shell command was split across lines after the grep pattern, so the filename was not passed to `grep` as intended. No conclusion can yet be drawn about the actual `Iconv_IS_BUILT_IN` compile failure. The next action is to rerun the log inspection with each `grep` command on one line and verify the actual CMake build-tree log location before reproducing the test.
