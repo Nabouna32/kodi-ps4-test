@@ -44,3 +44,8 @@ The official Kodi native TexturePacker mechanism and the PS5 host-tool implement
 The native dependency investigation established that the official Kodi CMake bootstrap explicitly requests system CURL. The first direct bootstrap failed because WSL lacked the CURL development package. `libcurl4-openssl-dev` is now installed and verified through pkg-config.
 
 This is a host-tool prerequisite, not a PS4 dependency. The next checkpoint is to rerun the unchanged CMake bootstrap and verify the generated native Makefile before proceeding to the remaining explicit native-tool targets.
+
+
+## Current build-system checkpoint — CMake bootstrap resolved
+
+The official Kodi native CMake bootstrap now succeeds after installing the required WSL host development package `libcurl4-openssl-dev`. The native `Makefile` is generated successfully. The next checkpoint is explicit native-tool dependency validation, followed by the target HarfBuzz path.
