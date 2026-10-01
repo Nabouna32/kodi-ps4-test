@@ -505,3 +505,32 @@ The fix is implemented but **not yet runtime/build-validated on WSL**.
 Run the configure-only build from a clean current `main` and inspect the generated native/target state. The critical verification is that the generated HarfBuzz cross-file contains `-fuse-ld=lld`, then Meson passes linker detection and HarfBuzz configuration/build proceeds.
 
 Do not change any additional linker/toolchain flags unless this validation demonstrates a separate failure.
+
+
+## Latest validation result — 2026-10-01 — HarfBuzz C++ header incompatibility
+
+The Meson linker correction was validated far enough to pass the previous linker-detection blocker: HarfBuzz now reaches actual C++ compilation with the PS4 target.
+
+The new blocker is repeated in all failing HarfBuzz translation units:
+
+    /home/benjamin/opt/OpenOrbis/PS4Toolchain/include/c++/v1/cmath:341:9:
+    error: no member named 'abs' in the global namespace; did you mean 'fabs'?
+
+The referenced OpenOrbis target header is:
+
+    /home/benjamin/opt/OpenOrbis/PS4Toolchain/include/math.h
+
+and the compiler reports that header exposes `fabs` at the referenced location but not the global `abs` declaration expected by the installed libc++ `cmath`.
+
+This is **not a HarfBuzz source error** and is not another linker failure. It indicates an incompatibility in the OpenOrbis C/C++ headers/toolchain version being used with the current LLVM/libc++ environment. OpenOrbis release history documents prior fixes specifically for BSD/MUSL header discrepancies and C++ `cmath` handling, so the installed toolchain revision must be identified before any repository workaround is considered.
+
+No repository code or toolchain headers have been modified for this blocker.
+
+### Immediate next step
+
+Inspect the installed OpenOrbis toolchain revision and the exact relevant sections of:
+
+    $OO_PS4_TOOLCHAIN/include/c++/v1/cmath
+    $OO_PS4_TOOLCHAIN/include/math.h
+
+Then compare them with the corresponding OpenOrbis upstream/release state. Do not patch Kodi, HarfBuzz, or the repository overlay until that comparison establishes whether the local OpenOrbis installation is stale/incompatible or whether a separate compatibility adaptation is actually required.
