@@ -62,7 +62,7 @@ done
 echo "==> building Kodi target dependencies required by ASS/libass"
 make -C "${KODI_SRC}/tools/depends/target" \
   -j"${JOBS}" \
-  fribidi harfbuzz
+  fribidi harfbuzz fontconfig
 
 cmake -S "${KODI_SRC}" -B "${BUILD_DIR}" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
