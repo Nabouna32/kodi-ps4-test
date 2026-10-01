@@ -208,3 +208,16 @@ Direct inspection of the OpenOrbis forked libc++ source shows that its cmath exp
 Because the SDK C include directory currently comes first, cmath instead resolves directly to the OpenOrbis C include/math.h, bypassing the libc++ wrapper. This is the identified cause of the repeated using ::abs failure.
 
 The repository has not been modified yet. The immediate validation is a minimal standalone C++ compile comparing the current and corrected include-directory order. Only after that succeeds should the PS4 build flags be changed.
+
+## Latest validation — OpenOrbis C++ header include order
+
+The standalone PS4-targeted `<cmath>` test has now validated the include-order root cause.
+
+With the current order (OpenOrbis SDK C headers before libc++), compilation fails in `include/c++/v1/cmath` at `using ::abs`. With libc++ first and the SDK C headers second, the same program compiles successfully.
+
+The next repository change must therefore preserve this ordering for C++ target compilation:
+
+    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
+    -isystem $OO_PS4_TOOLCHAIN/include
+
+No HarfBuzz or OpenOrbis header workaround is justified.
