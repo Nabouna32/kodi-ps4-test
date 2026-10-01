@@ -585,3 +585,51 @@ The result must be classified before any repository workaround is introduced.
 ### Scope boundary
 
 No new renderer, controller, audio, video, packaging, runtime, self-hosted CI, or broad build-system work is part of this step. If LLVM 18 does not resolve the header mismatch, the next action is to compare the exact OpenOrbis v0.5.4 libc++/math headers and their expected LLVM integration rather than patching Kodi blindly.
+
+## Latest handoff — 2026-10-01 — LLVM 18 experiment completed
+
+The controlled LLVM 18 compatibility experiment has been completed.
+
+### Result
+
+With:
+
+    /usr/lib/llvm-18/bin/clang
+    /usr/lib/llvm-18/bin/clang++
+    /usr/lib/llvm-18/bin/llvm-ar
+    /usr/lib/llvm-18/bin/llvm-ranlib
+    /usr/lib/llvm-18/bin/ld.lld
+
+selected through PATH, the existing CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh workflow still reaches HarfBuzz C++ compilation and fails at:
+
+    $OO_PS4_TOOLCHAIN/include/c++/v1/cmath:341:9
+    error: no member named 'abs' in the global namespace; did you mean 'fabs'?
+
+The compiler still points to:
+
+    $OO_PS4_TOOLCHAIN/include/math.h:295:13
+    double fabs(double);
+
+The same failure occurs across many HarfBuzz translation units.
+
+### Interpretation
+
+The LLVM 18 experiment did not resolve the blocker. The previous hypothesis that LLVM 21 was the primary incompatibility is therefore rejected as a sufficient explanation.
+
+No Kodi source, HarfBuzz source, OpenOrbis header, or repository toolchain file was modified.
+
+### Next step — one investigation
+
+Directly compare the OpenOrbis v0.5.4 include/c++/v1/cmath and include/math.h pair with the corresponding upstream OpenOrbis source/release state and determine the intended compatibility mechanism for the C++ math declarations.
+
+The investigation must answer:
+1. Why cmath unconditionally performs using ::abs;
+2. where OpenOrbis v0.5.4 is expected to provide that global declaration;
+3. whether the installed header pair is internally consistent;
+4. whether a required include/define/toolchain setting is missing from our integration.
+
+Only after this comparison should a repository adaptation be considered.
+
+### Scope boundary
+
+Do not patch HarfBuzz, suppress the abs error, or modify OpenOrbis headers as a workaround before the header integration root cause is established. Renderer, controller, audio, video, packaging, runtime and self-hosted CI remain out of scope.
