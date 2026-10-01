@@ -368,3 +368,22 @@ Until that root cause is established:
 
 ### Follow-up diagnostic — Iconv header/log lookup
 The OpenOrbis toolchain does contain `include/iconv.h`. The first attempted `grep` produced no CMake log output because the shell command was split across lines after the grep pattern, so the filename was not passed to `grep` as intended. No conclusion can yet be drawn about the actual `Iconv_IS_BUILT_IN` compile failure. The next action is to rerun the log inspection with each `grep` command on one line and verify the actual CMake build-tree log location before reproducing the test.
+
+
+## Latest investigation — 2026-10-01 — Iconv cross-reference completed
+
+The Iconv blocker has now been compared against the actual pinned Kodi source and the PS5 technical reference.
+
+Official Kodi only enables its `libiconv` target dependency when Autoconf cannot find `iconv_open` in the target C library. Our target configuration recorded `ac_cv_search_iconv_open='none required'`, so the official dependency graph does not currently justify staging libiconv.
+
+The PS5 reference deliberately forces Iconv away from the built-in path because its console libc iconv API is semantically insufficient for Kodi's legacy encodings and therefore uses GNU libiconv. That is an important reference pattern, but it cannot be assumed to apply to OpenOrbis PS4.
+
+### Current blocker
+
+CMake 4.2's implicit-iconv test fails while Kodi Autoconf considers iconv available. The OpenOrbis sysroot contains `include/iconv.h`.
+
+### Next action
+
+Run a minimal direct OpenOrbis target iconv compile/link and inspect the target libc/archive symbols relevant to `iconv_open`, `iconv` and `iconv_close`. This is the next single diagnostic step before any repository implementation.
+
+No repository source is changed by this investigation. Full Kodi build remains blocked until configure-only succeeds.
