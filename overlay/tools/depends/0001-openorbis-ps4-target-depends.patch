@@ -26,6 +26,25 @@ diff --git a/tools/depends/configure.ac b/tools/depends/configure.ac
 +    optimize_flags="-O2"
 +    platform_ldflags="--target=x86_64-pc-freebsd12-elf -fuse-ld=ld.lld -nostdlib -pie -Wl,--script=$use_toolchain/link.x -Wl,--eh-frame-hdr -L$use_toolchain/lib $use_toolchain/lib/crt1.o -lc -lkernel -lc++"
 +  ;;
+diff --git a/tools/depends/configure.ac b/tools/depends/configure.ac
+--- a/tools/depends/configure.ac
++++ b/tools/depends/configure.ac
+@@ -585,6 +585,8 @@
+ case $use_platform in
++  ps4)
++    ;;
+   ios|ios-simulator|tvos|tvos-simulator|macos)
+     ;;
+   webos)
+     ;;
+   wasm)
+     ;;
+   auto)
+     ;;
+   *)
+     AC_MSG_ERROR(unsupported platform ($use_platform))
+ esac
+
 diff --git a/tools/depends/target/Toolchain.cmake.in b/tools/depends/target/Toolchain.cmake.in
 --- a/tools/depends/target/Toolchain.cmake.in
 +++ b/tools/depends/target/Toolchain.cmake.in
