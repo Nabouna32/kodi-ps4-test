@@ -203,3 +203,33 @@ Next experiment: rerun the unchanged official CMake bootstrap and verify generat
 **Status:** validated.
 
 After installing the normal WSL host package `libcurl4-openssl-dev`, the unchanged pinned Kodi native CMake bootstrap was rerun successfully. System libcurl 8.18.0 was found, CMake configuration/generation completed, and the root native `Makefile` was generated. The previous host-CURL blocker is closed. The next experiment is explicit validation of Kodi's remaining native dependency targets.
+
+
+## R-004.21 — OpenOrbis v0.5.4 C++ header compatibility / LLVM version experiment
+
+**Status:** investigation in progress; LLVM 18 installed, build validation pending.
+
+The installed OpenOrbis toolchain is confirmed by the project environment to be v0.5.4. It is an extracted toolchain rather than a Git checkout, so there is no local OpenOrbis Git revision to record from the installation itself.
+
+The exact failing interface is:
+
+    $OO_PS4_TOOLCHAIN/include/c++/v1/cmath
+        using ::abs;
+
+while the inspected region of:
+
+    $OO_PS4_TOOLCHAIN/include/math.h
+
+exposes fabs, fabsf and fabsl but no matching global abs declaration at that location. The failure repeats across many HarfBuzz C++ translation units, establishing that this is a shared target-header/libc++ compatibility problem rather than a HarfBuzz source defect.
+
+The host environment previously used LLVM/Clang/LLD 21.1.8. LLVM/Clang/LLD 18.1.8 is now installed alongside it. This is an experiment, not yet a confirmed fix.
+
+Earlier external research identified LLVM 18 as the compatibility candidate associated with OpenOrbis v0.5.4-era tooling. The project must still validate the actual Kodi/HarfBuzz build with LLVM 18 before treating that relationship as confirmed.
+
+### Boundary
+
+No Kodi source, HarfBuzz source, OpenOrbis header, or repository toolchain file has been modified for this issue. LLVM 21 remains available for comparison, and the repository deliberately does not hard-code a host LLVM version at this stage.
+
+### Immediate experiment
+
+Because scripts/build-ps4-kodi.sh and cmake/toolchains/openorbis-ps4-kodi.cmake select generic clang, clang++, llvm-ar, llvm-ranlib and ld.lld names, the cleanest experiment is to put the LLVM 18 tool directory first in PATH for one build invocation. Verify the selected binaries first; then run the existing CONFIGURE_ONLY=1 workflow. Do not patch Kodi or the OpenOrbis headers unless this experiment disproves the host-LLVM hypothesis.
