@@ -767,3 +767,24 @@ This is therefore a **package-discovery/staging issue**, not a HarfBuzz compilat
 Inspect Kodi's complete `SETUP_FIND_SPECS()` / `SEARCH_EXISTING_PACKAGES()` implementation and the target dependency prefix contents for `freetype2.pc`. Determine whether Kodi expects the target prefix to be exposed through `PKG_CONFIG_PATH`, `CMAKE_PREFIX_PATH`, or another official depends-generated mechanism before changing the build script or toolchain.
 
 Do not add a blind global `PKG_CONFIG_PATH` workaround yet: the transitive FreeType requirement must also be understood, and the solution should use Kodi's existing target-package discovery mechanism where possible.
+
+
+## ## Latest handoff — 2026-10-01 — Kodi target pkg-config discovery diagnosis
+
+The current blocker is now narrowed to Kodi target-package discovery.
+
+Pinned Kodi `ModuleHelpers.cmake` uses `SEARCH_EXISTING_PACKAGES()` as follows:
+1. search CMake package configs under `DEPENDS_PATH/share/cmake` and `DEPENDS_PATH/lib/cmake`;
+2. if not found, call CMake `FindPkgConfig` and `pkg_check_modules(... IMPORTED_TARGET)`.
+
+It does not itself set `PKG_CONFIG_PATH` or `PKG_CONFIG_LIBDIR` to `DEPENDS_PATH`.
+
+The PS5 reference was checked and provides a directly relevant comparison: its cross toolchain sets `PKG_CONFIG_LIBDIR` to the target package directories and `PKG_CONFIG_SYSROOT_DIR` to the target sysroot. Its Kodi configure script also wraps pkg-config so Kodi's build-tree packages and SDK packages can be selected deliberately. This confirms that explicit target pkg-config routing is an established pattern in the reference port.
+
+For PS4, HarfBuzz is already built and installed at the target prefix with `lib/` and `libdata/pkgconfig/harfbuzz.pc`. Manual lookup succeeds when that target pkg-config directory is supplied. However, HarfBuzz's `.pc` requires `freetype2 >= 12.0.6`, and the manual lookup cannot resolve `freetype2` with the HarfBuzz directory alone.
+
+### Immediate diagnostic
+
+Before implementing target pkg-config routing, verify the target prefix's pkg-config metadata for both HarfBuzz and FreeType, and test them with `PKG_CONFIG_LIBDIR` rather than `PKG_CONFIG_PATH`. This distinguishes a missing target package metadata file from a missing CMake/pkg-config environment integration.
+
+Do not add a blind workaround until this distinction is established.
