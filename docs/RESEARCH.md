@@ -377,3 +377,22 @@ No Kodi upstream source, HarfBuzz source, FreeType recipe, OpenOrbis header, com
 ### Required validation
 
 Run the existing clean `CONFIGURE_ONLY=1` workflow from current `main`. The expected result is that Kodi's `FindHarfBuzz.cmake` resolves HarfBuzz and its FreeType dependency and proceeds beyond the previous blocker. Do not start a full Kodi build until configure-only validation succeeds.
+
+
+## R-004.28 — FriBidi becomes the next required target dependency blocker
+
+**Status:** diagnosis complete; implementation not yet started.
+
+The latest configure-only validation passed the previous HarfBuzz discovery blocker. HarfBuzz 14.2.0 was built and installed into the PS4 target dependency prefix, then Kodi stopped in required ASS/libass configuration with `FriBidi library was not found`.
+
+Pinned official Kodi `9c3e7f4d7b3ff314cd2f19a291766555e0346024` provides `cmake/modules/FindFriBidi.cmake`, which uses Kodi's standard `SEARCH_EXISTING_PACKAGES()` mechanism for the `fribidi` pkg-config package. It also provides `tools/depends/target/fribidi/Makefile`, which builds FriBidi with Meson for the target and installs into the target prefix.
+
+The repository build script currently requests only the target `harfbuzz` dependency after native tools. It does not currently build/stage the official `fribidi` target dependency. This is therefore currently classified as an incomplete target dependency subset, not a CMake finder defect and not a host dependency.
+
+### PS5 comparison
+
+The pinned `VivaLaVent/kodi-ps5` reference includes `ps5-payload-libfribidi` in its target dependency definitions alongside FreeType, HarfBuzz and libass. This is useful comparative evidence that FriBidi is a target-side dependency. It does not establish PS4 binary compatibility and no PS5 package is being copied.
+
+### Conclusion
+
+Before implementation, validate the official Kodi FriBidi recipe and its relationship with the existing libass/FreeType/HarfBuzz target chain under OpenOrbis. The likely minimal adaptation is to build the official FriBidi recipe for PS4 and stage it in the existing target prefix, not to modify `FindFriBidi.cmake` or install a Linux host package.
