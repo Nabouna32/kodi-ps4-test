@@ -534,3 +534,54 @@ Inspect the installed OpenOrbis toolchain revision and the exact relevant sectio
     $OO_PS4_TOOLCHAIN/include/math.h
 
 Then compare them with the corresponding OpenOrbis upstream/release state. Do not patch Kodi, HarfBuzz, or the repository overlay until that comparison establishes whether the local OpenOrbis installation is stale/incompatible or whether a separate compatibility adaptation is actually required.
+
+
+## Latest handoff state — 2026-10-01 — OpenOrbis v0.5.4 / LLVM 18 compatibility experiment
+
+### Actual current state
+
+- Repository: Nabouna32/kodi-ps4-test, normal development on main.
+- Pinned Kodi commit: 9c3e7f4d7b3ff314cd2f19a291766555e0346024.
+- OpenOrbis target toolchain: v0.5.4, installed at ~/opt/OpenOrbis/PS4Toolchain.
+- Previous host compiler environment: LLVM/Clang/LLD 21.1.8.
+- New host compiler environment: LLVM/Clang/LLD 18.1.8 installed in parallel; not yet used to validate Kodi.
+- The repository does not currently pin a host LLVM version.
+- references/kodi remains the clean upstream source; no Kodi/HarfBuzz/OpenOrbis headers were modified for the current blocker.
+
+### Latest validated blocker
+
+The Meson linker correction (-fuse-ld=lld) moved the build past linker detection and into real HarfBuzz C++ compilation. Compilation then fails repeatedly at:
+
+    OpenOrbis/include/c++/v1/cmath:341:9
+    error: no member named 'abs' in the global namespace; did you mean 'fabs'?
+
+The referenced OpenOrbis math.h region declares fabs, fabsf and fabsl but not the global abs expected by libc++ cmath.
+
+This is classified as a target-header/libc++ compatibility issue, not a HarfBuzz source issue and not a linker issue.
+
+### What changed in the host since the previous handoff
+
+LLVM/Clang/LLD 18.1.8 were installed through Ubuntu packages without removing LLVM/LLD 21.1.8. The purpose is to test the OpenOrbis v0.5.4 compatibility hypothesis.
+
+### Immediate next step — one experiment
+
+Do not modify repository source yet. Verify LLVM 18 generic tool resolution, then run the existing configure-only build with LLVM 18 first in PATH:
+
+    cd ~/projects/kodi-ps4-test
+    export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
+    export PATH="/usr/lib/llvm-18/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
+    command -v clang
+    command -v clang++
+    command -v llvm-ar
+    command -v llvm-ranlib
+    command -v ld.lld
+    clang --version
+    clang++ --version
+    ld.lld --version
+    CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
+
+The result must be classified before any repository workaround is introduced.
+
+### Scope boundary
+
+No new renderer, controller, audio, video, packaging, runtime, self-hosted CI, or broad build-system work is part of this step. If LLVM 18 does not resolve the header mismatch, the next action is to compare the exact OpenOrbis v0.5.4 libc++/math headers and their expected LLVM integration rather than patching Kodi blindly.
