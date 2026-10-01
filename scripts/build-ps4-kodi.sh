@@ -36,7 +36,7 @@ echo "==> bootstrapping Kodi target dependency configuration"
     --with-platform=ps4 \
     --with-cpu=x86_64 \
     --with-toolchain="${OO_PS4_TOOLCHAIN}" \
-    --with-linker=ld.lld \
+    --with-linker=lld \
     --prefix="${DEPENDS_ROOT}" \
     --disable-debug \
     --disable-ccache
