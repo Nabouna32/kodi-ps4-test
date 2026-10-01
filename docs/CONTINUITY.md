@@ -677,3 +677,37 @@ If confirmed, the implementation should change only the PS4 C++ include ordering
 ### Scope boundary
 
 Renderer, controller, audio, video, packaging, runtime and self-hosted CI remain out of scope.
+
+## Latest handoff — 2026-10-01 — OpenOrbis C++ header order experimentally validated
+
+The previously identified OpenOrbis v0.5.4 C++ header root cause is now experimentally confirmed.
+
+### Validation
+
+A minimal PS4-targeted C++ program containing `#include <cmath>` and `std::abs(-42.0)` was compiled twice.
+
+With the repository's current ordering:
+
+    -isystem $OO_PS4_TOOLCHAIN/include
+    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
+
+compilation fails at OpenOrbis libc++ `cmath:341` with:
+
+    error: no member named 'abs' in the global namespace
+
+With the corrected ordering:
+
+    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
+    -isystem $OO_PS4_TOOLCHAIN/include
+
+the same program compiles successfully.
+
+### Conclusion
+
+The HarfBuzz failure is caused by the OpenOrbis libc++ wrapper being shadowed by the raw SDK C `math.h`. The repository must fix only the C++ include ordering. No HarfBuzz patch, OpenOrbis header patch, LLVM version pin, or error suppression is justified.
+
+### Immediate next step
+
+Inspect the repository-owned PS4 target flag generation and apply the smallest change that puts `include/c++/v1` before `include` for C++ compilation. Preserve the existing target triple, sysroot, linker, CRT and target libraries. Then rerun the configure-only build and classify the next real blocker.
+
+Do not start renderer/controller/audio/video/runtime/packaging or self-hosted CI work.
