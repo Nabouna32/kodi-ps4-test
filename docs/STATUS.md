@@ -155,3 +155,32 @@ The fix is implemented but **not yet runtime/build-validated on WSL**.
 Run the configure-only build from a clean current `main` and inspect the generated native/target state. The critical verification is that the generated HarfBuzz cross-file contains `-fuse-ld=lld`, then Meson passes linker detection and HarfBuzz configuration/build proceeds.
 
 Do not change any additional linker/toolchain flags unless this validation demonstrates a separate failure.
+
+
+## Latest validation — 2026-10-01 — HarfBuzz reaches C++ compilation
+
+The `-fuse-ld=lld` correction successfully moved the build past the previous Meson linker-detection blocker. HarfBuzz now starts compiling for:
+
+    x86_64-pc-freebsd12-elf
+
+The new blocker is the OpenOrbis C++/C math-header interface:
+
+    include/c++/v1/cmath:341:9: error: no member named 'abs' in the global namespace
+
+with OpenOrbis:
+
+    include/math.h:295:13: note: 'fabs' declared here
+
+The same error occurs across many HarfBuzz C++ translation units, so it is a shared target-header/toolchain compatibility issue rather than an individual HarfBuzz source failure.
+
+OpenOrbis release history records previous fixes for BSD/MUSL header discrepancies and C++ `cmath` handling. Therefore the installed OpenOrbis toolchain revision must be established and compared against the upstream fixed state before introducing a Kodi-side workaround.
+
+### Current blocker
+
+OpenOrbis target header/libc++ compatibility.
+
+No repository workaround has been implemented yet.
+
+### Next action
+
+Inspect the installed OpenOrbis revision and the exact `cmath` / `math.h` sections, then compare with OpenOrbis upstream/release sources. Do not modify Kodi or HarfBuzz until the root cause is established.
