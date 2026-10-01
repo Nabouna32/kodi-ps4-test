@@ -77,3 +77,9 @@ The repeated cmath failure has been traced to the generated PS4 C++ include orde
 The current overlay emits the SDK C include directory before the OpenOrbis libc++ directory. OpenOrbis' libc++ cmath relies on its own math.h wrapper, which uses #include_next and includes <stdlib.h> before cmath imports ::abs.
 
 The immediate checkpoint is a minimal compile proving that reversing the C++ include order resolves the error. Only that narrow ordering change should then be applied to the repository.
+
+## Current checkpoint — OpenOrbis C++ header ordering
+
+The OpenOrbis v0.5.4 C++ header blocker is experimentally resolved at the integration level: the standalone `<cmath>` test fails with SDK C headers first and succeeds with OpenOrbis libc++ headers first.
+
+The implementation target is the repository-owned PS4 C++ flags/toolchain integration. No patch to Kodi, HarfBuzz or OpenOrbis headers is planned.
