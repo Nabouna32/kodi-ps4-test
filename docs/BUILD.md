@@ -133,3 +133,20 @@ The first target is deliberately smaller than a complete Kodi feature set. The i
 The PS4 overlay therefore disables optional integrations such as Blu-ray, XSLT/libxslt, optical media, Python add-ons, desktop audio/network integrations, and other platform facilities that are not yet integrated. This is intentional dependency minimization, not a permanent feature decision.
 
 When configure reports a missing dependency, first determine whether the corresponding Kodi feature is required for the current bring-up milestone. Do not install a host package merely to satisfy an optional target feature. For example, libbluray and libxslt can require LibXml2 during their internal builds; both features are outside the first milestone, so the correct action is to keep them excluded until their respective support is explicitly brought back into scope.
+## Native CMake bootstrap investigation — 2026-10-01
+
+The official Kodi native CMake recipe uses `./bootstrap --prefix=<native-prefix> --system-curl`. The initial bootstrap created `Bootstrap.cmk` and `CMakeCache.txt`, but no root `Makefile`. Direct reproduction isolated the failure to CMake's second configuration phase:
+
+    CMAKE_USE_SYSTEM_CURL is ON but a curl is not found!
+
+This is a **host WSL dependency**, not a PS4 target dependency. Installing normal Ubuntu development packages is valid for host tooling; the PS4 target dependency boundary remains unchanged.
+
+Installed and verified on WSL:
+- `libcurl4-openssl-dev` 8.18.0
+- `pkg-config --modversion libcurl` → `8.18.0`
+- `pkg-config --cflags --libs libcurl` resolves `-lcurl`
+- runtime linker exposes `libcurl.so`
+
+Ubuntu 26.04 uses multiarch include paths, so `/usr/include/curl/curl.h` does not have to exist; the header is expected under the architecture-specific include tree.
+
+The next validation is to rerun the **same official CMake bootstrap** after this host dependency installation. Do not modify the Kodi CMake recipe or add a project-local CURL workaround unless the reproduced failure demonstrates a real repository issue.
