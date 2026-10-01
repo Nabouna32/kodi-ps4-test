@@ -470,3 +470,20 @@ Run from a clean current `main`:
     CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 
 Do not start a full Kodi build until configure-only succeeds. If Iconv is resolved, classify the next real blocker before making another change.
+
+
+## Latest implementation — 2026-10-02 — Fontconfig staging and zlib test disablement
+
+The restored pre-regression state reproduced the expected next configure blocker: Kodi could not find target Fontconfig while configuring required ASS/libass. Fontconfig had already been audited as a required target dependency, so the PS4 dependency bootstrap now stages the official Kodi target recipe with:
+
+    fribidi harfbuzz fontconfig
+
+The zlib blocker was also implemented at the same time, based on the previously completed audit. The official pinned Kodi zlib recipe is preserved in the repository-owned overlay, with only:
+
+    -DZLIB_BUILD_TESTING=OFF
+
+added to its CMake options. This disables zlib's optional coverage/test executable that previously required the unavailable OpenOrbis profiling runtime, while retaining the target zlib library build.
+
+The overlay application script now copies this zlib Makefile into the materialized pinned Kodi source before dependency configuration. No upstream Kodi source is modified in the repository.
+
+**Validation pending:** run the clean CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh workflow. The expected sequence is to build the required target dependencies including Fontconfig and then verify that the previous zlib coverage-test blocker is gone. Do not start a full Kodi build yet.
