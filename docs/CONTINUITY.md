@@ -433,7 +433,20 @@ This handoff supersedes the older statement that the native dependency correctio
 ## WSL host dependency inventory
 
 See [`WSL-HOST-DEPENDENCIES.md`](WSL-HOST-DEPENDENCIES.md) for the evidence-based list of Ubuntu/WSL packages installed or explicitly required by the host build. This is the source to use when recreating the WSL environment; it deliberately separates direct project prerequisites from APT-resolved transitive packages.
-\n## Latest validation result — 2026-10-01 CMake bootstrap succeeded\n\nThe unchanged official Kodi native CMake recipe was rerun after installing the required WSL host package `libcurl4-openssl-dev`. The bootstrap now succeeds:\n\n- system CURL is found: libcurl 8.18.0;\n- CMake completes its initial configuration and generation;\n- the native CMake root `Makefile` is generated;\n- no Kodi upstream source was modified.\n\nThis closes the previously documented host-CURL blocker. The remaining validation is to let Kodi's official native dependency recipes build the explicit host tools they actually require, then validate the target HarfBuzz path.\n\n**Immediate next step:** run the native dependency targets for CMake, Ninja, Meson, Python, NASM, TexturePacker and JsonSchemaBuilder from Kodi's `tools/depends/native`, using the generated `x86_64-linux-gnu-native` prefix. Do not start the full Kodi build yet.\n
+
+## Latest validation result — 2026-10-01 CMake bootstrap succeeded
+
+The unchanged official Kodi native CMake recipe was rerun after installing the required WSL host package `libcurl4-openssl-dev`. The bootstrap now succeeds:
+
+- system CURL is found: libcurl 8.18.0;
+- CMake completes its initial configuration and generation;
+- the native CMake root `Makefile` is generated;
+- no Kodi upstream source was modified.
+
+This closes the previously documented host-CURL blocker. The remaining validation is to let Kodi's official native dependency recipes build the explicit host tools they actually require, then validate the target HarfBuzz path.
+
+**Immediate next step:** run the native dependency targets for CMake, Ninja, Meson, Python, NASM, TexturePacker and JsonSchemaBuilder from Kodi's `tools/depends/native`, using the generated `x86_64-linux-gnu-native` prefix. Do not start the full Kodi build yet.
+
 
 ## Latest handoff — 2026-10-01
 
