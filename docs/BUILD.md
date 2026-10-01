@@ -153,3 +153,10 @@ The next validation is to rerun the **same official CMake bootstrap** after this
 ## WSL host dependency inventory
 
 See [`WSL-HOST-DEPENDENCIES.md`](WSL-HOST-DEPENDENCIES.md) for the evidence-based list of Ubuntu/WSL packages installed or explicitly required by the host build. This is the source to use when recreating the WSL environment; it deliberately separates direct project prerequisites from APT-resolved transitive packages.
+
+
+## Native CMake bootstrap — validated
+
+The unchanged official Kodi native CMake recipe was rerun after installing `libcurl4-openssl-dev`. CMake 3.31.10 finds system libcurl 8.18.0, completes configuration/generation, and produces the native root `Makefile`. This confirms the previous failure was a missing WSL host development dependency, not a PS4/OpenOrbis issue.
+
+**Next:** validate the explicit native dependency targets in Kodi's generated `x86_64-linux-gnu-native` prefix before proceeding to target HarfBuzz or the full Kodi build.
