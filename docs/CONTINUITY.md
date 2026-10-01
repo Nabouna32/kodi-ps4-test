@@ -434,3 +434,32 @@ This handoff supersedes the older statement that the native dependency correctio
 
 See [`WSL-HOST-DEPENDENCIES.md`](WSL-HOST-DEPENDENCIES.md) for the evidence-based list of Ubuntu/WSL packages installed or explicitly required by the host build. This is the source to use when recreating the WSL environment; it deliberately separates direct project prerequisites from APT-resolved transitive packages.
 \n## Latest validation result — 2026-10-01 CMake bootstrap succeeded\n\nThe unchanged official Kodi native CMake recipe was rerun after installing the required WSL host package `libcurl4-openssl-dev`. The bootstrap now succeeds:\n\n- system CURL is found: libcurl 8.18.0;\n- CMake completes its initial configuration and generation;\n- the native CMake root `Makefile` is generated;\n- no Kodi upstream source was modified.\n\nThis closes the previously documented host-CURL blocker. The remaining validation is to let Kodi's official native dependency recipes build the explicit host tools they actually require, then validate the target HarfBuzz path.\n\n**Immediate next step:** run the native dependency targets for CMake, Ninja, Meson, Python, NASM, TexturePacker and JsonSchemaBuilder from Kodi's `tools/depends/native`, using the generated `x86_64-linux-gnu-native` prefix. Do not start the full Kodi build yet.\n
+
+## Latest handoff — 2026-10-01
+
+The previously documented WSL host-CURL blocker is resolved. The **unchanged official Kodi native CMake bootstrap** now succeeds after installing `libcurl4-openssl-dev`: system libcurl 8.18.0 is found, configuration/generation complete, and the native CMake root `Makefile` exists.
+
+### Current state
+
+- Official pinned Kodi commit: `9c3e7f4d7b3ff314cd2f19a291766555e0346024`.
+- PS5 reference: `0ea36e36d738aa045c1b8ed63c24a0314c7f72a5`.
+- OpenOrbis toolchain: `~/opt/OpenOrbis/PS4Toolchain`.
+- Native prefix: `build/ps4/build/x86_64-linux-gnu-native`.
+- Target prefix: `build/ps4/build/x86_64-pc-freebsd12-release`.
+- Host/target boundary remains strict; `HOST_CAN_EXECUTE_TARGET=FALSE`.
+- No proprietary Sony SDK/dumps/binaries are used.
+- `references/kodi` remains the clean upstream source; PS4 adaptations are repository-owned overlay changes only.
+
+### Validated discovery
+
+The exact Kodi CMake recipe uses `--system-curl`. Installing the normal WSL host development package `libcurl4-openssl-dev` was the correct fix. No Kodi CMake workaround was introduced.
+
+### Immediate next step
+
+**One step only:** validate the explicit Kodi native dependency targets for CMake, Ninja, Meson, Python, NASM, TexturePacker and JsonSchemaBuilder in the generated native prefix. Inspect the real result before modifying `scripts/build-ps4-kodi.sh`.
+
+Do not start the target HarfBuzz build or full Kodi build until this native-tool stage is validated.
+
+### Handoff procedure
+
+A new conversation must first read this file, `AGENTS.md`, `docs/STATUS.md`, `docs/BUILD.md`, `docs/DECISIONS.md`, `docs/RESEARCH.md` and `docs/PORTING.md`, then verify current `main` and the actual repository state. Historical hashes in this document are context only; GitHub `main` is authoritative.
