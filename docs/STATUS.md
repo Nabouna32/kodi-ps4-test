@@ -49,17 +49,23 @@ Until the next configure-only validation succeeds:
 
 ## Next action
 
-The HarfBuzz dependency integration is implemented in the PS4 build overlay, but it has not yet been executed successfully in the WSL environment. Two consecutive WSL attempts stopped before target dependency configuration because the repository-owned unified-diff patch was malformed. The first correction fixed one set of hunk counts; the second WSL run exposed another malformed hunk around the Android/FreeBSD case boundary; inspection then found a third incorrect hunk count in `Toolchain.cmake.in`. The patch was rebuilt rather than incrementally patched. Direct inspection of the exact pinned Kodi source showed the previous version had inconsistent hunk positions and line counts. The new patch uses three exact insertion points with zero-context hunks, and an automated structural audit against the pinned source verified every hunk count. The resulting patch commit is `e991e0894016903f4d9713102306958814a67926`. The container environment could not execute `patch` because external DNS/network access is unavailable; WSL execution remains the authoritative validation.
+The exact pinned Kodi source was re-audited at commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`. The current blocker is the final `case $use_platform` allowlist in `tools/depends/configure.ac`, which rejects `ps4` after the PS4 cross-configuration has otherwise succeeded.
 
-No HarfBuzz build result has been obtained yet. The next validation must first confirm that the current patch applies cleanly, then observe the target dependency bootstrap. Do not install Ubuntu `libharfbuzz-dev` as a workaround.
+The repository-owned patch `overlay/tools/depends/0001-openorbis-ps4-target-depends.patch` was updated in commit `24941fa574a4f43a99c0441bc5f77b21d68d82f4` to add only the missing `ps4)` acceptance branch. No Kodi upstream source or submodule file was modified.
 
-The intended sequence is:
-1. apply the corrected Kodi target-dependency patch;
-2. initialize the smallest Kodi target-dependency environment needed by HarfBuzz;
-3. build the official `freetype2-noharfbuzz` bootstrap dependency and HarfBuzz for the PS4 target;
-4. stage the resulting static library, headers and pkg-config/CMake metadata in the target dependency prefix already searched by Kodi;
-5. rerun `CONFIGURE_ONLY=1` and verify that HarfBuzz is discovered as a PS4 target library;
-6. stop again at the next blocker rather than broadening the dependency surface.
+This change has been structurally audited against the exact pinned source. Local WSL execution is still required to validate that the unified patch applies cleanly and that configuration proceeds beyond the platform allowlist. The authoritative validation command is:
+
+```bash
+cd ~/projects/kodi-ps4-test
+git fetch origin
+git reset --hard origin/main
+export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
+export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
+CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
+```
+
+Do not start a full Kodi build until configure succeeds. If a new blocker appears, diagnose it before changing the dependency surface.
+
 
 ## Major runtime risks
 
