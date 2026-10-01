@@ -227,3 +227,16 @@ No HarfBuzz or OpenOrbis header workaround is justified.
 The PS4 C++ include ordering has been corrected in both target integrations. C++ now receives `include/c++/v1` before the SDK `include` directory, matching the validated OpenOrbis libc++ header model.
 
 The implementation is committed to `main`. WSL configure-only validation is still required before this step is considered complete.
+
+
+## Target pkg-config routing — 2026-10-01
+
+The PS4 CMake toolchain now isolates target package discovery with `PKG_CONFIG_LIBDIR` derived from `DEPENDS_PATH`.
+
+Both target metadata locations are included because the current dependency graph places `freetype2.pc` under `lib/pkgconfig` and HarfBuzz `.pc` files under `libdata/pkgconfig`:
+
+    <DEPENDS_PATH>/lib/pkgconfig:<DEPENDS_PATH>/libdata/pkgconfig
+
+This uses `PKG_CONFIG_LIBDIR`, rather than `PKG_CONFIG_PATH`, so host Linux pkg-config metadata cannot satisfy PS4 target dependencies.
+
+The implementation is in `cmake/toolchains/openorbis-ps4-kodi.cmake`. WSL configure-only validation remains pending.
