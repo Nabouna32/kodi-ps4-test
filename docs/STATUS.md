@@ -257,3 +257,14 @@ Root cause identified, repository fix not yet applied.
 ### Next action
 
 Validate the hypothesis with a minimal standalone <cmath> compile using the current include order and then the corrected order. Do not modify HarfBuzz or OpenOrbis headers. If the corrected order compiles, change only the PS4 C++ include ordering and rerun the configure-only Kodi build.
+
+## Latest validation — 2026-10-01 — OpenOrbis C++ header order confirmed
+
+The minimal standalone cross-compilation test confirmed the exact root cause of the HarfBuzz failure:
+
+- SDK C headers first reproduces the `cmath` / global `abs` error.
+- OpenOrbis libc++ headers first compiles the same test successfully.
+
+The blocker is therefore a repository/toolchain integration include-order issue. No repository source has been changed for it yet.
+
+**Next step:** inspect the repository's generated target C++ flags and make the smallest justified ordering correction, then rerun the configure-only validation. Do not patch HarfBuzz or OpenOrbis headers.
