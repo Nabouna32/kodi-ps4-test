@@ -145,3 +145,12 @@ Prefer small, verifiable commits. Before considering a task complete:
 
 Avoid unrelated cleanup, speculative refactors, and changes outside the
 validated task.
+### Host WSL dependencies: do not avoid required system development packages
+
+For **host-native Linux build tools**, normal Ubuntu/WSL packages are an expected and supported dependency mechanism. Do not introduce project-local replacements, vendored host libraries, fake prefixes, or build-system workarounds merely to avoid installing a required host development package.
+
+When an official Kodi native recipe requires a host library (for example CMake bootstrapping with `--system-curl`), install the normal Ubuntu development package and document it in `docs/WSL-HOST-DEPENDENCIES.md`.
+
+This rule applies only to the **host**. It must not blur the target boundary: a Linux/WSL package must never be used as a substitute for a PS4 target library. PS4 target dependencies remain built for the OpenOrbis/FreeBSD target and live in the target dependency prefix.
+
+When a dependency is optional for the current bring-up milestone, classify it first and avoid installing it only to unblock an unnecessary feature. When the dependency is genuinely required by a host build tool, installing it is the preferred normal solution.
