@@ -24,36 +24,8 @@ cmake \
   -DKODI_SRC="${KODI_SRC}" \
   -P "${ROOT}/scripts/apply-kodi-overlay.cmake"
 
-NATIVEPREFIX="${BUILD_DIR}/build/native"
 DEPENDS_ROOT="${BUILD_DIR}/build"
-
-link_native_tool() {
-  local name="$1"
-  local source
-  source="$(command -v "$name" || true)"
-  if [[ -z "$source" ]]; then
-    echo "Missing host build tool: $name" >&2
-    exit 1
-  fi
-  mkdir -p "${NATIVEPREFIX}/bin"
-  if [[ ! -e "${NATIVEPREFIX}/bin/${name}" ]]; then
-    ln -s "$source" "${NATIVEPREFIX}/bin/${name}"
-  fi
-}
-
-for tool in cmake meson ninja pkg-config python3; do
-  link_native_tool "$tool"
-done
-
-if ! command -v nasm >/dev/null 2>&1; then
-  echo "Missing host build tool: nasm (required by Kodi generated target Toolchain.cmake)" >&2
-  exit 1
-fi
-
-KODI_SRC="${KODI_SRC}" \
-NATIVEPREFIX="${NATIVEPREFIX}" \
-JOBS="${JOBS:-$(nproc)}" \
-  bash "${ROOT}/scripts/build-ps4-native-host-tools.sh"
+JOBS="${JOBS:-$(nproc)}"
 
 echo "==> bootstrapping Kodi target dependency configuration"
 (
@@ -70,15 +42,24 @@ echo "==> bootstrapping Kodi target dependency configuration"
     --disable-ccache
 )
 
+echo "==> building Kodi native dependency toolchain"
+make -C "${KODI_SRC}/tools/depends/native" \
+  -j"${JOBS}" \
+  native JsonSchemaBuilder
+
 TARGET_DEPS_PREFIX="${DEPENDS_ROOT}/x86_64-pc-freebsd12-release"
-EXPECTED_NATIVEPREFIX="${DEPENDS_ROOT}/x86_64-linux-gnu-native"
-if [[ ! -e "${EXPECTED_NATIVEPREFIX}" ]]; then
-  ln -s "${NATIVEPREFIX}" "${EXPECTED_NATIVEPREFIX}"
-fi
+NATIVEPREFIX="${DEPENDS_ROOT}/x86_64-linux-gnu-native"
+
+for tool in cmake ninja meson pkg-config python3 nasm TexturePacker JsonSchemaBuilder; do
+  if [[ ! -x "${NATIVEPREFIX}/bin/${tool}" ]]; then
+    echo "Missing Kodi native tool: ${NATIVEPREFIX}/bin/${tool}" >&2
+    exit 1
+  fi
+done
 
 echo "==> building only Kodi target dependencies required by HarfBuzz"
 make -C "${KODI_SRC}/tools/depends/target" \
-  -j"${JOBS:-$(nproc)}" \
+  -j"${JOBS}" \
   harfbuzz
 
 cmake -S "${KODI_SRC}" -B "${BUILD_DIR}" -G Ninja \
