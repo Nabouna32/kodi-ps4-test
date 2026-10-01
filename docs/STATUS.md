@@ -268,3 +268,14 @@ The minimal standalone cross-compilation test confirmed the exact root cause of 
 The blocker is therefore a repository/toolchain integration include-order issue. No repository source has been changed for it yet.
 
 **Next step:** inspect the repository's generated target C++ flags and make the smallest justified ordering correction, then rerun the configure-only validation. Do not patch HarfBuzz or OpenOrbis headers.
+
+## Latest implementation — 2026-10-01 — C++ header ordering corrected
+
+The experimentally validated OpenOrbis libc++ include-order fix is now implemented in:
+
+- `overlay/tools/depends/0001-openorbis-ps4-target-depends.patch`
+- `cmake/toolchains/openorbis-ps4-kodi.cmake`
+
+Both changes are one-line ordering corrections. The standalone test already proved the ordering itself; the remaining validation is the real Kodi configure-only workflow.
+
+Do not start a full Kodi build until that configure-only run is evaluated.
