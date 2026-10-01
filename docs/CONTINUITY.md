@@ -430,3 +430,6 @@ Do not start the full Kodi build yet.
 A separate Makefile audit also established that `make native JsonSchemaBuilder` does not automatically mean “build every native tool”. After CMake bootstrap is validated, explicitly validate the native CMake/Ninja/Meson/Python/NASM/TexturePacker/JsonSchemaBuilder dependency targets against Kodi's real dependency graph before changing the orchestration.
 
 This handoff supersedes the older statement that the native dependency correction was merely pending without a known cause: the current known blocker is specifically the missing WSL system CURL development package, which has now been installed; bootstrap revalidation remains pending.
+## WSL host dependency inventory
+
+See [`WSL-HOST-DEPENDENCIES.md`](WSL-HOST-DEPENDENCIES.md) for the evidence-based list of Ubuntu/WSL packages installed or explicitly required by the host build. This is the source to use when recreating the WSL environment; it deliberately separates direct project prerequisites from APT-resolved transitive packages.
