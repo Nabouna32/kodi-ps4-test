@@ -330,3 +330,16 @@ This experimentally validates the previously identified root cause. The correct 
 The validated root cause from R-004.24 was implemented in the two repository-owned PS4 target integrations. C++ target flags now place OpenOrbis libc++ (`include/c++/v1`) before the SDK C headers (`include`). C compilation retains the SDK include path without the libc++ precedence requirement.
 
 The change is intentionally limited to include ordering. No target triple, sysroot, linker, CRT, library, Kodi or HarfBuzz changes were made.
+
+
+## R-004.26 — Kodi/PS5 pkg-config discovery comparison
+
+**Status:** diagnosis narrowed; implementation pending.
+
+The pinned Kodi `ModuleHelpers.cmake` resolves existing packages in two stages: first CMake config files under `DEPENDS_PATH/share/cmake` and `DEPENDS_PATH/lib/cmake`, then `FindPkgConfig` with `pkg_check_modules(... IMPORTED_TARGET)`. The Kodi code does not itself assign the target dependency prefix to `PKG_CONFIG_PATH` inside `SEARCH_EXISTING_PACKAGES()`.
+
+The PS5 reference provides a useful comparison. Its PS5 toolchain explicitly sets `PKG_CONFIG_LIBDIR` to the target homebrew `lib/pkgconfig` directories and `PKG_CONFIG_SYSROOT_DIR` to the PS5 sysroot; its configure script also installs a small pkg-config wrapper. This is an established target-package discovery pattern in the reference port, not a host-library workaround.
+
+For the PS4 build, the target HarfBuzz `.pc` is already installed under the Kodi target prefix. The remaining diagnostic question is whether the target prefix also contains the required `freetype2.pc` from the `freetype2-noharfbuzz` bootstrap dependency. If it does, the likely integration gap is simply that the PS4 CMake configure has no target `PKG_CONFIG_LIBDIR`. If it does not, the FreeType recipe's package metadata/install behavior must be understood before changing discovery configuration.
+
+No repository implementation change is justified yet.
