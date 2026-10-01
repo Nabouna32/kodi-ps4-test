@@ -47,3 +47,8 @@ Reason: Kodi's own FindTexturePacker.cmake establishes this host/target boundary
 For non-trivial PS4 porting questions, the project follows a repeatable evidence chain: official Kodi first, the PS5 reference second, current public PS4/OpenOrbis information third, then an explicit comparison before adapting anything for PS4.
 
 Reason: this preserves Kodi's upstream intent, exploits the PS5 port as a practical PlayStation/Kodi reference, and prevents PS5-specific assumptions from being mistaken for PS4 capabilities. The final PS4 implementation must be the smallest adaptation justified by the comparison and must be validated experimentally where possible.
+## D-010 — Normal Ubuntu packages are valid for host-native Kodi tooling
+
+Host-native Kodi build tools may use normal Ubuntu/WSL development packages when the official Kodi recipe requires them.
+
+Reason: CMake, TexturePacker, JsonSchemaBuilder, Meson, Ninja and related build-time utilities execute on the Linux host. Avoiding normal host packages by introducing project-local substitutes would add unnecessary complexity. This does **not** permit host Linux libraries to satisfy PS4 target dependencies; target libraries remain separately built for the OpenOrbis/FreeBSD target.
