@@ -125,3 +125,33 @@ Validate the explicit Kodi native dependency targets against the generated `x86_
 The unchanged official Kodi native CMake bootstrap was rerun after installing the required WSL host package `libcurl4-openssl-dev`. It now succeeds: system CURL 8.18.0 is found, CMake completes configuration and generation, and the native CMake root `Makefile` is generated. The previous host-CURL blocker is resolved.
 
 **Next action:** validate Kodi's explicit native dependency targets (CMake, Ninja, Meson, Python, NASM, TexturePacker and JsonSchemaBuilder) in the generated `x86_64-linux-gnu-native` prefix. Do not start the full Kodi build yet.
+
+
+
+## Latest handoff — 2026-10-01 — PS4 Meson linker flag correction
+
+The target HarfBuzz bootstrap reached Meson but failed during linker detection because the PS4 overlay generated:
+
+    -fuse-ld=ld.lld
+
+with the WSL Clang 21 toolchain, which reports that linker name as invalid for `-fuse-ld`. Direct inspection of pinned Kodi `tools/depends/configure.ac` confirmed that its generated `cross-file.meson` forwards `platform_ldflags` into Meson's `c_link_args` and `cpp_link_args`. The source of the bad flag was therefore our repository-owned PS4 overlay, not Meson itself.
+
+The minimal correction was committed to `main`:
+
+    943f8cbf895ffcf69743d73ff1ecb4ba300c2618
+
+    fix: use lld driver for PS4 Meson linker
+
+The PS4 overlay now uses:
+
+    -fuse-ld=lld
+
+while preserving the OpenOrbis PS4 target, `link.x`, sysroot, CRT and PS4 libraries unchanged.
+
+The fix is implemented but **not yet runtime/build-validated on WSL**.
+
+### Immediate next step
+
+Run the configure-only build from a clean current `main` and inspect the generated native/target state. The critical verification is that the generated HarfBuzz cross-file contains `-fuse-ld=lld`, then Meson passes linker detection and HarfBuzz configuration/build proceeds.
+
+Do not change any additional linker/toolchain flags unless this validation demonstrates a separate failure.
