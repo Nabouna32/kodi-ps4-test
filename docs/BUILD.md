@@ -193,3 +193,18 @@ with the compiler identifying include/math.h and its fabs declaration.
 This experiment does not establish LLVM 18 as a compatible or required host version for the Kodi PS4 build. The repository continues to use generic compiler names and does not pin an LLVM major version.
 
 **Next:** diagnose the OpenOrbis v0.5.4 libc++/math header integration directly. Do not introduce a Kodi-side header workaround yet.
+
+## Root-cause investigation — OpenOrbis C++ include ordering
+
+The current HarfBuzz command line places:
+
+    -isystem $OO_PS4_TOOLCHAIN/include
+    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
+
+before compiling C++.
+
+Direct inspection of the OpenOrbis forked libc++ source shows that its cmath expects the libc++ math.h wrapper to be selected. That wrapper uses #include_next <math.h> and includes <stdlib.h> for C++, providing the abs declaration required by cmath.
+
+Because the SDK C include directory currently comes first, cmath instead resolves directly to the OpenOrbis C include/math.h, bypassing the libc++ wrapper. This is the identified cause of the repeated using ::abs failure.
+
+The repository has not been modified yet. The immediate validation is a minimal standalone C++ compile comparing the current and corrected include-directory order. Only after that succeeds should the PS4 build flags be changed.
