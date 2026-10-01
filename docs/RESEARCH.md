@@ -233,3 +233,34 @@ No Kodi source, HarfBuzz source, OpenOrbis header, or repository toolchain file 
 ### Immediate experiment
 
 Because scripts/build-ps4-kodi.sh and cmake/toolchains/openorbis-ps4-kodi.cmake select generic clang, clang++, llvm-ar, llvm-ranlib and ld.lld names, the cleanest experiment is to put the LLVM 18 tool directory first in PATH for one build invocation. Verify the selected binaries first; then run the existing CONFIGURE_ONLY=1 workflow. Do not patch Kodi or the OpenOrbis headers unless this experiment disproves the host-LLVM hypothesis.
+
+## R-004.22 — LLVM 18 experiment does not resolve OpenOrbis v0.5.4 header mismatch
+
+**Status:** validated negative result.
+
+The controlled experiment selected LLVM/Clang/LLD 18.1.8 explicitly through PATH and reran the existing configure-only Kodi PS4 build.
+
+The result is unchanged. HarfBuzz compilation still fails repeatedly at:
+
+    $OO_PS4_TOOLCHAIN/include/c++/v1/cmath:341
+    using ::abs;
+
+because the OpenOrbis target:
+
+    $OO_PS4_TOOLCHAIN/include/math.h
+
+does not expose the expected global abs declaration at the relevant interface; the compiler reports fabs instead.
+
+The same failure appears across multiple independent HarfBuzz translation units, so changing the host LLVM major version from 21 to 18 does not explain or resolve the blocker.
+
+### Conclusion
+
+The LLVM 18 hypothesis is rejected as a sufficient explanation/fix for the current blocker.
+
+No repository source, Kodi source, HarfBuzz source, OpenOrbis header, or repository toolchain file was modified as part of this experiment.
+
+### Next investigation
+
+Compare the installed OpenOrbis v0.5.4 cmath and math.h pair with the corresponding upstream OpenOrbis source/release asset and determine how that toolchain expects libc++ and the C math headers to be integrated. In particular, establish whether the missing global abs is an intentional header compatibility layer, a generated/header-version mismatch, or an integration requirement not currently reproduced by the project.
+
+Do not patch HarfBuzz or suppress the libc++ using ::abs diagnostic before that comparison.
