@@ -300,3 +300,25 @@ Before changing the repository, run a minimal standalone C++ compile twice again
 2. corrected order: libc++ include before SDK C include.
 
 The test should include only <cmath> and compile for x86_64-pc-freebsd12-elf. The expected result is failure with the current order and success with the corrected order. If confirmed, the repository fix should be limited to the generated PS4 C++ include ordering; no header or HarfBuzz patch should be introduced.
+
+## R-004.24 — OpenOrbis libc++ C++ header include-order validation
+
+**Status: validated.**
+
+The standalone cross-compilation experiment reproduced the HarfBuzz blocker with the current include order and compiled successfully after reversing the two OpenOrbis include directories.
+
+Current order:
+
+    -isystem $OO_PS4_TOOLCHAIN/include
+    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
+
+Result: OpenOrbis libc++ `cmath` reaches the raw SDK `math.h`, which does not expose the global `abs` declaration required by `using ::abs`.
+
+Corrected order:
+
+    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
+    -isystem $OO_PS4_TOOLCHAIN/include
+
+Result: the minimal program including `<cmath>` and calling `std::abs(double)` compiles successfully.
+
+This experimentally validates the previously identified root cause. The correct fix is therefore in the repository's C++ include ordering, not in HarfBuzz, Kodi source, or OpenOrbis headers.
