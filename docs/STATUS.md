@@ -290,3 +290,14 @@ The next Kodi CMake stage fails in `FindHarfBuzz.cmake` with “Harfbuzz librari
 However, `harfbuzz.pc` declares a required `freetype2 >= 12.0.6` dependency, and that transitive target package is not currently resolvable through the same manual pkg-config lookup. The next action is therefore to inspect Kodi's official package-discovery macros and the target prefix's FreeType pkg-config metadata before modifying discovery configuration.
 
 **Do not treat this as a HarfBuzz build failure and do not add a blind host/target pkg-config workaround yet.**
+
+
+## Latest implementation — 2026-10-01 — PS4 target pkg-config routing
+
+The HarfBuzz discovery blocker was narrowed to target pkg-config metadata split across `lib/pkgconfig` (FreeType) and `libdata/pkgconfig` (HarfBuzz), combined with the absence of target-specific `PKG_CONFIG_LIBDIR` during Kodi CMake package discovery.
+
+The PS4 CMake toolchain now sets `PKG_CONFIG_LIBDIR` from `DEPENDS_PATH` to both target metadata directories. This isolates package discovery from host Linux packages while covering the actual Kodi target prefix layout.
+
+Implementation commit: `7b5d60af7e0e63dcbc8d59f049720069e56d3ad5`.
+
+**Validation pending:** rerun `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh` from a clean current `main`. The expected result is that Kodi resolves HarfBuzz and FreeType and proceeds beyond `FindHarfBuzz.cmake`.
