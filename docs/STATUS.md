@@ -184,3 +184,20 @@ No repository workaround has been implemented yet.
 ### Next action
 
 Inspect the installed OpenOrbis revision and the exact `cmath` / `math.h` sections, then compare with OpenOrbis upstream/release sources. Do not modify Kodi or HarfBuzz until the root cause is established.
+
+
+## Latest validation — 2026-10-01 — LLVM 18 installed for OpenOrbis v0.5.4 experiment
+
+The current external target toolchain is OpenOrbis v0.5.4. The active build blocker remains the OpenOrbis C/C++ math-header interface:
+
+    include/c++/v1/cmath:341:9: error: no member named 'abs' in the global namespace
+
+The host was previously using LLVM/Clang/LLD 21.1.8. LLVM/Clang/LLD 18.1.8 has now been installed in parallel through Ubuntu packages. Installation was verified successfully.
+
+This does not yet prove that LLVM 18 fixes the blocker. LLVM 18 is the next controlled experiment; LLVM 21 remains installed and the repository has not been changed to pin either version.
+
+### Immediate next action
+
+Use LLVM 18 explicitly for one clean configure-only run by placing /usr/lib/llvm-18/bin before the existing OpenOrbis path in PATH. First verify that generic clang, clang++, llvm-ar, llvm-ranlib and ld.lld resolve to LLVM 18. Then run the existing CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh workflow.
+
+Do not modify Kodi, HarfBuzz, the OpenOrbis headers, or the repository toolchain file before this experiment produces a result.
