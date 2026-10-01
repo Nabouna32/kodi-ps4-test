@@ -59,10 +59,10 @@ for tool in cmake ninja meson pkg-config python3 nasm TexturePacker JsonSchemaBu
   fi
 done
 
-echo "==> building only Kodi target dependencies required by HarfBuzz"
+echo "==> building Kodi target dependencies required by ASS/libass"
 make -C "${KODI_SRC}/tools/depends/target" \
   -j"${JOBS}" \
-  harfbuzz
+  fribidi harfbuzz
 
 cmake -S "${KODI_SRC}" -B "${BUILD_DIR}" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
