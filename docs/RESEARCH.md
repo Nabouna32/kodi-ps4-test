@@ -482,3 +482,59 @@ Use the actual OpenOrbis sysroot and target compiler to perform two small, deter
 2. inspect the OpenOrbis target libc/archive symbols and header definitions needed by that API.
 
 Only after those checks should we decide whether the PS4 solution is a toolchain/CMake detection correction or an explicit libiconv dependency.
+
+
+## R-004.32 — OpenOrbis iconv direct target test
+
+**Status:** validated partial result; CMake integration diagnosis remains open.
+
+A direct standalone C test was run against the installed OpenOrbis toolchain using the target triple `x86_64-pc-freebsd12-elf`.
+
+### Results
+
+With only the sysroot, compilation failed because the compiler did not find:
+
+`$OO_PS4_TOOLCHAIN/include/iconv.h`
+
+Adding the OpenOrbis SDK C include directory explicitly:
+
+`-isystem $OO_PS4_TOOLCHAIN/include`
+
+made the test compile successfully.
+
+The test then linked successfully against:
+
+`-lc -lkernel`
+
+when using the validated OpenOrbis linker driver:
+
+`-fuse-ld=lld`
+
+The linker emitted only:
+
+`warning: cannot find entry symbol _start; not setting start address`
+
+and produced a FreeBSD x86-64 PIE ELF. This warning is expected from the intentionally minimal symbol/link test, which does not provide the normal PS4 application entry point.
+
+The important result is that the calls used by CMake's implicit Iconv test — `iconv_open`, `iconv`, and `iconv_close` — are accepted by the OpenOrbis target link with `libc`; no separate target libiconv was required for this API test.
+
+### Conclusion
+
+The evidence now strongly favors a **CMake target-header/toolchain integration problem** over a missing GNU libiconv dependency:
+
+- OpenOrbis provides `iconv.h`;
+- the header becomes visible when the SDK C include directory is explicitly supplied;
+- the iconv API links through OpenOrbis `libc`;
+- Kodi Autoconf independently reports `ac_cv_search_iconv_open='none required'`.
+
+This does **not** yet prove that OpenOrbis iconv is semantically sufficient for all Kodi legacy encodings. That separate question remains out of scope until CMake's detection discrepancy is resolved.
+
+### Scope boundary
+
+No repository source, Kodi source, OpenOrbis header, target dependency recipe, or PS5 implementation was modified. No Ubuntu `libiconv-dev` package was introduced.
+
+### Next diagnostic
+
+Reproduce CMake's exact `Iconv_IS_BUILT_IN` test in a minimal standalone CMake project using the repository's PS4 toolchain. The experiment must first establish the C compiler's actual include/link command and then test whether adding the same OpenOrbis C include path makes CMake detect built-in iconv.
+
+Do not force `Iconv_IS_BUILT_IN`, add libiconv, or patch Kodi's finder until that exact CMake behavior is reproduced.
