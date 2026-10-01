@@ -45,6 +45,20 @@ diff --git a/tools/depends/configure.ac b/tools/depends/configure.ac
      AC_MSG_ERROR(unsupported platform ($use_platform))
  esac
 
+diff --git a/tools/depends/m4/xbmc_arch.m4 b/tools/depends/m4/xbmc_arch.m4
+--- a/tools/depends/m4/xbmc_arch.m4
++++ b/tools/depends/m4/xbmc_arch.m4
+@@ -46,6 +46,9 @@
+   i386-*-freebsd*)
+      AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_FREEBSD")
+      ;;
++  x86_64-*-freebsd*)
++     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_FREEBSD")
++     ;;
+   amd64-*-freebsd*)
+      AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_FREEBSD")
+      ;;
+ 
 diff --git a/tools/depends/target/Toolchain.cmake.in b/tools/depends/target/Toolchain.cmake.in
 --- a/tools/depends/target/Toolchain.cmake.in
 +++ b/tools/depends/target/Toolchain.cmake.in
