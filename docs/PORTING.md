@@ -83,3 +83,7 @@ The immediate checkpoint is a minimal compile proving that reversing the C++ inc
 The OpenOrbis v0.5.4 C++ header blocker is experimentally resolved at the integration level: the standalone `<cmath>` test fails with SDK C headers first and succeeds with OpenOrbis libc++ headers first.
 
 The implementation target is the repository-owned PS4 C++ flags/toolchain integration. No patch to Kodi, HarfBuzz or OpenOrbis headers is planned.
+
+## Current checkpoint — C++ header ordering implementation
+
+The OpenOrbis libc++ include-order correction is implemented in the Kodi depends overlay and the direct CMake PS4 toolchain. The next validation is a clean/current-main `CONFIGURE_ONLY=1` run in WSL. The expected outcome is that HarfBuzz passes the previous `cmath`/`abs` compilation failure and exposes the next genuine blocker, if any.
