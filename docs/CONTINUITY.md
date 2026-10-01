@@ -290,61 +290,39 @@ The PS5 script also creates `Toolchain-Native.cmake` for other native tools.
 
 **Do not copy the complete PS5 script blindly.** Use it only as supporting evidence for the focused host-tool architecture.
 
-## Step 5 — Native host-tools bootstrap
+## Native dependency bootstrap correction
 
-### Implementation completed
+### Implementation
 
-The specialized TexturePacker-only helper was replaced by:
+The previous project-specific `scripts/build-ps4-native-host-tools.sh` bootstrap has been removed from the build flow.
 
-    scripts/build-ps4-native-host-tools.sh
+The main script now:
+- configures Kodi `tools/depends`;
+- runs the official `tools/depends/native` graph;
+- explicitly builds the official `JsonSchemaBuilder` recipe;
+- uses the generated `x86_64-linux-gnu-native` prefix for all subsequent host tools;
+- builds only the target HarfBuzz dependency path after native tools are available.
 
-The helper now builds both currently required Kodi host tools from the pinned source:
-- TexturePacker
-- JsonSchemaBuilder
+This removes the duplicate `build/native` abstraction and the incorrect `x86_64-pc-linux-gnu-native` compatibility path.
 
-It uses the WSL host compilers, Ninja, KODI_SOURCE_DIR, APP_NAME_LC=kodi, and the validated host ARCH_DEFINES, then installs both into the shared native prefix.
+### Validation — pending
 
-The main build script now invokes this shared helper. The old:
+The previous WSL run proved that the failure occurred because target FreeType/HarfBuzz setup invoked:
 
-    scripts/build-ps4-native-texturepacker.sh
+    build/x86_64-linux-gnu-native/bin/cmake
 
-was removed.
+before that official native prefix had been populated.
 
-The implementation is committed to main.
-
-### Validation — host tools and cross-configure
-
-WSL validation after the host-tool correction confirmed:
-1. TexturePacker builds/installs;
-2. JsonSchemaBuilder builds/installs as `JsonSchemaBuilder`;
-3. the pinned Kodi finder accepts that executable;
-4. Kodi enters PS4 cross-configuration.
-
-The next configure blockers were optional Bluray/libbluray and optional XSLT/libxslt, both entering LibXml2-dependent paths. The PS4 overlay now excludes both from the minimal bring-up profile.
-
-Required next validation:
-
-```bash
-cd ~/projects/kodi-ps4-test
-git fetch origin
-git reset --hard origin/main
-
-CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
-```
-
-Two consecutive WSL runs stopped at the overlay application step with `patch: **** malformed patch`; these were repository patch-format defects, not HarfBuzz/toolchain results. The first correction fixed one set of hunk counts; the second exposed another malformed hunk at the Android/FreeBSD case boundary. Inspection then found a third incorrect hunk count in `Toolchain.cmake.in`. The previous patch correction `14a0ba05e8b7dce99234c7c3dea8339cd395499a` fixed the Toolchain.cmake hunk, but WSL still reported `patch: **** malformed patch at line 19`. Direct inspection against the exact pinned Kodi source then identified one remaining incorrect hunk header in `configure.ac`: the hunk contained four original context lines, not five. That final patch-format defect was corrected in commit `abe4c8d3fdcdb0222e5e57cd0cc97cc8ddbc2124`. WSL then reported both hunks as failed despite the corrected counts. Direct line-number inspection of the exact pinned Kodi source showed the hunk start locations were also off by one: `configure.ac` context begins at line 263, while `Toolchain.cmake.in` context begins at line 35. These locations were corrected in commit `a7f530b758e926c9b5650bd8c44e11d22ea9cacd`. The patch still requires WSL execution after this latest correction.
-
-Verify that:
-1. native host tools remain available;
-2. Bluray/libbluray and XSLT/libxslt are no longer configured;
-3. Kodi proceeds to the next dependency or completes configuration;
-4. the host/target boundary remains intact.
-
-Do not start a full Kodi build until configure succeeds. If a new blocker appears, first classify whether it belongs to the minimal GUI/GLES/controller milestone or to an optional feature that can remain disabled.
+The implementation is now aligned with Kodi's own dependency ordering. The authoritative WSL validation is still required:
+1. native CMake/Ninja/Meson/Python/pkg-config/NASM are installed under `x86_64-linux-gnu-native`;
+2. TexturePacker and JsonSchemaBuilder are installed there;
+3. target `freetype2-noharfbuzz` configures and builds;
+4. target HarfBuzz configures and builds;
+5. Kodi CMake configuration proceeds.
 
 ### Scope boundary
 
-No Vulkan/OpenGNM, renderer, controller, audio, video, GP4/PKG, GoldHEN runtime, self-hosted CI, broad CMake refactoring, or custom dependency bootstrap was added.
+No Vulkan/OpenGNM, renderer, controller, audio, video, GP4/PKG, GoldHEN runtime, self-hosted CI, broad CMake refactoring, or new custom dependency bootstrap was added. The change deliberately removes the previous custom native-tool bootstrap in favor of Kodi's official mechanism.
 
 ## Current target dependency bootstrap blocker
 
