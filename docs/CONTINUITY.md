@@ -842,3 +842,8 @@ Expected immediate result: Kodi gets past `FindHarfBuzz.cmake` because HarfBuzz 
 ### Important scope
 
 Do not change the pkg-config implementation again unless this validation disproves the hypothesis. Do not add host `libfreetype`/`libharfbuzz` packages, patch HarfBuzz, patch FreeType, or copy the PS5 pkg-config wrapper blindly. If the next failure is unrelated, stop and classify it before changing anything.
+
+
+### Handoff HEAD correction
+
+A subsequent documentation commit updated `docs/BUILD.md` after the previous handoff entry. The actual current `main` HEAD is now `92ffcb85ae3838deb7f66176d575c3099cb6988a`. This supersedes the older HEAD value in the preceding handoff paragraph; verify `origin/main` before continuing.
