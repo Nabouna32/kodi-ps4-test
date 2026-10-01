@@ -711,3 +711,36 @@ The HarfBuzz failure is caused by the OpenOrbis libc++ wrapper being shadowed by
 Inspect the repository-owned PS4 target flag generation and apply the smallest change that puts `include/c++/v1` before `include` for C++ compilation. Preserve the existing target triple, sysroot, linker, CRT and target libraries. Then rerun the configure-only build and classify the next real blocker.
 
 Do not start renderer/controller/audio/video/runtime/packaging or self-hosted CI work.
+
+## Latest handoff — 2026-10-01 — C++ include-order correction implemented
+
+The standalone validation from the previous checkpoint proved that OpenOrbis libc++ must precede the SDK C headers for C++ compilation. The repository implementation is now complete.
+
+### Implementation
+
+Changed only these two files:
+
+- `overlay/tools/depends/0001-openorbis-ps4-target-depends.patch`
+- `cmake/toolchains/openorbis-ps4-kodi.cmake`
+
+C++ flags now use:
+
+    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
+    -isystem $OO_PS4_TOOLCHAIN/include
+
+The target triple, sysroot, linker, linker script, CRT and libraries are unchanged.
+
+### Validation pending
+
+The standalone `<cmath>` test is green with the corrected ordering, but the real Kodi configure-only workflow has not yet been rerun after the repository change.
+
+Run from current `main`:
+
+    cd ~/projects/kodi-ps4-test
+    git fetch origin
+    git reset --hard origin/main
+    export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
+    export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
+    CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
+
+Do not start a full Kodi build until this run is classified.
