@@ -52,3 +52,10 @@ Reason: this preserves Kodi's upstream intent, exploits the PS5 port as a practi
 Host-native Kodi build tools may use normal Ubuntu/WSL development packages when the official Kodi recipe requires them.
 
 Reason: CMake, TexturePacker, JsonSchemaBuilder, Meson, Ninja and related build-time utilities execute on the Linux host. Avoiding normal host packages by introducing project-local substitutes would add unnecessary complexity. This does **not** permit host Linux libraries to satisfy PS4 target dependencies; target libraries remain separately built for the OpenOrbis/FreeBSD target.
+
+
+## D-011 — Do not hard-code the host LLVM version before compatibility validation
+
+The repository toolchain continues to select generic LLVM tool names (clang, clang++, llvm-ar, llvm-ranlib, ld.lld) rather than pinning an Ubuntu-specific LLVM path.
+
+Reason: LLVM/LLD 18.1.8 is currently installed as a controlled compatibility experiment for OpenOrbis v0.5.4, while LLVM/LLD 21.1.8 remains the validated baseline for the standalone PS4 smoke test. The project must first demonstrate the actual Kodi/HarfBuzz build result with LLVM 18 before deciding whether a repository-level version requirement is justified.
