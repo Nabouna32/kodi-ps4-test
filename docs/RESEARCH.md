@@ -264,3 +264,39 @@ No repository source, Kodi source, HarfBuzz source, OpenOrbis header, or reposit
 Compare the installed OpenOrbis v0.5.4 cmath and math.h pair with the corresponding upstream OpenOrbis source/release asset and determine how that toolchain expects libc++ and the C math headers to be integrated. In particular, establish whether the missing global abs is an intentional header compatibility layer, a generated/header-version mismatch, or an integration requirement not currently reproduced by the project.
 
 Do not patch HarfBuzz or suppress the libc++ using ::abs diagnostic before that comparison.
+
+## R-004.23 — Root cause identified: libc++/SDK C-header include-order mismatch
+
+**Status:** root cause identified; minimal validation pending.
+
+The OpenOrbis toolchain does not use a standalone upstream libc++ tree. Its C++ standard library headers come from the OpenOrbis fork OpenOrbis/llvm-project. Direct inspection of that fork shows:
+
+- libcxx/include/cmath performs #include <math.h> and then using ::abs;
+- libcxx/include/math.h is a libc++ wrapper that first performs #include_next <math.h> and, for C++, also includes <stdlib.h>. That wrapper therefore supplies the expected abs declaration through the OpenOrbis C library headers.
+
+The current Kodi HarfBuzz command line orders the target include directories as:
+
+    -isystem $OO_PS4_TOOLCHAIN/include
+    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
+
+The PS4 overlay itself generates this order in platform_cflags / platform_cxxflags.
+
+Consequently, when OpenOrbis libc++ cmath executes #include <math.h>, the first matching header is the SDK C include/math.h, not OpenOrbis libc++'s include/c++/v1/math.h. That SDK C header exposes fabs but does not provide the global abs expected by this libc++ implementation. The libc++ wrapper that would include <stdlib.h> is bypassed.
+
+This explains all observed facts:
+- the failure is in cmath;
+- the diagnostic points at the OpenOrbis C math.h;
+- it reproduces with LLVM 21 and LLVM 18;
+- it affects every C++ translation unit that reaches cmath;
+- no HarfBuzz source defect is required;
+- the problem is specific to the C++/C header search order.
+
+Independent public OpenOrbis compatibility guidance also explicitly states that libc++'s include directory must stay ahead of the SDK C headers because libc++ wraps the C headers and uses #include_next.
+
+### Next validation
+
+Before changing the repository, run a minimal standalone C++ compile twice against the installed OpenOrbis v0.5.4 toolchain:
+1. current order: SDK C include before libc++ include;
+2. corrected order: libc++ include before SDK C include.
+
+The test should include only <cmath> and compile for x86_64-pc-freebsd12-elf. The expected result is failure with the current order and success with the corrected order. If confirmed, the repository fix should be limited to the generated PS4 C++ include ordering; no header or HarfBuzz patch should be introduced.
