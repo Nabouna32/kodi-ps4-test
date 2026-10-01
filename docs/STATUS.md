@@ -365,3 +365,6 @@ Until that root cause is established:
 - do not patch Kodi's FindIconv.cmake;
 - do not modify references/kodi;
 - do not start a full Kodi build.
+
+### Follow-up diagnostic — Iconv header/log lookup
+The OpenOrbis toolchain does contain `include/iconv.h`. The first attempted `grep` produced no CMake log output because the shell command was split across lines after the grep pattern, so the filename was not passed to `grep` as intended. No conclusion can yet be drawn about the actual `Iconv_IS_BUILT_IN` compile failure. The next action is to rerun the log inspection with each `grep` command on one line and verify the actual CMake build-tree log location before reproducing the test.
