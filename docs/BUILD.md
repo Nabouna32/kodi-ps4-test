@@ -308,3 +308,16 @@ Do not yet:
 - copy the PS5 Iconv overlay.
 
 The next validation is a minimal direct OpenOrbis target iconv compile/link plus inspection of the target libc symbols/headers. This will distinguish a CMake cross-detection problem from a real PS4 libc/iconv limitation.
+
+
+## 2026-10-01 — Iconv target API validation
+
+The OpenOrbis iconv API was tested directly with the PS4 target compiler.
+
+The installed SDK contains `include/iconv.h`, and the test program using `iconv_open`, `iconv` and `iconv_close` compiles when `$OO_PS4_TOOLCHAIN/include` is explicitly supplied as a C system include directory.
+
+The same object links with the OpenOrbis target libraries `-lc -lkernel` when Clang is explicitly instructed to use LLD via `-fuse-ld=lld`. The resulting ELF is FreeBSD x86-64; the only diagnostic is the expected missing `_start` warning from the intentionally incomplete executable test.
+
+This confirms that the OpenOrbis C target environment contains the iconv API needed by the current CMake detection test. The remaining investigation is CMake/toolchain include-path propagation, not installation of a Linux host iconv library.
+
+Host/target boundary remains unchanged: a WSL `libiconv-dev` package would be a Linux host dependency and cannot substitute for the PS4 target libc. It should only be installed if a genuinely host-native build tool requires it.
