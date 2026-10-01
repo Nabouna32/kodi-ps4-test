@@ -201,3 +201,36 @@ This does not yet prove that LLVM 18 fixes the blocker. LLVM 18 is the next cont
 Use LLVM 18 explicitly for one clean configure-only run by placing /usr/lib/llvm-18/bin before the existing OpenOrbis path in PATH. First verify that generic clang, clang++, llvm-ar, llvm-ranlib and ld.lld resolve to LLVM 18. Then run the existing CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh workflow.
 
 Do not modify Kodi, HarfBuzz, the OpenOrbis headers, or the repository toolchain file before this experiment produces a result.
+
+## Latest validation — 2026-10-01 — LLVM 18 does not resolve the HarfBuzz header blocker
+
+The controlled LLVM 18 compatibility experiment has now been executed with:
+
+    /usr/lib/llvm-18/bin/clang++
+    Ubuntu Clang/LLD 18.1.8
+
+The build still fails at exactly the same shared target-header boundary:
+
+    OpenOrbis/include/c++/v1/cmath:341:9
+    error: no member named 'abs' in the global namespace; did you mean 'fabs'?
+
+The compiler still points at OpenOrbis:
+
+    OpenOrbis/include/math.h:295:13
+    note: 'fabs' declared here
+
+The failure occurs across many HarfBuzz C++ translation units and the build stops in the official Kodi HarfBuzz target dependency.
+
+### Conclusion
+
+The hypothesis that LLVM 21 alone was incompatible with the OpenOrbis v0.5.4 C++ headers is not supported by this experiment. LLVM 18 reproduces the same failure.
+
+Therefore:
+- LLVM 18 is not a fix for the current blocker;
+- LLVM 21 remains installed and remains the validated standalone PS4 smoke-test compiler;
+- the repository must not pin LLVM 18 based on this experiment;
+- no Kodi/HarfBuzz/OpenOrbis header patch has been introduced.
+
+### Next action
+
+Inspect the exact OpenOrbis v0.5.4 libc++/math header integration and compare the expected upstream OpenOrbis/LLVM configuration before modifying the repository. The next step remains diagnosis of the target header interface, not a workaround in HarfBuzz.
