@@ -285,3 +285,6 @@ Reproduce that exact test with the OpenOrbis target compiler and inspect the con
 - whether the test fails during preprocessing/compilation or only during linking.
 
 Do not modify the repository or add libiconv until this experiment identifies the root cause. Full Kodi compilation remains blocked until configure-only succeeds.
+
+### Follow-up diagnostic — Iconv header/log lookup
+The OpenOrbis toolchain does contain `include/iconv.h`. The first attempted `grep` produced no CMake log output because the shell command was split across lines after the grep pattern, so the filename was not passed to `grep` as intended. No conclusion can yet be drawn about the actual `Iconv_IS_BUILT_IN` compile failure. The next action is to rerun the log inspection with each `grep` command on one line and verify the actual CMake build-tree log location before reproducing the test.
