@@ -401,3 +401,39 @@ Before implementation, validate the official Kodi FriBidi recipe and its relatio
 ## R-004.29 — FriBidi target bootstrap implemented
 
 Following the FriBidi diagnosis, `scripts/build-ps4-kodi.sh` now stages `fribidi` alongside `harfbuzz` using the official Kodi target dependency recipes. This avoids a CMake finder workaround and preserves host/target separation. Implementation commit: `2afb9021ad1b35f1d2698d94cdacf80fe16e7100`. Validation is pending.
+
+
+## R-004.30 — CMake 4.2 Iconv detection mismatch
+
+**Status:** diagnosis narrowed; repository implementation not justified yet.
+
+The latest clean CONFIGURE_ONLY=1 run passed the previously staged FriBidi dependency and then stopped while configuring required ASS/libass:
+
+    Could NOT find Iconv (missing: Iconv_LIBRARY)
+
+The preceding Kodi tools/depends/configure result is significant:
+
+    ac_cv_search_iconv_open='none required'
+    link_iconv=''
+    need_libiconv=''
+
+At the pinned Kodi source, this means Kodi's Autoconf dependency bootstrap considers iconv_open() available from the target C library and therefore does not enable/build its optional libiconv target dependency. Adding libiconv blindly would contradict the dependency result and has not been justified.
+
+The pinned Kodi cmake/modules/FindIconv.cmake delegates to CMake's standard FindIconv.cmake. CMake's current module first attempts an implicit-iconv compile test when no Iconv cache variables are preset. The test includes <iconv.h> and calls iconv_open, iconv, and iconv_close; only when that test fails does it require Iconv_LIBRARY and Iconv_INCLUDE_DIR.
+
+The failure therefore represents a discrepancy between:
+- Kodi Autoconf's target test: iconv is supplied by libc;
+- CMake 4.2's target compile test: Iconv_IS_BUILT_IN is false.
+
+The PS4 repository toolchain intentionally sets CMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY, so the next investigation must reproduce the exact CMake test under the OpenOrbis target compiler and inspect the generated CMakeError.log. This avoids guessing whether the failure is caused by header visibility, compiler flags, target sysroot, or another CMake cross-compilation detail.
+
+### Scope boundary
+
+Do not:
+- add Ubuntu libiconv-dev as a PS4 dependency;
+- force Iconv_IS_BUILT_IN=TRUE;
+- patch Kodi's FindIconv.cmake;
+- modify references/kodi;
+- copy the PS5 iconv/libiconv solution.
+
+The immediate goal is only to establish why CMake's exact implicit-iconv test fails while Kodi's target Autoconf test succeeds.
