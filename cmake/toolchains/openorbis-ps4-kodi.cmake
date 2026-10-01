@@ -30,7 +30,7 @@ set(CMAKE_LINKER ld.lld)
 set(CMAKE_C_FLAGS_INIT
     "--target=${PS4_TRIPLE} -fPIC -funwind-tables")
 set(CMAKE_CXX_FLAGS_INIT
-    "--target=${PS4_TRIPLE} -fPIC -funwind-tables -isystem ${OO_PS4_TOOLCHAIN}/include/c++/v1")
+    "--target=${PS4_TRIPLE} -fPIC -funwind-tables -isystem ${OO_PS4_TOOLCHAIN}/include/c++/v1 -isystem ${OO_PS4_TOOLCHAIN}/include")
 set(CMAKE_ASM_FLAGS_INIT "--target=${PS4_TRIPLE}")
 
 set(CMAKE_SYSROOT "${OO_PS4_TOOLCHAIN}")
