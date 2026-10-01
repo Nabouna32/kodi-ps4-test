@@ -170,3 +170,29 @@ The smallest clean direction is **not** a new HarfBuzz implementation and not a 
 Implementation is committed, but it has not yet been executed in the WSL environment. The next validation is therefore the configure-only build; any failure must be classified from the real output before further adaptation.
 
 Before implementation, the remaining concrete question is how to initialize Kodi's official `tools/depends` configuration for the OpenOrbis toolchain without accidentally pulling the entire desktop dependency graph. The target dependency graph shows that HarfBuzz itself has a deliberately small bootstrap path, so the implementation should build only that path and then let the normal CMake discovery consume the resulting target prefix.
+## R-004.19 — Kodi native CMake bootstrap and system CURL
+
+**Status:** host dependency root cause identified; remediation installed; bootstrap revalidation pending.
+
+The official pinned Kodi native CMake recipe was reproduced directly. It invokes CMake's bootstrap script with:
+
+    --prefix=<x86_64-linux-gnu-native>
+    --system-curl
+
+The first bootstrap phase successfully compiled the bootstrap executable and entered CMake's initial configuration. The root `Makefile` was nevertheless absent because the second configuration phase failed while resolving system CURL:
+
+    CMAKE_USE_SYSTEM_CURL is ON but a curl is not found!
+
+This is important because the failure is entirely on the **WSL/Linux host-tool side**. It is not a missing PS4 library and does not justify adding a target dependency, changing the OpenOrbis toolchain, or modifying Kodi's CMake recipe.
+
+The normal host remediation was used: Ubuntu `libcurl4-openssl-dev` was installed. Verification returned libcurl 8.18.0 through pkg-config and exposed the development link flag `-lcurl`. Ubuntu 26.04's multiarch layout also explains why `/usr/include/curl/curl.h` is not necessarily present at that exact path.
+
+### Conclusion
+
+For this project, host development packages are an accepted and expected part of the WSL build environment when an official native Kodi recipe requires them. The strict separation is:
+
+- WSL packages → host executables/build tooling;
+- OpenOrbis + Kodi target depends → PS4 libraries/executables;
+- no host Linux library may satisfy a PS4 target dependency.
+
+Next experiment: rerun the unchanged official CMake bootstrap and verify generation of the native root `Makefile`.
