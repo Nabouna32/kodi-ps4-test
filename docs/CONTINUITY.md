@@ -847,3 +847,27 @@ Do not change the pkg-config implementation again unless this validation disprov
 ### Handoff HEAD correction
 
 A subsequent documentation commit updated `docs/BUILD.md` after the previous handoff entry. The actual current `main` HEAD is now `92ffcb85ae3838deb7f66176d575c3099cb6988a`. This supersedes the older HEAD value in the preceding handoff paragraph; verify `origin/main` before continuing.
+
+
+## Latest validation — 2026-10-01 — FriBidi target dependency blocker
+
+The latest clean `CONFIGURE_ONLY=1` run passed the previous HarfBuzz discovery blocker. HarfBuzz 14.2.0 successfully built for the OpenOrbis target and installed into the PS4 target dependency prefix.
+
+The next configure failure is:
+
+    CMake Error at cmake/modules/FindFriBidi.cmake:38 (message):
+      FriBidi library was not found.
+
+The pinned official Kodi source confirms that `FindFriBidi.cmake` searches the target package through Kodi's standard package-discovery path, while the official `tools/depends/target/fribidi/Makefile` builds FriBidi with Meson for the target.
+
+The current PS4 build script only builds the target `harfbuzz` recipe. FriBidi is therefore not yet staged. The blocker is currently classified as a missing required target dependency, not a CMake finder defect and not a host dependency.
+
+### PS5 reference reminder
+
+`references/kodi-ps5` remains a **technical reference only**. Its dependency definitions include `ps5-payload-libfribidi`, useful evidence that FriBidi belongs in the target-side dependency set. PS5 binaries/packages are not reusable PS4 dependencies and must not be copied into this project.
+
+### Immediate next step
+
+Validate the complete official Kodi FriBidi/libass dependency relationship and determine the smallest target-dependency build sequence compatible with the existing OpenOrbis integration. Then validate that dependency before changing the Kodi CMake discovery layer.
+
+Do not modify `references/kodi`. Do not install host `libfribidi-dev`. Do not start the full Kodi build.
