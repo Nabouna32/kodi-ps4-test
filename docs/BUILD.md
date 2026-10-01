@@ -240,3 +240,16 @@ Both target metadata locations are included because the current dependency graph
 This uses `PKG_CONFIG_LIBDIR`, rather than `PKG_CONFIG_PATH`, so host Linux pkg-config metadata cannot satisfy PS4 target dependencies.
 
 The implementation is in `cmake/toolchains/openorbis-ps4-kodi.cmake`. WSL configure-only validation remains pending.
+
+
+## FriBidi target dependency investigation — 2026-10-01
+
+The latest configure-only run moved beyond HarfBuzz discovery and now stops in Kodi's required ASS/libass configuration because FriBidi is missing:
+
+    FriBidi library was not found.
+
+The pinned official Kodi source provides `tools/depends/target/fribidi/Makefile`. It uses the native Meson executable, the generated target Meson cross-file, installs into Kodi's target prefix, builds a static library and installs target pkg-config metadata.
+
+The current PS4 build script does not invoke this recipe; it currently requests only the target `harfbuzz` dependency. The next change must therefore be evaluated as target dependency graph integration, not as a CMake finder workaround. Host Linux FriBidi packages must not be used to satisfy the PS4 target.
+
+The PS5 reference confirms the target-side dependency pattern through its `ps5-payload-libfribidi` dependency, but it is not a source of PS4 binaries.
