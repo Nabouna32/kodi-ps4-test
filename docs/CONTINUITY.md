@@ -99,7 +99,7 @@ The systematic research rule was formalized in commit:
 
 Repository: `Nabouna32/kodi-ps4-test`  
 Branch: `main`  
-Current main HEAD at this handoff preparation: `29d3d288625df8ca4a32a92d068142259eee28a1` (`docs: update PS4 architecture handoff`). Always verify the current GitHub HEAD before relying on historical hashes.
+Current main HEAD at this handoff preparation: `5b134fdb932443377d8309e830dc7e853f1085f2` (`chore: remove obsolete native host bootstrap`). Always verify the current GitHub HEAD before relying on historical hashes.
 
 Known pinned Kodi submodule commit:
 `9c3e7f4d7b3ff314cd2f19a291766555e0346024`
@@ -183,10 +183,13 @@ Flow:
 1. validate `OO_PS4_TOOLCHAIN`;
 2. materialize pinned Kodi;
 3. apply PS4 overlay;
-4. build native host tools;
-5. configure Kodi with OpenOrbis;
-6. stop after configure when `CONFIGURE_ONLY=1`;
-7. otherwise build Kodi.
+4. bootstrap/configure Kodi `tools/depends`;
+5. build Kodi's official native dependency graph into `x86_64-linux-gnu-native`;
+6. build native `JsonSchemaBuilder`;
+7. build only the target HarfBuzz dependency path;
+8. configure Kodi with OpenOrbis;
+9. stop after configure when `CONFIGURE_ONLY=1`;
+10. otherwise build Kodi.
 
 Important configure options include:
 
@@ -229,7 +232,7 @@ TexturePacker is built from:
 `tools/depends/native/TexturePacker/src`
 
 and installed under:
-`build/ps4/build/native/bin/TexturePacker`
+`build/ps4/build/x86_64-linux-gnu-native/bin/TexturePacker`
 
 The previous helper was:
 `scripts/build-ps4-native-texturepacker.sh`
@@ -324,51 +327,20 @@ The implementation is now aligned with Kodi's own dependency ordering. The autho
 
 No Vulkan/OpenGNM, renderer, controller, audio, video, GP4/PKG, GoldHEN runtime, self-hosted CI, broad CMake refactoring, or new custom dependency bootstrap was added. The change deliberately removes the previous custom native-tool bootstrap in favor of Kodi's official mechanism.
 
-## Current target dependency bootstrap blocker
+## Current native dependency bootstrap state
 
-HarfBuzz remains a required dependency and the official Kodi target recipe is being used. The current failure occurs before HarfBuzz compilation: Kodi's generated dependency Makefile tries to execute `build/x86_64-linux-gnu-native/bin/cmake`, but the orchestration script currently exposes the host tools under `build/native` and creates the compatibility link under the wrong `x86_64-pc-linux-gnu-native` name.
+HarfBuzz remains a required dependency. The previous failure was before HarfBuzz compilation: target FreeType attempted to invoke Kodi's generated native CMake path, `build/x86_64-linux-gnu-native/bin/cmake`, before our project-specific bootstrap had populated that prefix.
 
-Audit completed against the exact pinned Kodi commit, the pinned PS5 reference, and public OpenOrbis information:
-- Kodi's `FindHarfBuzz.cmake` searches the target dependency prefix and does not itself build HarfBuzz.
-- Kodi provides an official target recipe at `tools/depends/target/harfbuzz` for HarfBuzz 14.2.0, built statically with Meson.
-- The official target dependency graph uses `freetype2-noharfbuzz` to bootstrap the FreeType/HarfBuzz cycle, then builds HarfBuzz and normal FreeType.
-- PS5 uses target-side HarfBuzz in its pacbrew/sysroot; that establishes the dependency architecture but its PS5 binaries are not reusable for PS4.
-- OpenOrbis does not provide Kodi's third-party HarfBuzz target library.
+The build orchestration has now been corrected:
+- the custom `build/native` host-tool abstraction is removed;
+- Kodi's official `tools/depends/native` graph builds the native toolchain;
+- the official `JsonSchemaBuilder` recipe is built after native CMake is available;
+- target HarfBuzz is built only after the native prefix is populated;
+- no Kodi upstream source is modified.
 
-Do **not** install Ubuntu `libharfbuzz-dev`; the missing artifact is the PS4 target library.
+### Validation pending
 
-### Current implementation and validation state
-
-The smallest repository-owned integration is implemented in:
-`overlay/tools/depends/0001-openorbis-ps4-target-depends.patch`
-
-It patches only Kodi's target dependency configuration so the official `freetype2-noharfbuzz` and HarfBuzz recipes can be built for the OpenOrbis FreeBSD target. The overlay also adds the corresponding FreeBSD target behavior to Kodi's target `Toolchain.cmake.in`.
-
-The WSL configure-only run confirmed:
-- the overlay patch applies cleanly;
-- Autoconf accepts `x86_64-pc-freebsd12`;
-- clang/clang++, LLVM tools and `ld.lld` are selected;
-- the compiler test succeeds;
-- cross-compilation is detected.
-
-The final Kodi platform validation blocker in `tools/depends/configure.ac` was corrected in the repository-owned overlay: `ps4)` is now accepted by the final `case $use_platform` allowlist. The next configure run exposed the next target-side architecture blocker in `tools/depends/m4/xbmc_arch.m4`: the target host is `x86_64-pc-freebsd12`, while the pinned source only matches `amd64-*-freebsd*` and `i386-*-freebsd*`.
-
-This is the **current exact blocker**. It is not a compiler, OpenOrbis, HarfBuzz, or patch-format failure.
-
-### Next action
-
-Update only `scripts/build-ps4-kodi.sh` so the compatibility prefix matches Kodi's generated native-prefix convention:
-
-```bash
-EXPECTED_NATIVEPREFIX="${DEPENDS_ROOT}/x86_64-linux-gnu-native"
-if [[ ! -e "${EXPECTED_NATIVEPREFIX}" ]]; then
-  ln -s "${NATIVEPREFIX}" "${EXPECTED_NATIVEPREFIX}"
-fi
-```
-
-This is a build-orchestration correction at the host/target dependency boundary: Kodi already generates this native prefix name, so the project should expose the existing native tools at that exact path. It does not modify Kodi source, add a dependency-specific workaround, duplicate host tools, or hard-code a CMake executable path.
-
-After implementation, run:
+The authoritative WSL validation is:
 
 ```bash
 cd ~/projects/kodi-ps4-test
@@ -379,8 +351,14 @@ export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
 CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 ```
 
-Then stop at the next blocker and classify it before making another change. Do not start a full Kodi build until configure succeeds.
+The run must confirm:
+1. native CMake/Ninja/Meson/Python/pkg-config/NASM are installed under `x86_64-linux-gnu-native`;
+2. TexturePacker and JsonSchemaBuilder are installed there;
+3. `freetype2-noharfbuzz` configures/builds;
+4. HarfBuzz configures/builds;
+5. Kodi CMake configuration proceeds.
 
+Do not start a full Kodi build until this validation succeeds. If a new blocker appears, classify it against the minimal GUI/GLES/controller milestone before changing the dependency surface.
 ## Milestones
 
 A — Host tools: TexturePacker ✅, JsonSchemaBuilder ✅  
