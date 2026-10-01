@@ -49,3 +49,12 @@ This is a host-tool prerequisite, not a PS4 dependency. The next checkpoint is t
 ## Current build-system checkpoint — CMake bootstrap resolved
 
 The official Kodi native CMake bootstrap now succeeds after installing the required WSL host development package `libcurl4-openssl-dev`. The native `Makefile` is generated successfully. The next checkpoint is explicit native-tool dependency validation, followed by the target HarfBuzz path.
+
+
+## Current toolchain checkpoint — OpenOrbis v0.5.4 / LLVM 18 experiment
+
+The active target toolchain is OpenOrbis v0.5.4. The latest HarfBuzz failure is in the OpenOrbis C/C++ math-header interface (cmath expects global abs, while the inspected math.h region exposes fabs but not abs).
+
+LLVM/Clang/LLD 18.1.8 is now installed alongside the previously validated LLVM/LLD 21.1.8 environment. No repository pin or code workaround has been introduced.
+
+The next executable checkpoint is a single configure-only run with LLVM 18 selected explicitly through PATH. This experiment must establish whether the host compiler version explains the OpenOrbis header mismatch before any Kodi-side compatibility patch is considered.
