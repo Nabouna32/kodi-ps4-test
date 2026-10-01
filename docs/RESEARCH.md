@@ -396,3 +396,8 @@ The pinned `VivaLaVent/kodi-ps5` reference includes `ps5-payload-libfribidi` in 
 ### Conclusion
 
 Before implementation, validate the official Kodi FriBidi recipe and its relationship with the existing libass/FreeType/HarfBuzz target chain under OpenOrbis. The likely minimal adaptation is to build the official FriBidi recipe for PS4 and stage it in the existing target prefix, not to modify `FindFriBidi.cmake` or install a Linux host package.
+
+
+## R-004.29 — FriBidi target bootstrap implemented
+
+Following the FriBidi diagnosis, `scripts/build-ps4-kodi.sh` now stages `fribidi` alongside `harfbuzz` using the official Kodi target dependency recipes. This avoids a CMake finder workaround and preserves host/target separation. Implementation commit: `2afb9021ad1b35f1d2698d94cdacf80fe16e7100`. Validation is pending.
