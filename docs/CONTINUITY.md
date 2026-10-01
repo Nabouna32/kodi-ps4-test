@@ -788,3 +788,57 @@ For PS4, HarfBuzz is already built and installed at the target prefix with `lib/
 Before implementing target pkg-config routing, verify the target prefix's pkg-config metadata for both HarfBuzz and FreeType, and test them with `PKG_CONFIG_LIBDIR` rather than `PKG_CONFIG_PATH`. This distinguishes a missing target package metadata file from a missing CMake/pkg-config environment integration.
 
 Do not add a blind workaround until this distinction is established.
+
+
+## Latest handoff — 2026-10-01 — PS4 target pkg-config routing implemented
+
+Current GitHub `main` HEAD at this handoff: `c23a63e92179f4ddba4d465b780a5ff42ae0a201` (`docs: record pkg-config routing implementation`). Verify the HEAD independently before continuing.
+
+### What was validated before the implementation
+
+The clean configure-only workflow had already proven that:
+
+- OpenOrbis C++ header ordering is fixed: HarfBuzz 14.2.0 now compiles and installs for `x86_64-pc-freebsd12-elf`.
+- Kodi then fails in `FindHarfBuzz.cmake`, not while compiling HarfBuzz.
+- The target prefix contains `freetype2.pc` under `lib/pkgconfig` and HarfBuzz `.pc` files under `libdata/pkgconfig`.
+- With only `libdata/pkgconfig` in `PKG_CONFIG_LIBDIR`, `pkg-config` finds HarfBuzz and reports `freetype2 >= 12.0.6`, but cannot find FreeType because its `.pc` file is in the sibling `lib/pkgconfig` directory.
+
+This confirms the blocker is target pkg-config routing/metadata search, not a missing HarfBuzz library.
+
+### Implementation
+
+`cmake/toolchains/openorbis-ps4-kodi.cmake` now sets:
+
+    PKG_CONFIG_LIBDIR=<DEPENDS_PATH>/lib/pkgconfig:<DEPENDS_PATH>/libdata/pkgconfig
+
+when `DEPENDS_PATH` is available during the PS4 CMake configure. `PKG_CONFIG_LIBDIR` is used deliberately so host Linux pkg-config metadata cannot satisfy PS4 target dependency discovery.
+
+Implementation commit:
+
+    7b5d60af7e0e63dcbc8d59f049720069e56d3ad5
+
+No Kodi upstream source, HarfBuzz source, FreeType recipe, OpenOrbis header, compiler/linker flags, or target libraries were changed by this fix.
+
+### Documentation commits
+
+- `3cd5fec3d10a24d5ccbf45d68602fd9ab101af78` — research record
+- `c23a63e92179f4ddba4d465b780a5ff42ae0a201` — status record / current HEAD
+
+### Required next validation
+
+Run from a clean current `main`:
+
+```bash
+cd ~/projects/kodi-ps4-test
+git fetch origin
+git reset --hard origin/main
+export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
+export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
+CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
+```
+
+Expected immediate result: Kodi gets past `FindHarfBuzz.cmake` because HarfBuzz and its FreeType dependency are visible through the isolated target pkg-config paths. Continue only as far as the next real blocker and record it; do not start a full Kodi build yet.
+
+### Important scope
+
+Do not change the pkg-config implementation again unless this validation disproves the hypothesis. Do not add host `libfreetype`/`libharfbuzz` packages, patch HarfBuzz, patch FreeType, or copy the PS5 pkg-config wrapper blindly. If the next failure is unrelated, stop and classify it before changing anything.
