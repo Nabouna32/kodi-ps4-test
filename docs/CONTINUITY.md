@@ -390,3 +390,43 @@ The authority order is:
 5. official/reference external repositories;
 6. this handoff;
 7. old chat memory.
+## Latest handoff state — 2026-10-01 native CMake bootstrap
+
+Verified current GitHub main before this documentation update: the previous implementation/documentation state is at or after `d4b4385e1db3d589758d73efea4f9068527b2ab`; subsequent documentation commits record the current host-bootstrap investigation.
+
+### New validated discovery
+
+The official Kodi native CMake recipe was reproduced directly from the materialized pinned source. It invokes CMake with `--system-curl`. The bootstrap executable compiled and entered the initial CMake configuration, but the root Makefile was not generated because CMake stopped with:
+
+    CMAKE_USE_SYSTEM_CURL is ON but a curl is not found!
+
+This was identified as a missing **WSL host development dependency**, not a PS4/OpenOrbis or target-dependency failure.
+
+The host remediation was performed with the normal Ubuntu package:
+
+    libcurl4-openssl-dev
+
+Verification:
+- libcurl 8.18.0 is visible through pkg-config;
+- pkg-config provides `-lcurl` and the multiarch include path;
+- the runtime linker exposes libcurl;
+- the exact `/usr/include/curl/curl.h` path is not required on Ubuntu 26.04 because of multiarch layout.
+
+### Important boundary reaffirmed
+
+Normal Ubuntu development packages are allowed and expected for native Linux build tools when the official Kodi recipes require them. This does not change the target boundary:
+
+    WSL/Linux packages -> host build tools
+    OpenOrbis/Kodi target depends -> PS4 target libraries
+
+Do not use a host Linux library to satisfy a PS4 target dependency.
+
+### Immediate next step
+
+Rerun the **unchanged official CMake bootstrap** with the previously documented environment and verify that the native root `Makefile` is generated.
+
+Do not start the full Kodi build yet.
+
+A separate Makefile audit also established that `make native JsonSchemaBuilder` does not automatically mean “build every native tool”. After CMake bootstrap is validated, explicitly validate the native CMake/Ninja/Meson/Python/NASM/TexturePacker/JsonSchemaBuilder dependency targets against Kodi's real dependency graph before changing the orchestration.
+
+This handoff supersedes the older statement that the native dependency correction was merely pending without a known cause: the current known blocker is specifically the missing WSL system CURL development package, which has now been installed; bootstrap revalidation remains pending.
