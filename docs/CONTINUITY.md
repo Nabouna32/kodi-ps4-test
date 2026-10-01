@@ -959,3 +959,31 @@ Do not change the dependency graph until that experiment is classified. Full Kod
 
 ### Follow-up diagnostic — Iconv header/log lookup
 The OpenOrbis toolchain does contain `include/iconv.h`. The first attempted `grep` produced no CMake log output because the shell command was split across lines after the grep pattern, so the filename was not passed to `grep` as intended. No conclusion can yet be drawn about the actual `Iconv_IS_BUILT_IN` compile failure. The next action is to rerun the log inspection with each `grep` command on one line and verify the actual CMake build-tree log location before reproducing the test.
+
+
+## Latest investigation — 2026-10-01 — Iconv source comparison completed
+
+The Iconv blocker was re-evaluated using the real source repositories, respecting the rule that `references/kodi` is authoritative upstream Kodi and `references/kodi-ps5` is a technical reference only.
+
+### Official Kodi evidence
+
+Pinned Kodi `9c3e7f4d7b3ff314cd2f19a291766555e0346024`:
+
+- Autoconf checks `iconv_open` and sets `need_libiconv` only when the target C library does not provide it;
+- the current PS4 configure result is `ac_cv_search_iconv_open='none required'`;
+- `tools/depends/target/Makefile` therefore does not add `libiconv`;
+- Kodi's `FindIconv.cmake` delegates to CMake's standard finder.
+
+### PS5 reference evidence
+
+`references/kodi-ps5` explicitly forces `Iconv_IS_BUILT_IN=OFF` and links GNU libiconv. Its documentation explains that PS5 libc's iconv support is insufficient for Kodi's legacy encodings, with CP437 being a concrete add-on ZIP use case.
+
+This is a useful technical reference but does **not** prove the same limitation exists on PS4/OpenOrbis. No PS5 implementation or package is being copied.
+
+### Current conclusion
+
+There are two unresolved possibilities: CMake's cross-compilation test is failing despite valid OpenOrbis libc iconv support, or OpenOrbis has a console-specific iconv limitation that makes an explicit GNU libiconv dependency necessary.
+
+### Next single diagnostic
+
+Use the actual OpenOrbis target compiler/sysroot to compile and link the iconv API directly, then inspect the target libc/archive symbols and header definitions. Do not modify the repository before that evidence is classified.
