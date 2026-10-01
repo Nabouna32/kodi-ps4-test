@@ -85,3 +85,16 @@ before:
 for C++ header lookup.
 
 No OpenOrbis header copy, HarfBuzz patch, or compiler-version workaround is justified for this issue.
+
+## D-014 — Preserve OpenOrbis libc++ header precedence for C++ target builds
+
+**Status: validated decision.**
+
+OpenOrbis libc++ wraps the SDK C headers and relies on its wrapper being found before the raw SDK header. A standalone PS4-targeted `<cmath>` test proves that the current repository order is broken and that libc++ first is sufficient to restore the expected global `abs` declaration.
+
+Therefore the PS4 C++ target integration must use:
+
+    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
+    -isystem $OO_PS4_TOOLCHAIN/include
+
+Only the ordering is to change. Target triple, sysroot, linker, CRT and libraries remain unchanged.
