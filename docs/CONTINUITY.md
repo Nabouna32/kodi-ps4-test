@@ -1095,3 +1095,22 @@ The minimal candidate fix is to add the OpenOrbis SDK C include directory to CMA
 Implement only that C include-path correction, then rerun the clean CONFIGURE_ONLY=1 workflow.
 
 Do not start a full Kodi build. If the next configure run exposes another blocker, classify it from the real output before making any further change.
+
+
+## Latest implementation — 2026-10-01 — Iconv C include-path correction applied
+
+The CMake 4.2 reproduction proved that OpenOrbis `iconv.h` becomes visible to the PS4 C compiler when `${OO_PS4_TOOLCHAIN}/include` is explicitly supplied. The repository PS4 CMake toolchain has now been updated accordingly.
+
+### Implemented
+
+In `cmake/toolchains/openorbis-ps4-kodi.cmake`, `CMAKE_C_FLAGS_INIT` now includes:
+
+    -isystem ${OO_PS4_TOOLCHAIN}/include
+
+This is the smallest change supported by the reproduction. No libiconv dependency, `Iconv_IS_BUILT_IN` force, finder patch, or PS5 dependency was introduced.
+
+Implementation commit: `8cff9e52405f41a8028d59292db87a31128e0cbd`.
+
+### Next single step
+
+Run the clean `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh` workflow from current `main` and inspect the first new blocker. Full Kodi build remains prohibited until configure-only succeeds.

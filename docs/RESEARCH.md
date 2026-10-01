@@ -584,3 +584,14 @@ Do not:
 ### Next step
 
 Implement only the validated C include-path correction, then rerun the clean CONFIGURE_ONLY=1 workflow. The next configure result must determine whether this fixes Iconv without exposing a separate target-header issue.
+
+
+## Latest implementation — 2026-10-01 — OpenOrbis C SDK include path added to PS4 C flags
+
+The validated Iconv detection fix is now implemented in `cmake/toolchains/openorbis-ps4-kodi.cmake`.
+
+`CMAKE_C_FLAGS_INIT` now includes `-isystem ${OO_PS4_TOOLCHAIN}/include`, matching the successful standalone CMake reproduction. No other C toolchain, linker, library, Iconv finder, or dependency behavior was changed.
+
+Implementation commit: `8cff9e52405f41a8028d59292db87a31128e0cbd`.
+
+**Validation pending:** rerun the clean `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh` workflow from current `main`. Full Kodi build remains prohibited until configure-only succeeds.

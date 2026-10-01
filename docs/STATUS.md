@@ -448,3 +448,25 @@ Implement the minimal validated change in cmake/toolchains/openorbis-ps4-kodi.cm
 Then rerun the clean CONFIGURE_ONLY=1 workflow.
 
 Full Kodi build remains prohibited until configure-only succeeds.
+
+
+## Latest implementation — 2026-10-01 — Iconv C header visibility correction applied
+
+The validated CMake Iconv detection fix is implemented in `cmake/toolchains/openorbis-ps4-kodi.cmake`.
+
+`CMAKE_C_FLAGS_INIT` now explicitly exposes `${OO_PS4_TOOLCHAIN}/include` through `-isystem`, matching the successful standalone CMake reproduction. The target triple, sysroot, linker, target libraries, C++ include ordering, pkg-config routing, and Iconv dependency graph were left unchanged.
+
+Implementation commit: `8cff9e52405f41a8028d59292db87a31128e0cbd`.
+
+### Validation pending
+
+Run from a clean current `main`:
+
+    cd ~/projects/kodi-ps4-test
+    git fetch origin
+    git reset --hard origin/main
+    export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
+    export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
+    CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
+
+Do not start a full Kodi build until configure-only succeeds. If Iconv is resolved, classify the next real blocker before making another change.
