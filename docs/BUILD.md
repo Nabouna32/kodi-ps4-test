@@ -221,3 +221,9 @@ The next repository change must therefore preserve this ordering for C++ target 
     -isystem $OO_PS4_TOOLCHAIN/include
 
 No HarfBuzz or OpenOrbis header workaround is justified.
+
+## Latest implementation — OpenOrbis C++ include order
+
+The PS4 C++ include ordering has been corrected in both target integrations. C++ now receives `include/c++/v1` before the SDK `include` directory, matching the validated OpenOrbis libc++ header model.
+
+The implementation is committed to `main`. WSL configure-only validation is still required before this step is considered complete.
