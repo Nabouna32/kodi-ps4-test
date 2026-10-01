@@ -871,3 +871,40 @@ The current PS4 build script only builds the target `harfbuzz` recipe. FriBidi i
 Validate the complete official Kodi FriBidi/libass dependency relationship and determine the smallest target-dependency build sequence compatible with the existing OpenOrbis integration. Then validate that dependency before changing the Kodi CMake discovery layer.
 
 Do not modify `references/kodi`. Do not install host `libfribidi-dev`. Do not start the full Kodi build.
+
+
+## Latest implementation — 2026-10-01 — Stage FriBidi with the target dependency bootstrap
+
+The FriBidi diagnosis is now implemented in the repository-owned build orchestration.
+
+### Change
+
+`scripts/build-ps4-kodi.sh` previously staged only:
+
+    harfbuzz
+
+from Kodi's official `tools/depends/target` recipes. It now stages:
+
+    fribidi harfbuzz
+
+using the same official Kodi target dependency machinery, native Meson/Ninja and the existing OpenOrbis-generated target configuration.
+
+Implementation commit:
+
+    2afb9021ad1b35f1d2698d94cdacf80fe16e7100
+
+No Kodi upstream source was modified. `references/kodi` remains immutable, and `references/kodi-ps5` remains a technical reference only.
+
+### Why this is the minimal correction
+
+The pinned Kodi source already contains a target `fribidi` recipe. That recipe is designed to install a static target library and pkg-config metadata into the same target prefix consumed by Kodi CMake. The configure failure occurred because our PS4 bootstrap omitted that target recipe; changing `FindFriBidi.cmake` would have hidden the missing dependency rather than fixing the dependency graph.
+
+### Validation status
+
+This implementation has **not yet been WSL/build validated** in this conversation. The next validation is the existing clean configure-only workflow from current `main`:
+
+    CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
+
+The expected immediate verification is that FriBidi builds and installs for `x86_64-pc-freebsd12-elf`, then Kodi CMake progresses beyond `FindFriBidi.cmake`. If a new failure appears, stop at that first failure and diagnose it before adding another change.
+
+Do not start the full Kodi build until configure-only succeeds.
