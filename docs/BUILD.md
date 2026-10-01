@@ -22,8 +22,10 @@ Primary development is WSL2/Linux.
 
 Validated environment:
 - Ubuntu 26.04.1 LTS
-- Clang/Clang++ 21.1.8
-- LLD 21.1.8
+- Clang/Clang++ 21.1.8 (validated PS4 smoke-test environment)
+- LLD 21.1.8 (validated PS4 smoke-test environment)
+- Clang/Clang++ 18.1.8 (installed 2026-10-01 for OpenOrbis v0.5.4 compatibility validation; not yet build-validated)
+- LLD 18.1.8 (installed 2026-10-01 for the same validation; not yet build-validated)
 - CMake 4.2.3
 - Ninja 1.13.2
 - Meson 1.10.1
@@ -160,3 +162,16 @@ See [`WSL-HOST-DEPENDENCIES.md`](WSL-HOST-DEPENDENCIES.md) for the evidence-base
 The unchanged official Kodi native CMake recipe was rerun after installing `libcurl4-openssl-dev`. CMake 3.31.10 finds system libcurl 8.18.0, completes configuration/generation, and produces the native root `Makefile`. This confirms the previous failure was a missing WSL host development dependency, not a PS4/OpenOrbis issue.
 
 **Next:** validate the explicit native dependency targets in Kodi's generated `x86_64-linux-gnu-native` prefix before proceeding to target HarfBuzz or the full Kodi build.
+
+
+## LLVM 18 compatibility investigation — 2026-10-01
+
+The installed OpenOrbis toolchain is v0.5.4, and the current Kodi PS4 build blocker occurs in the OpenOrbis C++/C math-header interface:
+
+    include/c++/v1/cmath:341:9: error: no member named 'abs' in the global namespace
+
+LLVM/Clang/LLD 18.1.8 has now been installed in parallel through Ubuntu packages: clang-18 and lld-18. Verified versions are Ubuntu clang 18.1.8 (20ubuntu8) and Ubuntu LLD 18.1.8.
+
+LLVM 21 remains installed and has not been removed. The repository toolchain still uses generic compiler names and does not hard-code a host LLVM version.
+
+LLVM 18 is currently an experiment to validate the OpenOrbis v0.5.4 header/libc++ compatibility hypothesis. It is not yet established as the permanent host LLVM version. The next validation must select LLVM 18 explicitly without changing repository files, then rerun the smallest relevant build/configuration path.
