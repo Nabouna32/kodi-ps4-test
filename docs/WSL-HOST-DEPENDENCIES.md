@@ -10,7 +10,8 @@ Validated build environment:
 
 - Ubuntu 26.04.1 LTS / WSL
 - x86_64 host
-- Clang/LLVM 21.1.8
+- Clang/LLVM 21.1.8 (validated PS4 smoke-test environment)
+- Clang/LLVM 18.1.8 (installed 2026-10-01 for OpenOrbis v0.5.4 compatibility validation; not yet build-validated)
 - OpenOrbis PS4 toolchain under `~/opt/OpenOrbis/PS4Toolchain`
 
 ## Direct host development packages identified by the project
@@ -110,3 +111,17 @@ Example:
 Start with the direct packages above, then follow `docs/BUILD.md` and the documented OpenOrbis/toolchain setup. As new host packages are genuinely required and verified, add them here with the reason and the date/discovery that established them.
 
 Do not turn this file into a guessed “install everything” list. It should remain an evidence-based record of packages actually required by the project.
+
+
+## LLVM 18 compatibility experiment
+
+The Ubuntu packages below were installed in parallel with LLVM 21:
+
+| Package | Version | Purpose |
+|---|---|---|
+| clang-18 | 18.1.8 | Host compiler compatibility experiment for OpenOrbis v0.5.4 |
+| lld-18 | 18.1.8 | Host linker compatibility experiment for OpenOrbis v0.5.4 |
+
+The packages are installed successfully. LLVM 21 remains installed. This is not yet a validated project prerequisite: the Kodi PS4 configure-only build must first be rerun with LLVM 18 selected explicitly and the HarfBuzz result observed.
+
+Do not remove LLVM 21 until the experiment is complete; the existing LLVM 21 PS4 smoke-test result remains valuable as a known-good baseline.
