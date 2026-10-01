@@ -58,3 +58,14 @@ The active target toolchain is OpenOrbis v0.5.4. The latest HarfBuzz failure is 
 LLVM/Clang/LLD 18.1.8 is now installed alongside the previously validated LLVM/LLD 21.1.8 environment. No repository pin or code workaround has been introduced.
 
 The next executable checkpoint is a single configure-only run with LLVM 18 selected explicitly through PATH. This experiment must establish whether the host compiler version explains the OpenOrbis header mismatch before any Kodi-side compatibility patch is considered.
+
+## Current toolchain checkpoint — LLVM 18 experiment rejected as fix
+
+The LLVM/Clang/LLD 18.1.8 configure-only experiment reproduced the exact same OpenOrbis cmath failure as LLVM 21:
+
+    cmath:341: using ::abs
+    math.h:295: fabs declared
+
+The host LLVM major version is therefore not sufficient to explain the blocker. No repository pin or compatibility workaround was added.
+
+The next checkpoint is a direct comparison of the OpenOrbis v0.5.4 libc++/math header integration and its expected upstream build environment.
