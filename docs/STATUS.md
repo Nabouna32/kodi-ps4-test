@@ -337,3 +337,31 @@ The change is limited to `scripts/build-ps4-kodi.sh` and uses the existing `tool
 Implementation commit: `2afb9021ad1b35f1d2698d94cdacf80fe16e7100`.
 
 **Validation pending:** run the clean `CONFIGURE_ONLY=1` workflow from current `main`. Full Kodi build remains prohibited until configure-only succeeds.
+
+
+## Latest validation — 2026-10-01 — Iconv detection blocker
+
+The latest clean CONFIGURE_ONLY=1 run passed the previously missing FriBidi target dependency and progressed into required ASS/libass configuration. The first new blocker is:
+
+    Could NOT find Iconv (missing: Iconv_LIBRARY)
+
+The preceding Kodi target tools/depends/configure result reports:
+
+    ac_cv_search_iconv_open='none required'
+    link_iconv=''
+    need_libiconv=''
+
+This means Kodi's official dependency bootstrap currently considers iconv_open() provided by the target C library and does not enable its libiconv dependency.
+
+The blocker is therefore classified as a CMake target-detection mismatch, not as proof that a host Linux iconv package should be installed and not yet as proof that PS4 libiconv is required.
+
+### Immediate next action
+
+Reproduce CMake 4.2's exact implicit-iconv compile test with the OpenOrbis target compiler and inspect the generated CMakeError.log. Determine whether the test fails because of target header visibility, the OpenOrbis sysroot/flags, or another cross-compilation detail.
+
+Until that root cause is established:
+- do not add libiconv;
+- do not force Iconv_IS_BUILT_IN;
+- do not patch Kodi's FindIconv.cmake;
+- do not modify references/kodi;
+- do not start a full Kodi build.
