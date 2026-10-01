@@ -279,3 +279,14 @@ The experimentally validated OpenOrbis libc++ include-order fix is now implement
 Both changes are one-line ordering corrections. The standalone test already proved the ordering itself; the remaining validation is the real Kodi configure-only workflow.
 
 Do not start a full Kodi build until that configure-only run is evaluated.
+
+
+## 2026-10-01 — Current blocker: target HarfBuzz package discovery
+
+The real `CONFIGURE_ONLY=1` workflow now passes the previous OpenOrbis C++ header blocker: HarfBuzz 14.2.0 compiles and installs into the PS4 target dependency prefix.
+
+The next Kodi CMake stage fails in `FindHarfBuzz.cmake` with “Harfbuzz libraries were not found.” The target prefix contains `libharfbuzz.a` and `harfbuzz.pc`, and manual `pkg-config` lookup succeeds when `PKG_CONFIG_PATH` is explicitly pointed at the target `libdata/pkgconfig` directory.
+
+However, `harfbuzz.pc` declares a required `freetype2 >= 12.0.6` dependency, and that transitive target package is not currently resolvable through the same manual pkg-config lookup. The next action is therefore to inspect Kodi's official package-discovery macros and the target prefix's FreeType pkg-config metadata before modifying discovery configuration.
+
+**Do not treat this as a HarfBuzz build failure and do not add a blind host/target pkg-config workaround yet.**
