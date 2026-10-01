@@ -324,3 +324,16 @@ The pinned references/kodi-ps5 repository is a technical reference only. Its dep
 Inspect the complete official Kodi FriBidi/libass dependency relationship and validate that the existing OpenOrbis/Meson target integration can build the official FriBidi recipe. Do not modify FindFriBidi.cmake or add host packages unless evidence requires it.
 
 Full Kodi build remains prohibited until configure-only succeeds.
+
+
+## Latest implementation — 2026-10-01 — FriBidi target dependency staged
+
+The repository-owned PS4 build script now stages both official Kodi target dependencies required by the current ASS/libass path:
+
+    fribidi harfbuzz
+
+The change is limited to `scripts/build-ps4-kodi.sh` and uses the existing `tools/depends/target` machinery. No upstream Kodi source or PS5 implementation was copied or modified.
+
+Implementation commit: `2afb9021ad1b35f1d2698d94cdacf80fe16e7100`.
+
+**Validation pending:** run the clean `CONFIGURE_ONLY=1` workflow from current `main`. Full Kodi build remains prohibited until configure-only succeeds.
