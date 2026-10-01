@@ -744,3 +744,26 @@ Run from current `main`:
     CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 
 Do not start a full Kodi build until this run is classified.
+
+
+## Latest handoff — 2026-10-01 — HarfBuzz package discovery blocker
+
+The corrected OpenOrbis C++ include ordering has been validated by the real configure-only Kodi workflow: HarfBuzz now compiles and installs successfully into the PS4 target dependency prefix.
+
+Kodi configuration then reaches `FindHarfBuzz.cmake` and fails because the installed target HarfBuzz package is not being discovered.
+
+Evidence:
+- target HarfBuzz is present at `build/ps4/build/x86_64-pc-freebsd12-release/lib/libharfbuzz.a`;
+- target metadata is present at `libdata/pkgconfig/harfbuzz.pc`;
+- CMake has found `/usr/bin/pkg-config` 2.5.1;
+- the configure cache contains `PKG_CONFIG_EXECUTABLE=/usr/bin/pkg-config`, but no target `PKG_CONFIG_PATH`/target pkg-config directory was established;
+- manually setting `PKG_CONFIG_PATH` to the target `libdata/pkgconfig` makes `pkg-config --modversion harfbuzz` return 14.2.0;
+- that manual lookup then exposes a second transitive discovery issue: `harfbuzz.pc` declares `Requires: freetype2 >= 12.0.6`, but the target pkg-config search path does not currently contain a resolvable `freetype2.pc`.
+
+This is therefore a **package-discovery/staging issue**, not a HarfBuzz compilation failure.
+
+### Immediate next step
+
+Inspect Kodi's complete `SETUP_FIND_SPECS()` / `SEARCH_EXISTING_PACKAGES()` implementation and the target dependency prefix contents for `freetype2.pc`. Determine whether Kodi expects the target prefix to be exposed through `PKG_CONFIG_PATH`, `CMAKE_PREFIX_PATH`, or another official depends-generated mechanism before changing the build script or toolchain.
+
+Do not add a blind global `PKG_CONFIG_PATH` workaround yet: the transitive FreeType requirement must also be understood, and the solution should use Kodi's existing target-package discovery mechanism where possible.
