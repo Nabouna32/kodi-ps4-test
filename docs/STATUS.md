@@ -49,11 +49,11 @@ Until the next configure-only validation succeeds:
 
 ## Next action
 
-The exact pinned Kodi source was re-audited at commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`. The current blocker is the final `case $use_platform` allowlist in `tools/depends/configure.ac`, which rejects `ps4` after the PS4 cross-configuration has otherwise succeeded.
+The exact pinned Kodi source was re-audited at commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`. The final `case $use_platform` allowlist blocker was corrected in the repository-owned overlay. The next blocker is Kodi's target architecture detection in `tools/depends/m4/xbmc_arch.m4`: the target host is `x86_64-pc-freebsd12`, but the pinned source accepts `amd64-*-freebsd*` and `i386-*-freebsd*`, not `x86_64-*-freebsd*`.
 
-The repository-owned patch `overlay/tools/depends/0001-openorbis-ps4-target-depends.patch` was updated in commit `24941fa574a4f43a99c0441bc5f77b21d68d82f4` to add only the missing `ps4)` acceptance branch. No Kodi upstream source or submodule file was modified.
+The repository-owned patch `overlay/tools/depends/0001-openorbis-ps4-target-depends.patch` was updated in commit `eadc6b5cf3a45328a2dc34bebecfd559df5be7ba` to add the missing `x86_64-*-freebsd*` target architecture branch. The branch emits the same `TARGET_POSIX -DTARGET_FREEBSD` definitions already used for FreeBSD targets; it does not alter the native Linux build case. No Kodi upstream source or submodule file was modified.
 
-This change has been structurally audited against the exact pinned source. Local WSL execution is still required to validate that the unified patch applies cleanly and that configuration proceeds beyond the platform allowlist. The authoritative validation command is:
+This change is structurally audited against the exact pinned source. Local WSL execution is still required to validate that the unified patch applies cleanly and that configuration proceeds beyond target architecture detection. The authoritative validation command is:
 
 ```bash
 cd ~/projects/kodi-ps4-test
