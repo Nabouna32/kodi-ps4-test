@@ -196,3 +196,10 @@ For this project, host development packages are an accepted and expected part of
 - no host Linux library may satisfy a PS4 target dependency.
 
 Next experiment: rerun the unchanged official CMake bootstrap and verify generation of the native root `Makefile`.
+
+
+## R-004.20 — Native CMake bootstrap revalidation
+
+**Status:** validated.
+
+After installing the normal WSL host package `libcurl4-openssl-dev`, the unchanged pinned Kodi native CMake bootstrap was rerun successfully. System libcurl 8.18.0 was found, CMake configuration/generation completed, and the root native `Makefile` was generated. The previous host-CURL blocker is closed. The next experiment is explicit validation of Kodi's remaining native dependency targets.
