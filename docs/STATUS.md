@@ -301,3 +301,26 @@ The PS4 CMake toolchain now sets `PKG_CONFIG_LIBDIR` from `DEPENDS_PATH` to both
 Implementation commit: `7b5d60af7e0e63dcbc8d59f049720069e56d3ad5`.
 
 **Validation pending:** rerun `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh` from a clean current `main`. The expected result is that Kodi resolves HarfBuzz and FreeType and proceeds beyond `FindHarfBuzz.cmake`.
+
+
+## Latest validation — 2026-10-01 — FriBidi is the next target dependency blocker
+
+The clean configure-only workflow passed the previous HarfBuzz target-package discovery blocker. HarfBuzz 14.2.0 was successfully compiled for x86_64-pc-freebsd12-elf and installed into the PS4 target dependency prefix.
+
+Kodi then stopped while configuring required ASS/libass because FindFriBidi.cmake reported:
+
+    FriBidi library was not found.
+
+This is now the first blocker in the configure sequence. The pinned official Kodi source contains an official target tools/depends/target/fribidi recipe using Meson. The repository's PS4 build orchestration currently builds only the harfbuzz target dependency after the native tools, so FriBidi is not yet staged in the target prefix.
+
+Do not install a WSL/Linux libfribidi-dev package: that would provide a host library and would violate the host/target dependency boundary.
+
+### PS5 reference
+
+The pinned references/kodi-ps5 repository is a technical reference only. Its dependency definitions include ps5-payload-libfribidi alongside the other target-side text/rendering dependencies. This supports the target-dependency interpretation but does not establish PS4 binary compatibility.
+
+### Next action
+
+Inspect the complete official Kodi FriBidi/libass dependency relationship and validate that the existing OpenOrbis/Meson target integration can build the official FriBidi recipe. Do not modify FindFriBidi.cmake or add host packages unless evidence requires it.
+
+Full Kodi build remains prohibited until configure-only succeeds.
