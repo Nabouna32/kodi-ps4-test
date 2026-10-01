@@ -21,9 +21,11 @@ Current phase: build/toolchain validation / minimal bring-up profile
 
 ## Current blocker
 
-The native host-tools bootstrap is validated for the currently required tools:
+The required native host tools were previously validated:
 - TexturePacker: installed and accepted by Kodi
 - JsonSchemaBuilder: installed as `JsonSchemaBuilder`, which the pinned Kodi finder accepts
+
+The orchestration has now been corrected to use Kodi's official native dependency graph and generated native prefix instead of the project-specific `build/native` bootstrap. This implementation change is not yet WSL-validated.
 
 Kodi reaches and completes the real PS4 cross-configuration, with `Cross-Compiling: TRUE`, `System type: FreeBSD`, `Core system type: ps4`, and `ARCH x86_64-ps4`.
 
@@ -51,9 +53,9 @@ Until the next configure-only validation succeeds:
 
 The exact pinned Kodi source remains at commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`. The repository-owned overlay now gets through Kodi's platform and target-architecture checks, and the latest WSL run confirmed that the `tools/depends` configure phase completes.
 
-The current blocker is the generated native CMake path used by Kodi's target dependency Makefiles: Kodi expects `x86_64-linux-gnu-native`, while our script exposed the compatibility path as `x86_64-pc-linux-gnu-native`. The durable fix belongs in `scripts/build-ps4-kodi.sh`, not in Kodi or the dependency recipe.
+The build orchestration now uses Kodi's generated `x86_64-linux-gnu-native` prefix and invokes the official native dependency graph before building the target HarfBuzz dependency. This replaces the previous custom `build/native` bootstrap and removes the incorrect compatibility-prefix approach.
 
-The architecture correction is already validated by WSL. The remaining authoritative validation is the native-prefix correction. The authoritative validation command is:
+The authoritative validation command is:
 
 ```bash
 cd ~/projects/kodi-ps4-test
