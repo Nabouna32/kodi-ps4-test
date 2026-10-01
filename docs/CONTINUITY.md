@@ -1056,3 +1056,42 @@ The reproduction must establish:
 4. how this differs from the successful direct Clang test.
 
 Only after that reproduction should the repository toolchain be changed. Do not add host `libiconv-dev`, force `Iconv_IS_BUILT_IN`, add target `libiconv`, or patch Kodi's finder before the CMake behavior is classified.
+
+
+## Latest handoff — 2026-10-01 — CMake Iconv detection root cause confirmed
+
+The exact CMake 4.2 Iconv reproduction has now been validated with the OpenOrbis target configuration.
+
+### Validated reproduction
+
+Using a minimal CMake project and the repository-equivalent PS4 C toolchain:
+
+- without an explicit OpenOrbis SDK C include path:
+  - Iconv_IS_BUILT_IN fails;
+  - find_package(Iconv REQUIRED) reports missing: Iconv_LIBRARY;
+- with -isystem $OO_PS4_TOOLCHAIN/include in CMAKE_C_FLAGS:
+  - Iconv_IS_BUILT_IN succeeds;
+  - CMake reports Found Iconv: built in to C library;
+  - Iconv_FOUND=TRUE;
+  - Iconv_IS_BUILT_IN=1.
+
+This exactly matches the earlier standalone target test, which needed the same explicit OpenOrbis C SDK include directory to find iconv.h.
+
+### Technical conclusion
+
+The Iconv blocker is now classified as a **C compiler include-path integration issue** in the repository PS4 toolchain.
+
+The evidence does not justify:
+- Ubuntu libiconv-dev;
+- a Kodi target libiconv dependency;
+- forcing Iconv_IS_BUILT_IN;
+- modifying Kodi's FindIconv.cmake;
+- copying the PS5 libiconv solution.
+
+The minimal candidate fix is to add the OpenOrbis SDK C include directory to CMAKE_C_FLAGS_INIT, matching the target C header visibility already required by the direct iconv test.
+
+### Next single step
+
+Implement only that C include-path correction, then rerun the clean CONFIGURE_ONLY=1 workflow.
+
+Do not start a full Kodi build. If the next configure run exposes another blocker, classify it from the real output before making any further change.

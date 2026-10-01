@@ -416,3 +416,35 @@ The remaining issue is to reproduce CMake's exact implicit-iconv test and determ
 ### Next action
 
 Run the minimal CMake reproduction using the repository PS4 toolchain. Do not modify the Kodi dependency graph or add host `libiconv-dev` before this experiment is classified.
+
+
+## Latest validation — 2026-10-01 — Iconv CMake detection root cause confirmed
+
+The minimal standalone CMake 4.2 reproduction now exactly matches the Kodi blocker:
+
+    Performing Test Iconv_IS_BUILT_IN - Failed
+    Could NOT find Iconv (missing: Iconv_LIBRARY)
+
+The same toolchain succeeds when the OpenOrbis SDK C include directory is added to the C compiler flags:
+
+    -isystem $OO_PS4_TOOLCHAIN/include
+
+CMake then reports:
+
+    Found Iconv: built in to C library
+    Iconv_FOUND=TRUE
+    Iconv_IS_BUILT_IN=1
+
+This confirms that the blocker is the PS4 C compiler's OpenOrbis SDK header visibility during CMake's implicit Iconv test. It is not currently evidence of a missing target libiconv.
+
+### Current blocker
+
+The repository PS4 CMake toolchain still lacks the OpenOrbis SDK C include path in CMAKE_C_FLAGS_INIT.
+
+### Next action
+
+Implement the minimal validated change in cmake/toolchains/openorbis-ps4-kodi.cmake: add -isystem ${OO_PS4_TOOLCHAIN}/include to CMAKE_C_FLAGS_INIT, without changing the target triple, sysroot, linker, libraries, or Iconv finder.
+
+Then rerun the clean CONFIGURE_ONLY=1 workflow.
+
+Full Kodi build remains prohibited until configure-only succeeds.
