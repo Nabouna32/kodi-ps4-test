@@ -258,3 +258,30 @@ The PS5 reference confirms the target-side dependency pattern through its `ps5-p
 ## FriBidi implementation — 2026-10-01
 
 The PS4 target dependency bootstrap now requests the official Kodi `fribidi` recipe together with `harfbuzz` before the Kodi CMake configure stage. This is the minimal dependency-graph correction for the `FindFriBidi.cmake` blocker. Implementation commit: `2afb9021ad1b35f1d2698d94cdacf80fe16e7100`. WSL validation is pending; do not start the full Kodi build until configure-only succeeds.
+
+
+## Latest configure blocker — CMake Iconv detection
+
+After the target HarfBuzz package-discovery correction and FriBidi staging, the configure-only workflow progressed into required ASS/libass configuration and now stops at:
+
+    Could NOT find Iconv (missing: Iconv_LIBRARY)
+
+The target tools/depends/configure result for the same toolchain reports:
+
+    ac_cv_search_iconv_open='none required'
+    link_iconv=''
+    need_libiconv=''
+
+Therefore Kodi's official dependency bootstrap does not request its libiconv target recipe. This is currently a CMake detection mismatch, not evidence that a Linux host iconv library is missing.
+
+The pinned Kodi cmake/modules/FindIconv.cmake delegates to CMake's standard FindIconv.cmake. CMake's module performs an implicit-iconv compile test using <iconv.h> and the iconv API before falling back to searching for an external library.
+
+### Next validation
+
+Reproduce that exact test with the OpenOrbis target compiler and inspect the configure error log. In particular, compare:
+- the exact failing CMake test in the active CMakeFiles/CMakeError.log;
+- availability of the OpenOrbis target iconv.h;
+- the compiler command generated for the test;
+- whether the test fails during preprocessing/compilation or only during linking.
+
+Do not modify the repository or add libiconv until this experiment identifies the root cause. Full Kodi compilation remains blocked until configure-only succeeds.
