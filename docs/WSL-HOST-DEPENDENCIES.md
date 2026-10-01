@@ -43,7 +43,7 @@ Installing `libcurl4-openssl-dev` on Ubuntu 26.04 pulled additional development/
 
 Those packages are **not listed as separate project prerequisites** because they were installed by APT as dependencies of the direct host package. A fresh machine should normally let APT resolve them rather than maintaining a manually duplicated transitive list.
 
-The exact transaction on 2026-10-01 installed/upgraded 28 packages in addition to the requested `libcurl4-openssl-dev` transaction set, including:
+The exact transaction on 2026-10-01 installed 28 new packages (including `libcurl4-openssl-dev`) and upgraded 4 existing packages. The 27 packages other than the requested direct package were APT-resolved dependencies, including:
 
 - `libssl-dev`
 - `libkrb5-dev`
