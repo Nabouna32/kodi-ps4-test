@@ -59,3 +59,11 @@ Reason: CMake, TexturePacker, JsonSchemaBuilder, Meson, Ninja and related build-
 The repository toolchain continues to select generic LLVM tool names (clang, clang++, llvm-ar, llvm-ranlib, ld.lld) rather than pinning an Ubuntu-specific LLVM path.
 
 Reason: LLVM/LLD 18.1.8 is currently installed as a controlled compatibility experiment for OpenOrbis v0.5.4, while LLVM/LLD 21.1.8 remains the validated baseline for the standalone PS4 smoke test. The project must first demonstrate the actual Kodi/HarfBuzz build result with LLVM 18 before deciding whether a repository-level version requirement is justified.
+
+## D-012 — Do not adopt LLVM 18 as the OpenOrbis header fix
+
+The LLVM/Clang/LLD 18.1.8 experiment was executed against the real Kodi HarfBuzz target build and reproduced the same cmath/global-abs failure seen with LLVM 21.
+
+Therefore LLVM 18 is not accepted as the fix for the current OpenOrbis v0.5.4 header mismatch.
+
+The repository continues to avoid hard-coding an Ubuntu-specific LLVM version until a real compatibility requirement is demonstrated. LLVM 18 remains installed only as an available diagnostic baseline.
