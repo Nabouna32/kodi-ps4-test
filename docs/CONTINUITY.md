@@ -361,8 +361,8 @@ The run must confirm:
 Do not start a full Kodi build until this validation succeeds. If a new blocker appears, classify it against the minimal GUI/GLES/controller milestone before changing the dependency surface.
 ## Milestones
 
-A — Host tools: TexturePacker ✅, JsonSchemaBuilder ✅  
-B — Kodi configure: `tools/depends` cross-configuration completed; target dependency bootstrap blocked by native CMake path resolution  
+A — Host tools: previously validated; native bootstrap architecture corrected, revalidation pending  
+B — Kodi configure: `tools/depends` cross-configuration completed; target dependency bootstrap revalidation pending  
 C — Kodi compilation: not yet validated  
 D — Kodi ELF/FSELF: not yet validated  
 E — real PS4 runtime: not yet validated  
