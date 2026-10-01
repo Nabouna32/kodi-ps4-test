@@ -150,3 +150,6 @@ Installed and verified on WSL:
 Ubuntu 26.04 uses multiarch include paths, so `/usr/include/curl/curl.h` does not have to exist; the header is expected under the architecture-specific include tree.
 
 The next validation is to rerun the **same official CMake bootstrap** after this host dependency installation. Do not modify the Kodi CMake recipe or add a project-local CURL workaround unless the reproduced failure demonstrates a real repository issue.
+## WSL host dependency inventory
+
+See [`WSL-HOST-DEPENDENCIES.md`](WSL-HOST-DEPENDENCIES.md) for the evidence-based list of Ubuntu/WSL packages installed or explicitly required by the host build. This is the source to use when recreating the WSL environment; it deliberately separates direct project prerequisites from APT-resolved transitive packages.
