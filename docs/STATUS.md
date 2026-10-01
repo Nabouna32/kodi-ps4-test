@@ -82,3 +82,25 @@ No PS4 runtime/platform implementation is currently claimed as working.
 The PS4 overlay extends Kodi's `tools/depends/configure.ac` for the Autoconf host `x86_64-pc-freebsd12` / `--with-platform=ps4`, while the generated target toolchain passes the OpenOrbis LLVM target `x86_64-pc-freebsd12-elf`. The build script bootstraps that generated configure system, builds only the official target dependency path needed by HarfBuzz (`freetype2-noharfbuzz` → HarfBuzz), and passes the resulting target prefix to Kodi CMake through `DEPENDS_PATH`. Host Meson/Ninja/pkg-config/Python/CMake are exposed through the existing native prefix rather than rebuilt as new project-specific tools.
 
 This remains an implementation-only phase until the WSL configure-only run successfully applies the overlay and reaches the target dependency bootstrap.
+## Latest validation result — host CMake bootstrap
+
+The previous native CMake bootstrap failure has been root-caused.
+
+The pinned Kodi CMake recipe invokes `./bootstrap --system-curl`. Direct reproduction showed that the bootstrap reached its initial configuration and then stopped because the WSL host did not provide the libcurl development files:
+
+    CMAKE_USE_SYSTEM_CURL is ON but a curl is not found!
+
+This is a normal **host Linux dependency**. It does not indicate a PS4/OpenOrbis problem and does not weaken the host/target separation.
+
+WSL remediation completed:
+- `libcurl4-openssl-dev` installed;
+- `pkg-config` resolves libcurl 8.18.0;
+- `-lcurl` and the multiarch development include path are available.
+
+### Current blocker
+
+**Native CMake bootstrap has not yet been re-run after installing libcurl development files.**
+
+The next step is only to rerun the official CMake bootstrap and verify that the root `Makefile` is generated. Do not start the complete Kodi build yet.
+
+If CMake bootstraps successfully, the following step will validate/build the explicitly required Kodi native tools. An earlier Makefile inspection established that `make native JsonSchemaBuilder` does not mean “build every native tool”; the native targets for CMake, Ninja, Meson, Python, TexturePacker and JsonSchemaBuilder must be requested according to Kodi's actual dependency graph rather than assumed from the aggregate target name.
