@@ -234,3 +234,26 @@ Therefore:
 ### Next action
 
 Inspect the exact OpenOrbis v0.5.4 libc++/math header integration and compare the expected upstream OpenOrbis/LLVM configuration before modifying the repository. The next step remains diagnosis of the target header interface, not a workaround in HarfBuzz.
+
+## Latest investigation — 2026-10-01 — OpenOrbis header root cause identified
+
+The LLVM 18 experiment reproduced the same failure as LLVM 21, so the host LLVM version is not the sufficient cause.
+
+Direct inspection of the OpenOrbis forked libc++ source identified the actual integration issue: the PS4 build currently puts the OpenOrbis C header directory before the OpenOrbis libc++ header directory.
+
+Current order:
+
+    -isystem $OO_PS4_TOOLCHAIN/include
+    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
+
+OpenOrbis libc++ cmath includes <math.h> and then performs using ::abs. OpenOrbis' libc++ math.h wrapper is designed to include the target C math.h with #include_next and includes <stdlib.h> for C++, which supplies abs.
+
+With the current search order, <math.h> resolves directly to the target C header and bypasses the libc++ wrapper. The target C header exposes fabs but not the required global abs, producing the observed error.
+
+### Current status
+
+Root cause identified, repository fix not yet applied.
+
+### Next action
+
+Validate the hypothesis with a minimal standalone <cmath> compile using the current include order and then the corrected order. Do not modify HarfBuzz or OpenOrbis headers. If the corrected order compiles, change only the PS4 C++ include ordering and rerun the configure-only Kodi build.
