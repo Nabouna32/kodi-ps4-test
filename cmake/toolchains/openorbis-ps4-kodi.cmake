@@ -36,6 +36,15 @@ set(CMAKE_ASM_FLAGS_INIT "--target=${PS4_TRIPLE}")
 set(CMAKE_SYSROOT "${OO_PS4_TOOLCHAIN}")
 set(CMAKE_FIND_ROOT_PATH "${OO_PS4_TOOLCHAIN}")
 
+# Kodi target dependencies use both FreeBSD-style pkg-config locations.
+# Restrict pkg-config to the PS4 target prefix so host packages cannot satisfy
+# target dependency discovery.
+if(DEFINED DEPENDS_PATH AND DEPENDS_PATH)
+  set(_PS4_PKG_CONFIG_LIBDIRS
+      "${DEPENDS_PATH}/lib/pkgconfig:${DEPENDS_PATH}/libdata/pkgconfig")
+  set(ENV{PKG_CONFIG_LIBDIR} "${_PS4_PKG_CONFIG_LIBDIRS}")
+endif()
+
 set(CMAKE_C_COMPILER_TARGET "${PS4_TRIPLE}")
 set(CMAKE_CXX_COMPILER_TARGET "${PS4_TRIPLE}")
 
