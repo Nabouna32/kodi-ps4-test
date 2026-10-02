@@ -39,6 +39,8 @@ file(COPY "${PROJECT_ROOT}/overlay/tools/depends/target/zlib/Makefile"
   DESTINATION "${KODI_SRC}/tools/depends/target/zlib")
 file(COPY "${PROJECT_ROOT}/overlay/tools/depends/target/openssl/0001-openorbis-in6-addr.patch"
   DESTINATION "${KODI_SRC}/tools/depends/target/openssl")
+file(COPY "${PROJECT_ROOT}/overlay/tools/depends/target/openssl/0002-openorbis-endian-header.patch"
+  DESTINATION "${KODI_SRC}/tools/depends/target/openssl")
 execute_process(
   COMMAND patch --dry-run -p1 -i "${PROJECT_ROOT}/overlay/tools/depends/0001-openorbis-ps4-target-depends.patch"
   WORKING_DIRECTORY "${KODI_SRC}"
