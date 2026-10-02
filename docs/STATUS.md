@@ -2,8 +2,7 @@
 
 Repository: `Nabouna32/kodi-ps4-test`
 Current branch: `main`
-Current main HEAD: `a5a3ddcd798e4ac95e7a1f740f8229cb6743ac30`
-Last implementation state before the docs-only workflow merge: `9415f3571e24be039d6cd1f3a7a1fd19e24e9f94`
+Current `main` state must be verified independently from `origin/main` at startup.
 Primary environment: WSL2/Linux
 Phase: build/toolchain validation / minimal bring-up
 
