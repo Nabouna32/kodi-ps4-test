@@ -96,3 +96,14 @@ CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 When validating an approved implementation branch, switch to that branch before running the test and report the branch explicitly.
 
 Keep this file concise: Git history contains chronology; this file contains only the current handoff.
+
+
+## Randomness investigation result
+
+The OpenSSL blocker is more specific than a missing header: OpenSSL's FreeBSD random-seeding code uses sysctl(KERN_ARND) as one FreeBSD entropy path, while newer FreeBSD versions can use getrandom(). OpenOrbis exposes neither the standard sys/random.h/getrandom() path nor getentropy() in its indexed public headers. It does expose sceRandomGetRandomNumber, but the v0.5.4 header declaration is incomplete and repository search does not establish that the corresponding symbol is present in the shipped library stubs.
+
+The historical references/ps4sdk contains sys/sysctl.h, KERN_ARND, and SYS___sysctl, but it is a 2017 reference and does not expose sceRandomGetRandomNumber. Therefore we must not copy its header merely to make OpenSSL compile.
+
+## Exact next action
+
+Verify the actual OpenOrbis v0.5.4 installed library symbol for sceRandomGetRandomNumber and its link behavior with a minimal PS4 target smoke test. If the symbol is linkable, derive a narrow OpenSSL PS4 random-source adaptation around that native API. If it is not linkable, investigate the correct OpenOrbis-supported entropy primitive before changing OpenSSL.
