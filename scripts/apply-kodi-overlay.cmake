@@ -37,6 +37,8 @@ file(COPY "${PROJECT_ROOT}/overlay/xbmc/platform/ps4"
   DESTINATION "${KODI_SRC}/xbmc/platform")
 file(COPY "${PROJECT_ROOT}/overlay/tools/depends/target/zlib/Makefile"
   DESTINATION "${KODI_SRC}/tools/depends/target/zlib")
+file(COPY "${PROJECT_ROOT}/overlay/tools/depends/target/openssl/0001-openorbis-in6-addr.patch"
+  DESTINATION "${KODI_SRC}/tools/depends/target/openssl")
 execute_process(
   COMMAND patch --dry-run -p1 -i "${PROJECT_ROOT}/overlay/tools/depends/0001-openorbis-ps4-target-depends.patch"
   WORKING_DIRECTORY "${KODI_SRC}"
@@ -50,6 +52,21 @@ execute_process(
   RESULT_VARIABLE PATCH_RESULT)
 if(NOT PATCH_RESULT EQUAL 0)
   message(FATAL_ERROR "Failed to apply OpenOrbis PS4 target-dependency patch")
+endif()
+
+execute_process(
+  COMMAND patch --dry-run -p1 -i "${PROJECT_ROOT}/overlay/tools/depends/0002-openorbis-openssl-in6-addr.patch"
+  WORKING_DIRECTORY "${KODI_SRC}"
+  RESULT_VARIABLE OPENSSL_PATCH_DRY_RUN_RESULT)
+if(NOT OPENSSL_PATCH_DRY_RUN_RESULT EQUAL 0)
+  message(FATAL_ERROR "OpenOrbis OpenSSL compatibility patch does not match the pinned Kodi source")
+endif()
+execute_process(
+  COMMAND patch -p1 -i "${PROJECT_ROOT}/overlay/tools/depends/0002-openorbis-openssl-in6-addr.patch"
+  WORKING_DIRECTORY "${KODI_SRC}"
+  RESULT_VARIABLE OPENSSL_PATCH_RESULT)
+if(NOT OPENSSL_PATCH_RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to apply OpenOrbis OpenSSL compatibility patch")
 endif()
 
 message(STATUS "Applied PS4 Kodi overlay to: ${KODI_SRC}")
