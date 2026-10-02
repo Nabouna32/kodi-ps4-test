@@ -6,7 +6,7 @@ diff --git a/tools/depends/target/openssl/Makefile b/tools/depends/target/openss
 -DEPS = ../../Makefile.include Makefile OPENSSL-VERSION ../../download-files.include \
 +DEPS = ../../Makefile.include Makefile OPENSSL-VERSION ../../download-files.include 0001-openorbis-in6-addr.patch 0002-openorbis-endian-header.patch 0003-openorbis-openssl-ps4-random.patch \
                          001-android-getauxvalrevert.patch 16-kodi.conf
-@@ -50,9 +50,12 @@
+@@ -50,8 +50,11 @@
      endif
    endif
    ifeq ($(OS), osx)
