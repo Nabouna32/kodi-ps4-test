@@ -83,11 +83,13 @@ OpenSSL 3.5.7 previously stopped at `providers/implementations/rands/seeding/ran
 
 ## Exact next action
 
+Validate the approved implementation branch `fix/ps4-cmake-dependency-root`:
+
 ```bash
 cd ~/projects/kodi-ps4-test
 git fetch origin
-git switch main
-git reset --hard origin/main
+git switch fix/ps4-cmake-dependency-root
+git pull --ff-only
 export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
 export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
 CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
