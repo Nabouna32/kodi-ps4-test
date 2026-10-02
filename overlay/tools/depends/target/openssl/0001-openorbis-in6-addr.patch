@@ -1,0 +1,13 @@
+diff --git a/crypto/bio/bss_dgram.c b/crypto/bio/bss_dgram.c
+--- a/crypto/bio/bss_dgram.c
++++ b/crypto/bio/bss_dgram.c
+@@ -31,9 +31,11 @@
+ #if defined(__FreeBSD__) && defined(IN6_IS_ADDR_V4MAPPED)
+ /* Standard definition causes type-punning problems. */
+ #undef IN6_IS_ADDR_V4MAPPED
++#ifndef s6_addr32
+ #define s6_addr32 __u6_addr.__u6_addr32
++#endif
+ #define IN6_IS_ADDR_V4MAPPED(a) \
+     (((a)->s6_addr32[0] == 0) && ((a)->s6_addr32[1] == 0) && ((a)->s6_addr32[2] == htonl(0x0000ffff)))
+ #endif
