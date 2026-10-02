@@ -59,7 +59,7 @@ The latest configure-only run progressed through the OpenSSL OpenOrbis-specific 
 
 ## Next action
 
-For current `main`:
+For the approved implementation branch `fix/ps4-cmake-dependency-root`:
 
 ```bash
 cd ~/projects/kodi-ps4-test
