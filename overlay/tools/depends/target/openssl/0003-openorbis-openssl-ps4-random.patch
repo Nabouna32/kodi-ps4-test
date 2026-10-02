@@ -48,4 +48,4 @@ diff --git a/providers/implementations/rands/seeding/rand_unix.c b/providers/imp
      return syscall(__NR_getrandom, buf, buflen, 0);
  #elif (defined(__DragonFly__) && __DragonFly_version >= 500700) \
      || (defined(__NetBSD__) && __NetBSD_Version >= 1000000000)  \
-    || (defined(__FreeBSD__) && __FreeBSD_version >= 1200061)
+     || (defined(__FreeBSD__) && __FreeBSD_version >= 1200061)
