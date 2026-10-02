@@ -106,4 +106,4 @@ The historical references/ps4sdk contains sys/sysctl.h, KERN_ARND, and SYS___sys
 
 ## Exact next action
 
-Verify the actual OpenOrbis v0.5.4 installed library symbol for sceRandomGetRandomNumber and its link behavior with a minimal PS4 target smoke test. If the symbol is linkable, derive a narrow OpenSSL PS4 random-source adaptation around that native API. If it is not linkable, investigate the correct OpenOrbis-supported entropy primitive before changing OpenSSL.
+Validate the approved OpenSSL PS4 random adaptation on `fix/ps4-cmake-dependency-root` with a fresh WSL configure-only run. The implementation selects an OpenSSL `kodi-ps4` target, defines `KODI_PS4`, excludes the FreeBSD `sysctl(KERN_ARND)` path, and calls the verified OpenOrbis `getrandom()` API. If configure-only passes OpenSSL, continue only with the next actual build blocker.
