@@ -135,20 +135,19 @@ Confidence: high for the contents of that public revision; low for current runti
 
 ## R-016 — OpenSSL FreeBSD random path versus PS4 APIs
 
-OpenSSL 3.5.7's failure at providers/implementations/rands/seeding/rand_unix.c is not evidence that sysctl(KERN_ARND) is the correct PS4 implementation. OpenSSL's FreeBSD path includes sys/sysctl.h and, when KERN_ARND is available, uses sysctl() as its random source. The same source also has a separate FreeBSD getrandom() path for sufficiently recent FreeBSD versions. Sources: OpenSSL 3.5.7/3.5.8 source comparison and historical OpenSSL source. citeturn4search0turn3search1
+OpenSSL 3.5.7's failure at `providers/implementations/rands/seeding/rand_unix.c` was a FreeBSD compatibility-path mismatch, not evidence that `sysctl(KERN_ARND)` is the correct PS4 implementation. OpenSSL's source includes both the older FreeBSD `sysctl(KERN_ARND)` path and a `getrandom()` path for sufficiently recent FreeBSD versions. citeturn5view0
 
-Current OpenOrbis evidence:
-- the toolchain has no indexed sys/random.h, getrandom(), or getentropy() interface;
-- include/orbis/Random.h declares sceRandomGetRandomNumber, but its checked-in prototype is only void sceRandomGetRandomNumber();, so the header does not establish the usable buffer/length ABI;
-- OpenOrbis documentation explicitly states that header files and library stubs may still require updates for undiscovered functions. citeturn0search0turn0search3
+Current OpenOrbis v0.5.4 evidence changed the decision: the installed toolchain contains `include/sys/random.h` declaring `getrandom(void *, size_t, unsigned)`, and a minimal executable linked with the same OpenOrbis PS4 model used by Kodi resolves `getrandom` as a defined target symbol. This establishes a usable OpenOrbis entropy primitive without copying `sys/sysctl.h` from the historical PS4SDK.
 
-Historical PS4SDK evidence:
-- references/ps4sdk/include/sys/sysctl.h defines KERN_ARND and declares the standard sysctl() interface;
-- its syscall metadata includes sys___sysctl / syscall number 202, which is stronger evidence than a header-only declaration that the old SDK modeled a FreeBSD sysctl syscall path;
-- however, this SDK is from 2017 and does not expose sceRandomGetRandomNumber, so it cannot establish the current OpenOrbis implementation.
+Implementation:
+- add an OpenSSL `kodi-ps4` target inheriting the existing `BSD-x86_64` target shape;
+- define `KODI_PS4` only for that target;
+- include `<sys/random.h>` for PS4;
+- bypass the FreeBSD `sysctl(KERN_ARND)` backend on PS4;
+- call `getrandom(buf, buflen, 0)` as the PS4 entropy source.
 
-Independent PS4 ecosystem evidence shows sceRandomGetRandomNumber(void *buf, size_t len) being called as a buffer-filling random primitive, including in LuaJIT's PS4 path. This supports investigating the native SCE random API rather than manufacturing a sys/sysctl.h compatibility header solely to satisfy OpenSSL. It still does not prove that the symbol is linkable from the current OpenOrbis v0.5.4 libraries. citeturn1search1
+No OpenOrbis SDK files are modified and no historical PS4SDK compatibility header is copied.
 
-Conclusion for this investigation: do not add a fake sys/sysctl.h yet. The remaining unknown is symbol availability/linkability of sceRandomGetRandomNumber in the exact OpenOrbis v0.5.4 toolchain installed for this project, followed by a minimal target-link smoke test. No OpenSSL implementation change is made in this step.
+Validation level: source-level verification plus a successful OpenOrbis target-link smoke test for `getrandom`; the full OpenSSL dependency build remains pending.
 
-Confidence: high for the inspected source/header facts; medium for the native random ABI based on independent PS4 software; unresolved for OpenOrbis library-symbol availability.
+Confidence: high for the OpenOrbis header/symbol evidence and the narrow source adaptation; pending full dependency-build validation.
