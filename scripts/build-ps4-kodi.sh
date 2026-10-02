@@ -65,6 +65,8 @@ make -C "${KODI_SRC}/tools/depends/target" \
   fribidi harfbuzz fontconfig
 make -C "${KODI_SRC}/tools/depends/target/brotli" \
   -j"${JOBS}"
+make -C "${KODI_SRC}/tools/depends/target/openssl" \
+  -j"${JOBS}"
 
 cmake -S "${KODI_SRC}" -B "${BUILD_DIR}" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
