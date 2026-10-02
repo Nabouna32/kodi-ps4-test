@@ -256,8 +256,8 @@ chronological memory dump.
 
 docs/CONTINUITY.md is the canonical handoff document.
 
-At a handoff, it must describe the actual repository state, including:
-- current GitHub main HEAD;
+At a handoff, it must describe the latest verified repository state, including:
+- last verified GitHub main HEAD;
 - relevant pinned external commits;
 - validated facts and validation level;
 - current blocker;
@@ -271,9 +271,10 @@ A new conversation must read it and then independently verify its claims against
 GitHub, AGENTS.md, this workflow, the relevant project documentation, and the
 actual source/configuration.
 
-If the repository state changes after the handoff is written, update the
-handoff before the next handoff. Never knowingly leave a stale handoff as the
-documented current state.
+The handoff may itself be followed by a documentation commit or merge, so its
+recorded SHA is necessarily a point-in-time verification. At every new startup,
+verify the actual current main HEAD first; do not treat the recorded SHA as
+current merely because it appears in the handoff.
 
 ## 14. Completion criteria
 
