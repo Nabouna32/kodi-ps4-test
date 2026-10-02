@@ -19,8 +19,7 @@ Normal work uses a branch and PR. Never commit directly to `main`, and never mer
 
 ## Repository state
 
-- Current main HEAD: `a5a3ddcd798e4ac95e7a1f740f8229cb6743ac30` — docs-only workflow merge.
-- Last implementation/documentation state before that merge: `9415f3571e24be039d6cd1f3a7a1fd19e24e9f94`.
+- `main` is the authoritative current repository state; verify `origin/main` independently at startup.
 - Kodi pin: `9c3e7f4d7b3ff314cd2f19a291766555e0346024`.
 - PS5 reference pin: `0ea36e36d738aa045c1b8ed63c24a0314c7f72a5`.
 - `references/kodi/` is immutable.
