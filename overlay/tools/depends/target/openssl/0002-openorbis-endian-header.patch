@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Kodi PS4 Port <noreply@example.com>
+Subject: [PATCH] OpenSSL: use OpenOrbis endian header
+
+OpenOrbis provides the endian conversion macros required by OpenSSL
+through <endian.h>, while its FreeBSD-compatible environment does not
+provide <sys/endian.h>.
+
+Keep the standard FreeBSD handling unchanged and select the OpenOrbis
+header only when building against the OpenOrbis environment.
+
+---
+ include/openssl/byteorder.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/openssl/byteorder.h b/include/openssl/byteorder.h
+index 0000000..0000000 100644
+--- a/include/openssl/byteorder.h
++++ b/include/openssl/byteorder.h
+@@ -60,7 +60,7 @@
+ #if defined(__OpenBSD__)
+ #include <sys/types.h>
+ #else
+-#include <sys/endian.h>
++#include <endian.h>
+ #endif
+ #define OSSL_HTOBE16(x) htobe16(x)
+ #define OSSL_HTOBE32(x) htobe32(x)
+-- 
+2.39.5
