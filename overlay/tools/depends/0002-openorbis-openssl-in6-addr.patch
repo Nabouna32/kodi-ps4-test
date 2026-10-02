@@ -1,0 +1,16 @@
+diff --git a/tools/depends/target/openssl/Makefile b/tools/depends/target/openssl/Makefile
+--- a/tools/depends/target/openssl/Makefile
++++ b/tools/depends/target/openssl/Makefile
+@@ -1,6 +1,6 @@
+ include ../../Makefile.include OPENSSL-VERSION ../../download-files.include
+-DEPS = ../../Makefile.include Makefile OPENSSL-VERSION ../../download-files.include \
++DEPS = ../../Makefile.include Makefile OPENSSL-VERSION ../../download-files.include 0001-openorbis-in6-addr.patch \
+                         001-android-getauxvalrevert.patch 16-kodi.conf
+@@ -48,6 +48,7 @@
+ 	cd $(PLATFORM); $(ARCHIVE_TOOL) $(ARCHIVE_TOOL_FLAGS) $(TARBALLS_LOCATION)/$(ARCHIVE)
+ ifeq ($(OS),android)
+ 	cd $(PLATFORM); patch -p1 -i ../001-android-getauxvalrevert.patch
+ endif
++	cd $(PLATFORM); patch -p1 -i ../0001-openorbis-in6-addr.patch
+ 	cd $(PLATFORM); cp ../16-kodi.conf ./Configurations/
+ 	cd $(PLATFORM); $(CONFIGURE)
