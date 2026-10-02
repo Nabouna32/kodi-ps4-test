@@ -1,496 +1,82 @@
 # Kodi PS4 Port — Current Status
 
-Repository: Nabouna32/kodi-ps4-test
-Branch: main
-Primary development environment: WSL2/Linux
-Current phase: build/toolchain validation / minimal bring-up profile
+Repository: `Nabouna32/kodi-ps4-test`
+Current branch: `main`
+Current main HEAD: `a5a3ddcd798e4ac95e7a1f740f8229cb6743ac30`
+Last implementation state before the docs-only workflow merge: `9415f3571e24be039d6cd1f3a7a1fd19e24e9f94`
+Primary environment: WSL2/Linux
+Phase: build/toolchain validation / minimal bring-up
 
-## Validated
+## Verified state
 
-- Official Kodi is the upstream base; the PS5 port is a reference only.
+- Official Kodi is the upstream base.
+- Kodi pin: `9c3e7f4d7b3ff314cd2f19a291766555e0346024`.
+- PS5 reference pin: `0ea36e36d738aa045c1b8ed63c24a0314c7f72a5`.
+- `references/kodi` remains immutable.
+- The build materializes Kodi into `build/ps4/kodi-source` before applying the repository-owned PS4 overlay.
 - OpenOrbis + LLVM/LLD 21.1.8 can compile, link and FSELF-package a minimal PS4 executable under WSL2.
-- The pinned references/kodi submodule remains clean during the normal overlay workflow.
-- PS4 source is materialized to build/ps4/kodi-source before the repository-owned overlay is applied.
-- Kodi native dependency discovery reaches flatc and JsonSchemaBuilder in the native prefix.
-- The required Ubuntu host development packages for the pinned Kodi TexturePacker source are installed and verified:
-  - liblzo2-dev
-  - libpng-dev
-  - libgif-dev
-  - libjpeg-dev
-- The PS4 configure entry script is versioned as executable (100755), so it can be invoked directly from a fresh checkout.
+- That smoke test does not validate Kodi or actual PS4 runtime execution.
+- Initial runtime milestone: Kodi GUI + GLES/EGL presentation + PS4 controller input.
+- Graphics direction: GLES/EGL/Piglet first; Vulkan/OpenGNM later.
 
-## Current blocker
+## Build/toolchain facts
 
-The required native host tools were previously validated:
-- TexturePacker: installed and accepted by Kodi
-- JsonSchemaBuilder: installed as `JsonSchemaBuilder`, which the pinned Kodi finder accepts
+- OpenOrbis: `$HOME/opt/OpenOrbis/PS4Toolchain`.
+- Target triple: `x86_64-pc-freebsd12-elf`.
+- Native prefix: `build/ps4/build/x86_64-linux-gnu-native`.
+- PS4 target prefix: `build/ps4/build/x86_64-pc-freebsd12-release`.
+- C++ flags put OpenOrbis libc++ headers before SDK C headers.
+- C flags explicitly expose the OpenOrbis SDK C include directory.
+- Target pkg-config is restricted to target `lib/pkgconfig` and `libdata/pkgconfig`.
 
-The orchestration has now been corrected to use Kodi's official native dependency graph and generated native prefix instead of the project-specific `build/native` bootstrap. This implementation change is not yet WSL-validated.
+## Dependency state
 
-Kodi reaches and completes the real PS4 cross-configuration, with `Cross-Compiling: TRUE`, `System type: FreeBSD`, `Core system type: ps4`, and `ARCH x86_64-ps4`.
+- Blu-ray/libbluray and XSLT/libxslt are excluded for the initial bring-up.
+- HarfBuzz, FriBidi and Fontconfig are staged as required ASS/libass target dependencies.
+- The repository-owned zlib recipe adds only `-DZLIB_BUILD_TESTING=OFF`; the target zlib library remains enabled.
+- The Iconv issue was classified as CMake/OpenOrbis C-header visibility, not a missing libiconv dependency.
+- LLVM 18 was tested against the OpenOrbis `cmath` issue and did not resolve it; no LLVM pin was introduced.
 
-The earlier configure blocker was libbluray: Kodi's optional `Bluray` dependency attempted to find target LibXml2 while configuring the internal libbluray build. Blu-ray playback is not required for the first bring-up milestone (Kodi GUI + GLES + PS4 controller), so the durable correction is to disable Blu-ray in the PS4 bring-up profile rather than install an unrelated host dependency.
+## Current implementation
 
-The PS4 overlay now explicitly excludes Bluray from optional platform dependencies and forces `ENABLE_BLURAY=OFF`.
+`scripts/build-ps4-kodi.sh` now:
 
-The following configure run then reached Kodi's optional `XSLT` dependency and failed through its internal libxslt path because LibXml2 was unavailable. The pinned Kodi source confirms that XSLT is listed under `optional_deps`, while its internal build path requires LibXml2. XSLT is not required for the first bring-up milestone, so the durable correction is to exclude `XSLT` from the PS4 optional dependency set rather than install `libxml2-dev` just to satisfy this optional feature.
+1. materializes pinned Kodi;
+2. applies the PS4 overlay and target-dependency patch;
+3. bootstraps/configures Kodi `tools/depends`;
+4. builds Kodi native dependencies;
+5. builds native `JsonSchemaBuilder`;
+6. verifies native tools;
+7. stages `fribidi harfbuzz fontconfig`;
+8. configures Kodi with the OpenOrbis toolchain.
 
-The PS4 overlay now excludes `XSLT` from optional platform dependencies. No explicit `ENABLE_XSLT` cache override is used because Kodi models that option as an AUTO/string dependency switch; exclusion is the narrower platform-level adaptation.
+The Fontconfig/zlib changes are implemented but have not yet been validated by a fresh WSL configure-only run from the recovered current state.
 
-The next configure blocker was target-side HarfBuzz while configuring required ASS/libass. At the pinned Kodi commit, ASS and HarfBuzz are required dependencies, so this blocker cannot be handled by disabling an optional feature. Kodi's `FindHarfBuzz.cmake` expects a target HarfBuzz installation in the dependency prefix; the official Kodi `tools/depends/target/harfbuzz` recipe builds HarfBuzz 14.2.0 statically with Meson for the target. The PS5 reference uses the same architectural concept through its target sysroot/pacbrew dependency set, but its PS5 libraries cannot be reused for PS4.
+## Current blocker / boundary
 
-Do not install Ubuntu `libharfbuzz-dev`: that would provide a host Linux library, not the missing PS4 target library.
-
-Until the next configure-only validation succeeds:
-- Native host tools: validated ✅
-- Kodi PS4 cross-configuration entry: validated ✅
-- Blu-ray/libbluray: intentionally disabled for bring-up ✅
-- XSLT/libxslt: intentionally excluded for bring-up ✅
-- CCache/ClangFormat warnings: non-blocking
-- Full Kodi build: not started
+No new blocker should be inferred before that validation. The next configure-only run determines the first real result.
 
 ## Next action
 
-The exact pinned Kodi source remains at commit `9c3e7f4d7b3ff314cd2f19a291766555e0346024`. The repository-owned overlay now gets through Kodi's platform and target-architecture checks, and the latest WSL run confirmed that the `tools/depends` configure phase completes.
-
-The build orchestration now uses Kodi's generated `x86_64-linux-gnu-native` prefix and invokes the official native dependency graph before building the target HarfBuzz dependency. This replaces the previous custom `build/native` bootstrap and removes the incorrect compatibility-prefix approach.
-
-The authoritative validation command is:
+For current `main`:
 
 ```bash
 cd ~/projects/kodi-ps4-test
 git fetch origin
+git switch main
 git reset --hard origin/main
 export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
 export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
 CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 ```
 
-Do not start a full Kodi build until configure succeeds. If a new blocker appears, diagnose it before changing the dependency surface.
+For a future approved change, switch to its task branch before local validation.
 
+Do not start a full Kodi build until configure-only succeeds.
 
-## Major runtime risks
+## Validation levels
 
-1. Kodi GLES renderer compatibility with PS4 Piglet's actual GLES 2.0/extension surface.
-2. Kodi-compatible ownership/lifetime of hardware-decoded PS4 frames.
-3. Efficient or zero-copy transfer of NV12/P010 decoder surfaces into the renderer.
-
-No PS4 runtime/platform implementation is currently claimed as working.
-
-## HarfBuzz implementation phase
-
-The PS4 overlay extends Kodi's `tools/depends/configure.ac` for the Autoconf host `x86_64-pc-freebsd12` / `--with-platform=ps4`, while the generated target toolchain passes the OpenOrbis LLVM target `x86_64-pc-freebsd12-elf`. The build script bootstraps that generated configure system, builds only the official target dependency path needed by HarfBuzz (`freetype2-noharfbuzz` → HarfBuzz), and passes the resulting target prefix to Kodi CMake through `DEPENDS_PATH`. Host Meson/Ninja/pkg-config/Python/CMake are exposed through the existing native prefix rather than rebuilt as new project-specific tools.
-
-This remains an implementation-only phase until the WSL configure-only run successfully applies the overlay and reaches the target dependency bootstrap.
-## Latest validation result — host CMake bootstrap
-
-The previous native CMake bootstrap failure has been root-caused.
-
-The pinned Kodi CMake recipe invokes `./bootstrap --system-curl`. Direct reproduction showed that the bootstrap reached its initial configuration and then stopped because the WSL host did not provide the libcurl development files:
-
-    CMAKE_USE_SYSTEM_CURL is ON but a curl is not found!
-
-This is a normal **host Linux dependency**. It does not indicate a PS4/OpenOrbis problem and does not weaken the host/target separation.
-
-WSL remediation completed:
-- `libcurl4-openssl-dev` installed;
-- `pkg-config` resolves libcurl 8.18.0;
-- `-lcurl` and the multiarch development include path are available.
-
-### Current blocker
-
-**Native CMake bootstrap has not yet been re-run after installing libcurl development files.**
-
-The next step is only to rerun the official CMake bootstrap and verify that the root `Makefile` is generated. Do not start the complete Kodi build yet.
-
-If CMake bootstraps successfully, the following step will validate/build the explicitly required Kodi native tools. An earlier Makefile inspection established that `make native JsonSchemaBuilder` does not mean “build every native tool”; the native targets for CMake, Ninja, Meson, Python, TexturePacker and JsonSchemaBuilder must be requested according to Kodi's actual dependency graph rather than assumed from the aggregate target name.
-
-## Latest validation result — host CMake bootstrap succeeded
-
-The exact pinned Kodi CMake recipe was rerun unchanged after installing the WSL host development package `libcurl4-openssl-dev`. The bootstrap now completes successfully:
-
-- CURL is found through the system installation (8.18.0);
-- CMake configuration and generation complete;
-- the native CMake root `Makefile` is present.
-
-The previous host-CURL blocker is therefore resolved.
-
-### Next action
-
-Validate the explicit Kodi native dependency targets against the generated `x86_64-linux-gnu-native` prefix. The target set must cover the host tools needed by the cross-build (CMake, Ninja, Meson, Python, NASM, TexturePacker and JsonSchemaBuilder). Do not start the full Kodi build until this native-tool stage and the subsequent target HarfBuzz bootstrap are validated.
-
-
-## Latest validation — 2026-10-01 native CMake bootstrap succeeded
-
-The unchanged official Kodi native CMake bootstrap was rerun after installing the required WSL host package `libcurl4-openssl-dev`. It now succeeds: system CURL 8.18.0 is found, CMake completes configuration and generation, and the native CMake root `Makefile` is generated. The previous host-CURL blocker is resolved.
-
-**Next action:** validate Kodi's explicit native dependency targets (CMake, Ninja, Meson, Python, NASM, TexturePacker and JsonSchemaBuilder) in the generated `x86_64-linux-gnu-native` prefix. Do not start the full Kodi build yet.
-
-
-
-## Latest handoff — 2026-10-01 — PS4 Meson linker flag correction
-
-The target HarfBuzz bootstrap reached Meson but failed during linker detection because the PS4 overlay generated:
-
-    -fuse-ld=ld.lld
-
-with the WSL Clang 21 toolchain, which reports that linker name as invalid for `-fuse-ld`. Direct inspection of pinned Kodi `tools/depends/configure.ac` confirmed that its generated `cross-file.meson` forwards `platform_ldflags` into Meson's `c_link_args` and `cpp_link_args`. The source of the bad flag was therefore our repository-owned PS4 overlay, not Meson itself.
-
-The minimal correction was committed to `main`:
-
-    943f8cbf895ffcf69743d73ff1ecb4ba300c2618
-
-    fix: use lld driver for PS4 Meson linker
-
-The PS4 overlay now uses:
-
-    -fuse-ld=lld
-
-while preserving the OpenOrbis PS4 target, `link.x`, sysroot, CRT and PS4 libraries unchanged.
-
-The fix is implemented but **not yet runtime/build-validated on WSL**.
-
-### Immediate next step
-
-Run the configure-only build from a clean current `main` and inspect the generated native/target state. The critical verification is that the generated HarfBuzz cross-file contains `-fuse-ld=lld`, then Meson passes linker detection and HarfBuzz configuration/build proceeds.
-
-Do not change any additional linker/toolchain flags unless this validation demonstrates a separate failure.
-
-
-## Latest validation — 2026-10-01 — HarfBuzz reaches C++ compilation
-
-The `-fuse-ld=lld` correction successfully moved the build past the previous Meson linker-detection blocker. HarfBuzz now starts compiling for:
-
-    x86_64-pc-freebsd12-elf
-
-The new blocker is the OpenOrbis C++/C math-header interface:
-
-    include/c++/v1/cmath:341:9: error: no member named 'abs' in the global namespace
-
-with OpenOrbis:
-
-    include/math.h:295:13: note: 'fabs' declared here
-
-The same error occurs across many HarfBuzz C++ translation units, so it is a shared target-header/toolchain compatibility issue rather than an individual HarfBuzz source failure.
-
-OpenOrbis release history records previous fixes for BSD/MUSL header discrepancies and C++ `cmath` handling. Therefore the installed OpenOrbis toolchain revision must be established and compared against the upstream fixed state before introducing a Kodi-side workaround.
-
-### Current blocker
-
-OpenOrbis target header/libc++ compatibility.
-
-No repository workaround has been implemented yet.
-
-### Next action
-
-Inspect the installed OpenOrbis revision and the exact `cmath` / `math.h` sections, then compare with OpenOrbis upstream/release sources. Do not modify Kodi or HarfBuzz until the root cause is established.
-
-
-## Latest validation — 2026-10-01 — LLVM 18 installed for OpenOrbis v0.5.4 experiment
-
-The current external target toolchain is OpenOrbis v0.5.4. The active build blocker remains the OpenOrbis C/C++ math-header interface:
-
-    include/c++/v1/cmath:341:9: error: no member named 'abs' in the global namespace
-
-The host was previously using LLVM/Clang/LLD 21.1.8. LLVM/Clang/LLD 18.1.8 has now been installed in parallel through Ubuntu packages. Installation was verified successfully.
-
-This does not yet prove that LLVM 18 fixes the blocker. LLVM 18 is the next controlled experiment; LLVM 21 remains installed and the repository has not been changed to pin either version.
-
-### Immediate next action
-
-Use LLVM 18 explicitly for one clean configure-only run by placing /usr/lib/llvm-18/bin before the existing OpenOrbis path in PATH. First verify that generic clang, clang++, llvm-ar, llvm-ranlib and ld.lld resolve to LLVM 18. Then run the existing CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh workflow.
-
-Do not modify Kodi, HarfBuzz, the OpenOrbis headers, or the repository toolchain file before this experiment produces a result.
-
-## Latest validation — 2026-10-01 — LLVM 18 does not resolve the HarfBuzz header blocker
-
-The controlled LLVM 18 compatibility experiment has now been executed with:
-
-    /usr/lib/llvm-18/bin/clang++
-    Ubuntu Clang/LLD 18.1.8
-
-The build still fails at exactly the same shared target-header boundary:
-
-    OpenOrbis/include/c++/v1/cmath:341:9
-    error: no member named 'abs' in the global namespace; did you mean 'fabs'?
-
-The compiler still points at OpenOrbis:
-
-    OpenOrbis/include/math.h:295:13
-    note: 'fabs' declared here
-
-The failure occurs across many HarfBuzz C++ translation units and the build stops in the official Kodi HarfBuzz target dependency.
-
-### Conclusion
-
-The hypothesis that LLVM 21 alone was incompatible with the OpenOrbis v0.5.4 C++ headers is not supported by this experiment. LLVM 18 reproduces the same failure.
-
-Therefore:
-- LLVM 18 is not a fix for the current blocker;
-- LLVM 21 remains installed and remains the validated standalone PS4 smoke-test compiler;
-- the repository must not pin LLVM 18 based on this experiment;
-- no Kodi/HarfBuzz/OpenOrbis header patch has been introduced.
-
-### Next action
-
-Inspect the exact OpenOrbis v0.5.4 libc++/math header integration and compare the expected upstream OpenOrbis/LLVM configuration before modifying the repository. The next step remains diagnosis of the target header interface, not a workaround in HarfBuzz.
-
-## Latest investigation — 2026-10-01 — OpenOrbis header root cause identified
-
-The LLVM 18 experiment reproduced the same failure as LLVM 21, so the host LLVM version is not the sufficient cause.
-
-Direct inspection of the OpenOrbis forked libc++ source identified the actual integration issue: the PS4 build currently puts the OpenOrbis C header directory before the OpenOrbis libc++ header directory.
-
-Current order:
-
-    -isystem $OO_PS4_TOOLCHAIN/include
-    -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
-
-OpenOrbis libc++ cmath includes <math.h> and then performs using ::abs. OpenOrbis' libc++ math.h wrapper is designed to include the target C math.h with #include_next and includes <stdlib.h> for C++, which supplies abs.
-
-With the current search order, <math.h> resolves directly to the target C header and bypasses the libc++ wrapper. The target C header exposes fabs but not the required global abs, producing the observed error.
-
-### Current status
-
-Root cause identified, repository fix not yet applied.
-
-### Next action
-
-Validate the hypothesis with a minimal standalone <cmath> compile using the current include order and then the corrected order. Do not modify HarfBuzz or OpenOrbis headers. If the corrected order compiles, change only the PS4 C++ include ordering and rerun the configure-only Kodi build.
-
-## Latest validation — 2026-10-01 — OpenOrbis C++ header order confirmed
-
-The minimal standalone cross-compilation test confirmed the exact root cause of the HarfBuzz failure:
-
-- SDK C headers first reproduces the `cmath` / global `abs` error.
-- OpenOrbis libc++ headers first compiles the same test successfully.
-
-The blocker is therefore a repository/toolchain integration include-order issue. No repository source has been changed for it yet.
-
-**Next step:** inspect the repository's generated target C++ flags and make the smallest justified ordering correction, then rerun the configure-only validation. Do not patch HarfBuzz or OpenOrbis headers.
-
-## Latest implementation — 2026-10-01 — C++ header ordering corrected
-
-The experimentally validated OpenOrbis libc++ include-order fix is now implemented in:
-
-- `overlay/tools/depends/0001-openorbis-ps4-target-depends.patch`
-- `cmake/toolchains/openorbis-ps4-kodi.cmake`
-
-Both changes are one-line ordering corrections. The standalone test already proved the ordering itself; the remaining validation is the real Kodi configure-only workflow.
-
-Do not start a full Kodi build until that configure-only run is evaluated.
-
-
-## 2026-10-01 — Current blocker: target HarfBuzz package discovery
-
-The real `CONFIGURE_ONLY=1` workflow now passes the previous OpenOrbis C++ header blocker: HarfBuzz 14.2.0 compiles and installs into the PS4 target dependency prefix.
-
-The next Kodi CMake stage fails in `FindHarfBuzz.cmake` with “Harfbuzz libraries were not found.” The target prefix contains `libharfbuzz.a` and `harfbuzz.pc`, and manual `pkg-config` lookup succeeds when `PKG_CONFIG_PATH` is explicitly pointed at the target `libdata/pkgconfig` directory.
-
-However, `harfbuzz.pc` declares a required `freetype2 >= 12.0.6` dependency, and that transitive target package is not currently resolvable through the same manual pkg-config lookup. The next action is therefore to inspect Kodi's official package-discovery macros and the target prefix's FreeType pkg-config metadata before modifying discovery configuration.
-
-**Do not treat this as a HarfBuzz build failure and do not add a blind host/target pkg-config workaround yet.**
-
-
-## Latest implementation — 2026-10-01 — PS4 target pkg-config routing
-
-The HarfBuzz discovery blocker was narrowed to target pkg-config metadata split across `lib/pkgconfig` (FreeType) and `libdata/pkgconfig` (HarfBuzz), combined with the absence of target-specific `PKG_CONFIG_LIBDIR` during Kodi CMake package discovery.
-
-The PS4 CMake toolchain now sets `PKG_CONFIG_LIBDIR` from `DEPENDS_PATH` to both target metadata directories. This isolates package discovery from host Linux packages while covering the actual Kodi target prefix layout.
-
-Implementation commit: `7b5d60af7e0e63dcbc8d59f049720069e56d3ad5`.
-
-**Validation pending:** rerun `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh` from a clean current `main`. The expected result is that Kodi resolves HarfBuzz and FreeType and proceeds beyond `FindHarfBuzz.cmake`.
-
-
-## Latest validation — 2026-10-01 — FriBidi is the next target dependency blocker
-
-The clean configure-only workflow passed the previous HarfBuzz target-package discovery blocker. HarfBuzz 14.2.0 was successfully compiled for x86_64-pc-freebsd12-elf and installed into the PS4 target dependency prefix.
-
-Kodi then stopped while configuring required ASS/libass because FindFriBidi.cmake reported:
-
-    FriBidi library was not found.
-
-This is now the first blocker in the configure sequence. The pinned official Kodi source contains an official target tools/depends/target/fribidi recipe using Meson. The repository's PS4 build orchestration currently builds only the harfbuzz target dependency after the native tools, so FriBidi is not yet staged in the target prefix.
-
-Do not install a WSL/Linux libfribidi-dev package: that would provide a host library and would violate the host/target dependency boundary.
-
-### PS5 reference
-
-The pinned references/kodi-ps5 repository is a technical reference only. Its dependency definitions include ps5-payload-libfribidi alongside the other target-side text/rendering dependencies. This supports the target-dependency interpretation but does not establish PS4 binary compatibility.
-
-### Next action
-
-Inspect the complete official Kodi FriBidi/libass dependency relationship and validate that the existing OpenOrbis/Meson target integration can build the official FriBidi recipe. Do not modify FindFriBidi.cmake or add host packages unless evidence requires it.
-
-Full Kodi build remains prohibited until configure-only succeeds.
-
-
-## Latest implementation — 2026-10-01 — FriBidi target dependency staged
-
-The repository-owned PS4 build script now stages both official Kodi target dependencies required by the current ASS/libass path:
-
-    fribidi harfbuzz
-
-The change is limited to `scripts/build-ps4-kodi.sh` and uses the existing `tools/depends/target` machinery. No upstream Kodi source or PS5 implementation was copied or modified.
-
-Implementation commit: `2afb9021ad1b35f1d2698d94cdacf80fe16e7100`.
-
-**Validation pending:** run the clean `CONFIGURE_ONLY=1` workflow from current `main`. Full Kodi build remains prohibited until configure-only succeeds.
-
-
-## Latest validation — 2026-10-01 — Iconv detection blocker
-
-The latest clean CONFIGURE_ONLY=1 run passed the previously missing FriBidi target dependency and progressed into required ASS/libass configuration. The first new blocker is:
-
-    Could NOT find Iconv (missing: Iconv_LIBRARY)
-
-The preceding Kodi target tools/depends/configure result reports:
-
-    ac_cv_search_iconv_open='none required'
-    link_iconv=''
-    need_libiconv=''
-
-This means Kodi's official dependency bootstrap currently considers iconv_open() provided by the target C library and does not enable its libiconv dependency.
-
-The blocker is therefore classified as a CMake target-detection mismatch, not as proof that a host Linux iconv package should be installed and not yet as proof that PS4 libiconv is required.
-
-### Immediate next action
-
-Reproduce CMake 4.2's exact implicit-iconv compile test with the OpenOrbis target compiler and inspect the generated CMakeError.log. Determine whether the test fails because of target header visibility, the OpenOrbis sysroot/flags, or another cross-compilation detail.
-
-Until that root cause is established:
-- do not add libiconv;
-- do not force Iconv_IS_BUILT_IN;
-- do not patch Kodi's FindIconv.cmake;
-- do not modify references/kodi;
-- do not start a full Kodi build.
-
-### Follow-up diagnostic — Iconv header/log lookup
-The OpenOrbis toolchain does contain `include/iconv.h`. The first attempted `grep` produced no CMake log output because the shell command was split across lines after the grep pattern, so the filename was not passed to `grep` as intended. No conclusion can yet be drawn about the actual `Iconv_IS_BUILT_IN` compile failure. The next action is to rerun the log inspection with each `grep` command on one line and verify the actual CMake build-tree log location before reproducing the test.
-
-
-## Latest investigation — 2026-10-01 — Iconv cross-reference completed
-
-The Iconv blocker has now been compared against the actual pinned Kodi source and the PS5 technical reference.
-
-Official Kodi only enables its `libiconv` target dependency when Autoconf cannot find `iconv_open` in the target C library. Our target configuration recorded `ac_cv_search_iconv_open='none required'`, so the official dependency graph does not currently justify staging libiconv.
-
-The PS5 reference deliberately forces Iconv away from the built-in path because its console libc iconv API is semantically insufficient for Kodi's legacy encodings and therefore uses GNU libiconv. That is an important reference pattern, but it cannot be assumed to apply to OpenOrbis PS4.
-
-### Current blocker
-
-CMake 4.2's implicit-iconv test fails while Kodi Autoconf considers iconv available. The OpenOrbis sysroot contains `include/iconv.h`.
-
-### Next action
-
-Run a minimal direct OpenOrbis target iconv compile/link and inspect the target libc/archive symbols relevant to `iconv_open`, `iconv` and `iconv_close`. This is the next single diagnostic step before any repository implementation.
-
-No repository source is changed by this investigation. Full Kodi build remains blocked until configure-only succeeds.
-
-
-## Latest validation — 2026-10-01 — OpenOrbis iconv API direct test
-
-The direct target experiment narrowed the Iconv blocker substantially.
-
-A standalone C program including `<iconv.h>` initially failed to compile with the OpenOrbis sysroot alone because `$OO_PS4_TOOLCHAIN/include/iconv.h` was not visible to the C compiler.
-
-When the OpenOrbis C SDK include directory was explicitly added, compilation succeeded. The same test then linked successfully with:
-
-`-fuse-ld=lld -lc -lkernel`
-
-and produced a FreeBSD x86-64 PIE ELF. The only linker diagnostic was the expected minimal-test warning about the missing `_start` entry point.
-
-Therefore the OpenOrbis target libc exposes the iconv API used by CMake's implicit detection test, and the current evidence does not justify adding GNU libiconv.
-
-### Current blocker
-
-Kodi CMake's `FindIconv.cmake` still reports:
-
-`Could NOT find Iconv (missing: Iconv_LIBRARY)`
-
-despite the direct target test succeeding once the SDK C include path is visible.
-
-The remaining issue is to reproduce CMake's exact implicit-iconv test and determine why the repository's C cross-compilation environment does not expose the OpenOrbis C headers to that test.
-
-### Next action
-
-Run the minimal CMake reproduction using the repository PS4 toolchain. Do not modify the Kodi dependency graph or add host `libiconv-dev` before this experiment is classified.
-
-
-## Latest validation — 2026-10-01 — Iconv CMake detection root cause confirmed
-
-The minimal standalone CMake 4.2 reproduction now exactly matches the Kodi blocker:
-
-    Performing Test Iconv_IS_BUILT_IN - Failed
-    Could NOT find Iconv (missing: Iconv_LIBRARY)
-
-The same toolchain succeeds when the OpenOrbis SDK C include directory is added to the C compiler flags:
-
-    -isystem $OO_PS4_TOOLCHAIN/include
-
-CMake then reports:
-
-    Found Iconv: built in to C library
-    Iconv_FOUND=TRUE
-    Iconv_IS_BUILT_IN=1
-
-This confirms that the blocker is the PS4 C compiler's OpenOrbis SDK header visibility during CMake's implicit Iconv test. It is not currently evidence of a missing target libiconv.
-
-### Current blocker
-
-The repository PS4 CMake toolchain still lacks the OpenOrbis SDK C include path in CMAKE_C_FLAGS_INIT.
-
-### Next action
-
-Implement the minimal validated change in cmake/toolchains/openorbis-ps4-kodi.cmake: add -isystem ${OO_PS4_TOOLCHAIN}/include to CMAKE_C_FLAGS_INIT, without changing the target triple, sysroot, linker, libraries, or Iconv finder.
-
-Then rerun the clean CONFIGURE_ONLY=1 workflow.
-
-Full Kodi build remains prohibited until configure-only succeeds.
-
-
-## Latest implementation — 2026-10-01 — Iconv C header visibility correction applied
-
-The validated CMake Iconv detection fix is implemented in `cmake/toolchains/openorbis-ps4-kodi.cmake`.
-
-`CMAKE_C_FLAGS_INIT` now explicitly exposes `${OO_PS4_TOOLCHAIN}/include` through `-isystem`, matching the successful standalone CMake reproduction. The target triple, sysroot, linker, target libraries, C++ include ordering, pkg-config routing, and Iconv dependency graph were left unchanged.
-
-Implementation commit: `8cff9e52405f41a8028d59292db87a31128e0cbd`.
-
-### Validation pending
-
-Run from a clean current `main`:
-
-    cd ~/projects/kodi-ps4-test
-    git fetch origin
-    git reset --hard origin/main
-    export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
-    export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
-    CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
-
-Do not start a full Kodi build until configure-only succeeds. If Iconv is resolved, classify the next real blocker before making another change.
-
-
-## Latest implementation — 2026-10-02 — Fontconfig staging and zlib test disablement
-
-The restored pre-regression state reproduced the expected next configure blocker: Kodi could not find target Fontconfig while configuring required ASS/libass. Fontconfig had already been audited as a required target dependency, so the PS4 dependency bootstrap now stages the official Kodi target recipe with:
-
-    fribidi harfbuzz fontconfig
-
-The zlib blocker was also implemented at the same time, based on the previously completed audit. The official pinned Kodi zlib recipe is preserved in the repository-owned overlay, with only:
-
-    -DZLIB_BUILD_TESTING=OFF
-
-added to its CMake options. This disables zlib's optional coverage/test executable that previously required the unavailable OpenOrbis profiling runtime, while retaining the target zlib library build.
-
-The overlay application script now copies this zlib Makefile into the materialized pinned Kodi source before dependency configuration. No upstream Kodi source is modified in the repository.
-
-**Validation pending:** run the clean CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh workflow. The expected sequence is to build the required target dependencies including Fontconfig and then verify that the previous zlib coverage-test blocker is gone. Do not start a full Kodi build yet.
-
-
-## Latest repository-state verification — 2026-10-02
-
-The GitHub `main` branch was re-verified after a rollback/recovery concern. The restored implementation is present: the Iconv correction remains in the PS4 toolchain, Fontconfig remains staged by the build script, and the repository-owned zlib overlay remains applied with target zlib testing disabled while retaining the static library build.
-
-Current HEAD after the continuity update is the new documentation commit created immediately before this entry. The restored Fontconfig/zlib path still requires fresh WSL validation. Next action: run the clean `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh` workflow from current `main`. Do not start a full Kodi build before configure-only succeeds.
+- Local WSL: current interactive OpenOrbis validation environment.
+- GitHub-hosted CI: not a reproduction of the OpenOrbis environment yet.
+- Self-hosted OpenOrbis runner: planned.
+- PS4 runtime: separate and not yet validated.
