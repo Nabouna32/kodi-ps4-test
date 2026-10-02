@@ -1,7 +1,7 @@
 diff --git a/Configurations/16-kodi.conf b/Configurations/16-kodi.conf
 --- a/Configurations/16-kodi.conf
 +++ b/Configurations/16-kodi.conf
-@@ -25,5 +25,10 @@
+@@ -29,5 +29,10 @@
          bn_ops           => "SIXTY_FOUR_BIT_LONG",
          perlasm_scheme   => "ios64",
          sys_id           => "tvOS",
