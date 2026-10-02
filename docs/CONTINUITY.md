@@ -24,6 +24,7 @@ Normal work uses a branch and PR. Never commit directly to `main`, and never mer
 - PS5 reference pin: `0ea36e36d738aa045c1b8ed63c24a0314c7f72a5`.
 - `references/kodi/` is immutable.
 - `references/kodi-ps5/` is a technical reference only.
+- `references/ps4sdk/` is a historical/public PS4 technical reference only, pinned to `4df9d001b66ae4ec07d9a51b62d1e4c5e270eecc`.
 
 ## Project direction
 
@@ -75,6 +76,10 @@ PS4 target dependencies: `build/ps4/build/x86_64-pc-freebsd12-release`.
 The Fontconfig/zlib implementation is present, but the recovered state has not yet had a fresh WSL `CONFIGURE_ONLY=1` run. The next blocker is therefore unknown until that run.
 
 Do not start a full Kodi build before configure-only succeeds.
+
+## Current blocker
+
+OpenSSL 3.5.7 now reaches `providers/implementations/rands/seeding/rand_unix.c` and fails because OpenOrbis v0.5.4 lacks `sys/sysctl.h`. The pinned public PS4SDK reference contains a FreeBSD-derived `sys/sysctl.h` with `KERN_ARND`, which is useful evidence but does not establish current OpenOrbis link/runtime support.
 
 ## Exact next action
 

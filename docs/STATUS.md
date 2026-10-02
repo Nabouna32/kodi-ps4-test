@@ -53,7 +53,9 @@ The Fontconfig/zlib changes are implemented but have not yet been validated by a
 
 ## Current blocker / boundary
 
-No new blocker should be inferred before that validation. The next configure-only run determines the first real result.
+The latest configure-only run progressed through the OpenSSL OpenOrbis-specific patches and then stopped in OpenSSL 3.5.7 at `providers/implementations/rands/seeding/rand_unix.c` because OpenOrbis does not provide `sys/sysctl.h`. The next investigation is to compare the FreeBSD random-seeding path against current OpenOrbis and the pinned public `references/ps4sdk` evidence.
+
+`references/ps4sdk` is now available as a historical/public PS4 reference. It is not used by the build.
 
 ## Next action
 

@@ -4,3 +4,7 @@
 [submodule "references/kodi-ps5"]
 	path = references/kodi-ps5
 	url = https://github.com/VivaLaVent/kodi-ps5.git
+
+[submodule "references/ps4sdk"]
+	path = references/ps4sdk
+	url = https://github.com/ps4dev/ps4sdk.git

@@ -121,3 +121,14 @@ Validated boundaries:
 5. Self-hosted OpenOrbis CI design.
 
 These are future investigations, not current build blockers.
+
+## R-015 — ps4dev/ps4sdk as historical PS4 reference
+
+The public `ps4dev/ps4sdk` repository is pinned under `references/ps4sdk/` at `4df9d001b66ae4ec07d9a51b62d1e4c5e270eecc` (last `master` commit, 2017). It is a historical/open-source PS4 SDK reference, not a replacement for OpenOrbis and not a source of proprietary Sony SDK artifacts.
+
+It is relevant to the current OpenSSL blocker because its public headers include FreeBSD-derived compatibility interfaces missing from OpenOrbis v0.5.4, including `sys/sysctl.h`, and define `KERN_ARND`. This gives us concrete historical PS4/FreeBSD evidence for the API shape selected by OpenSSL's FreeBSD random-seeding path. It does not prove that the same interface is available or linkable in the current OpenOrbis userland.
+
+Decision for this step: keep the repository immutable and use it only for source comparison. No PS4SDK headers, libraries, binaries, or code are copied into the build.
+
+Source: https://github.com/ps4dev/ps4sdk/commit/4df9d001b66ae4ec07d9a51b62d1e4c5e270eecc
+Confidence: high for the contents of that public revision; low for current runtime/API availability on modern PS4/OpenOrbis.
