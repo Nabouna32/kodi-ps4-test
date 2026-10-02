@@ -81,3 +81,12 @@ Do not start a full Kodi build until configure-only succeeds.
 - GitHub-hosted CI: not a reproduction of the OpenOrbis environment yet.
 - Self-hosted OpenOrbis runner: planned.
 - PS4 runtime: separate and not yet validated.
+
+
+## Randomness blocker investigation
+
+The sys/sysctl.h failure is now classified as a FreeBSD compatibility-path mismatch, not yet as a missing header that should be copied from the historical PS4SDK.
+
+OpenSSL 3.5.7 can use sysctl(KERN_ARND) on the FreeBSD path, but OpenOrbis exposes no indexed sys/random.h, getrandom() or getentropy() interface. OpenOrbis does declare sceRandomGetRandomNumber, although the checked-in prototype is incomplete. Historical ps4dev/ps4sdk provides sysctl.h/KERN_ARND and syscall metadata, but is too old to prove current OpenOrbis support.
+
+Current implementation boundary: no compatibility header has been copied and OpenSSL has not yet been modified to use the native SCE random API.
