@@ -1114,3 +1114,12 @@ Implementation commit: `8cff9e52405f41a8028d59292db87a31128e0cbd`.
 ### Next single step
 
 Run the clean `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh` workflow from current `main` and inspect the first new blocker. Full Kodi build remains prohibited until configure-only succeeds.
+
+
+## Latest repository-state verification — 2026-10-02
+
+GitHub `main` was re-verified after a rollback/recovery concern. Current HEAD is `9415f3571e24be039d6cd1f3a7a1fd19e24e9f94` (`docs: record Fontconfig and zlib overlay implementation`). The previously implemented Iconv, FriBidi, HarfBuzz and Fontconfig work is still present, and the zlib overlay is present and applied by `scripts/apply-kodi-overlay.cmake`.
+
+The zlib overlay contains the official Kodi recipe with only `-DZLIB_BUILD_TESTING=OFF` added. The Fontconfig staging command remains `fribidi harfbuzz fontconfig`.
+
+No WSL validation of the restored Fontconfig/zlib implementation has been performed since this recovered repository state was established. The next action is to run the clean configure-only workflow from current `main` and classify the first real result. Do not start a full Kodi build until configure-only succeeds.
