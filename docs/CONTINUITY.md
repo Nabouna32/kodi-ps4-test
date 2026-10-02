@@ -79,7 +79,7 @@ Do not start a full Kodi build before configure-only succeeds.
 
 ## Current blocker
 
-OpenSSL 3.5.7 now reaches `providers/implementations/rands/seeding/rand_unix.c` and fails because OpenOrbis v0.5.4 lacks `sys/sysctl.h`. The pinned public PS4SDK reference contains a FreeBSD-derived `sys/sysctl.h` with `KERN_ARND`, which is useful evidence but does not establish current OpenOrbis link/runtime support.
+OpenSSL 3.5.7 previously stopped at `providers/implementations/rands/seeding/rand_unix.c` because OpenOrbis v0.5.4 lacks `sys/sysctl.h`. The repository-owned implementation now avoids that incompatible FreeBSD path and selects OpenOrbis `getrandom()` for PS4. Fresh WSL configure-only validation is pending.
 
 ## Exact next action
 
@@ -100,7 +100,7 @@ Keep this file concise: Git history contains chronology; this file contains only
 
 ## Randomness investigation result
 
-The OpenSSL blocker is more specific than a missing header: OpenSSL's FreeBSD random-seeding code uses sysctl(KERN_ARND) as one FreeBSD entropy path, while newer FreeBSD versions can use getrandom(). OpenOrbis exposes neither the standard sys/random.h/getrandom() path nor getentropy() in its indexed public headers. It does expose sceRandomGetRandomNumber, but the v0.5.4 header declaration is incomplete and repository search does not establish that the corresponding symbol is present in the shipped library stubs.
+The OpenSSL blocker was a FreeBSD compatibility-path mismatch. OpenSSL 3.5.7 selects `sysctl(KERN_ARND)` on older FreeBSD paths and `getrandom()` on sufficiently new FreeBSD paths. Current OpenOrbis v0.5.4 actually provides `<sys/random.h>` with `getrandom(void *, size_t, unsigned)` and the symbol is linkable with the same PS4 target linkage used by Kodi.
 
 The historical references/ps4sdk contains sys/sysctl.h, KERN_ARND, and SYS___sysctl, but it is a 2017 reference and does not expose sceRandomGetRandomNumber. Therefore we must not copy its header merely to make OpenSSL compile.
 
