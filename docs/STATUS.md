@@ -89,4 +89,4 @@ The sys/sysctl.h failure is now classified as a FreeBSD compatibility-path misma
 
 OpenSSL 3.5.7 can use sysctl(KERN_ARND) on the FreeBSD path, but OpenOrbis exposes no indexed sys/random.h, getrandom() or getentropy() interface. OpenOrbis does declare sceRandomGetRandomNumber, although the checked-in prototype is incomplete. Historical ps4dev/ps4sdk provides sysctl.h/KERN_ARND and syscall metadata, but is too old to prove current OpenOrbis support.
 
-Current implementation boundary: no compatibility header has been copied and OpenSSL has not yet been modified to use the native SCE random API.
+Implementation result: no compatibility header was copied and OpenSSL was adapted to use the verified OpenOrbis `getrandom()` path. The adaptation is isolated behind the OpenSSL-only `KODI_PS4` define and the `kodi-ps4` target. Fresh WSL configure-only validation is still pending.
