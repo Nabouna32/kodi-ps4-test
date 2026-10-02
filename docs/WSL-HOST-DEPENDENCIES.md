@@ -1,32 +1,26 @@
-# WSL host dependencies
+# WSL Host Dependencies
 
-This document records **host-side Ubuntu/WSL development packages** that have been explicitly identified and installed during the Kodi PS4 porting work. It exists so a new WSL machine can be prepared without depending on chat history.
+This document records host-side Ubuntu/WSL packages actually required by the current Kodi PS4 workflow. They never satisfy PS4 target dependencies.
 
-> **Scope:** these packages are for Linux host tools. They are not PS4 target libraries. Target dependencies must still be built for the OpenOrbis/FreeBSD target.
+## Validated environment
 
-## Base environment
+- Ubuntu 26.04.1 LTS / WSL2
+- x86_64
+- LLVM/Clang/LLD 21.1.8 — validated standalone PS4 smoke-test baseline
+- LLVM/Clang/LLD 18.1.8 — diagnostic experiment only
+- OpenOrbis: `~/opt/OpenOrbis/PS4Toolchain`
 
-Validated build environment:
+## Direct packages
 
-- Ubuntu 26.04.1 LTS / WSL
-- x86_64 host
-- Clang/LLVM 21.1.8 (validated PS4 smoke-test environment)
-- Clang/LLVM 18.1.8 (installed 2026-10-01 for OpenOrbis v0.5.4 compatibility validation; not yet build-validated)
-- OpenOrbis PS4 toolchain under `~/opt/OpenOrbis/PS4Toolchain`
-
-## Direct host development packages identified by the project
-
-These are the packages explicitly documented as required/installed for the host build so far:
-
-| Package | Why it is needed |
+| Package | Purpose |
 |---|---|
-| `liblzo2-dev` | Kodi native TexturePacker host build |
-| `libpng-dev` | Kodi native TexturePacker host build |
-| `libgif-dev` | Kodi native TexturePacker host build |
-| `libjpeg-dev` | Kodi native TexturePacker host build |
-| `libcurl4-openssl-dev` | Official Kodi native CMake bootstrap; the recipe uses `--system-curl` |
+| `liblzo2-dev` | Kodi native TexturePacker |
+| `libpng-dev` | Kodi native TexturePacker |
+| `libgif-dev` | Kodi native TexturePacker |
+| `libjpeg-dev` | Kodi native TexturePacker |
+| `libcurl4-openssl-dev` | Kodi native CMake bootstrap with system CURL |
 
-Install the direct project packages with:
+Install:
 
 ```bash
 sudo apt update
@@ -38,90 +32,34 @@ sudo apt install -y \
   libcurl4-openssl-dev
 ```
 
-## Important: transitive packages
+APT may install transitive packages; they are not maintained here as a manually curated list unless the project proves they are direct requirements.
 
-Installing `libcurl4-openssl-dev` on Ubuntu 26.04 pulled additional development/runtime packages, including OpenSSL, Kerberos, LDAP, GnuTLS, Brotli, IDN2, nghttp2, SSH2, PSL, GMP, Zstd, RTMP and related packages.
+## Host tools
 
-Those packages are **not listed as separate project prerequisites** because they were installed by APT as dependencies of the direct host package. A fresh machine should normally let APT resolve them rather than maintaining a manually duplicated transitive list.
+Git/GitHub CLI, CMake, Ninja, Clang/LLVM, GCC/G++, Python, Meson, Autotools, pkg-config, NASM and the OpenOrbis toolchain are host tools rather than entries in the package list.
 
-The exact transaction on 2026-10-01 installed 28 new packages (including `libcurl4-openssl-dev`) and upgraded 4 existing packages. The 27 packages other than the requested direct package were APT-resolved dependencies, including:
+Kodi's native dependency system supplies several build-time tools into:
 
-- `libssl-dev`
-- `libkrb5-dev`
-- `libldap-dev`
-- `libnghttp2-dev`
-- `libgnutls28-dev`
-- `libssh2-1-dev`
-- `libbrotli-dev`
-- `libidn2-dev`
-- `libpsl-dev`
-- `librtmp-dev`
-- `libzstd-dev`
-- `libgmp-dev`
-- `libtasn1-6-dev`
-- `libp11-kit-dev`
-- `nettle-dev`
-- `libevent-2.1-7t64`
-- Kerberos/GSS and related development packages
-
-These are recorded for forensic/reproducibility context, not as packages that must all be installed manually.
-
-## Host tools versus APT libraries
-
-The following are also part of the validated build environment, but are **tools rather than this package list**:
-
-- Git
-- GitHub CLI
-- CMake
-- Ninja
-- Clang/LLVM
-- GCC/G++
-- Python
-- Meson
-- Autotools
-- pkg-config
-- NASM
-- OpenOrbis PS4 toolchain
-
-Kodi's own `tools/depends/native` is responsible for building/placing several native build tools in:
-
-```text
-build/ps4/build/x86_64-linux-gnu-native/
 ```
-
-Do not confuse that native prefix with the PS4 target dependency prefix:
-
-```text
-build/ps4/build/x86_64-pc-freebsd12-release/
+build/ps4/build/x86_64-linux-gnu-native/
 ```
 
 ## Host/target rule
 
-A host package is correct when a program **runs on WSL/Linux** and needs it.
-
-A host package is not a substitute when Kodi is looking for a **PS4 target library**.
-
-Example:
+A package belongs here only when a program executes on WSL/Linux and genuinely needs it.
 
 - `libcurl4-openssl-dev` → valid host dependency for native CMake.
-- Ubuntu `libharfbuzz-dev` → **not** a solution for PS4 target HarfBuzz.
+- Ubuntu `libharfbuzz-dev` → not a solution for PS4 target HarfBuzz.
+- Ubuntu `libiconv-dev` → not a solution for the PS4 Iconv detection issue.
 
-## Rebuilding a new WSL machine
+Target dependencies are built for the PS4 target and staged in the target prefix.
 
-Start with the direct packages above, then follow `docs/BUILD.md` and the documented OpenOrbis/toolchain setup. As new host packages are genuinely required and verified, add them here with the reason and the date/discovery that established them.
+## LLVM 18 experiment
 
-Do not turn this file into a guessed “install everything” list. It should remain an evidence-based record of packages actually required by the project.
+LLVM 18.1.8 was installed alongside LLVM 21 to test whether the OpenOrbis v0.5.4 `cmath` failure was compiler-version specific.
 
+It reproduced the same failure. LLVM 18 is therefore not a project fix or required baseline. The repository continues to use generic LLVM command names.
 
-## LLVM 18 compatibility experiment
+## Maintenance
 
-The Ubuntu packages below were installed in parallel with LLVM 21:
-
-| Package | Version | Purpose |
-|---|---|---|
-| clang-18 | 18.1.8 | Host compiler compatibility experiment for OpenOrbis v0.5.4 |
-| lld-18 | 18.1.8 | Host linker compatibility experiment for OpenOrbis v0.5.4 |
-
-The packages are installed successfully. LLVM 21 remains installed. This is not yet a validated project prerequisite: the Kodi PS4 configure-only build must first be rerun with LLVM 18 selected explicitly and the HarfBuzz result observed.
-
-Do not remove LLVM 21 until the experiment is complete; the existing LLVM 21 PS4 smoke-test result remains valuable as a known-good baseline.
+Keep only directly required, verified host packages here. Do not turn this into an “install everything” list or retain transient APT transaction details that do not help reproduce the environment.
