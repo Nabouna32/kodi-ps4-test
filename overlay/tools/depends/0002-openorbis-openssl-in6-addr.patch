@@ -6,14 +6,27 @@ diff --git a/tools/depends/target/openssl/Makefile b/tools/depends/target/openss
 -DEPS = ../../Makefile.include Makefile OPENSSL-VERSION ../../download-files.include \
 +DEPS = ../../Makefile.include Makefile OPENSSL-VERSION ../../download-files.include 0001-openorbis-in6-addr.patch 0002-openorbis-endian-header.patch 0003-openorbis-openssl-ps4-random.patch \
                          001-android-getauxvalrevert.patch 16-kodi.conf
-@@ -67,7 +67,9 @@
+@@ -50,9 +50,12 @@
+     endif
+   endif
+   ifeq ($(OS), osx)
+     OPENSSLPLATFORM=kodi-darwin64-$(CPU)
+   endif
++  ifeq ($(TARGET_PLATFORM),ps4)
++    OPENSSLPLATFORM=kodi-ps4
++  endif
+ 
+   # Openssl 3.2.0 allows no-apps no-docs as options. Use when we update further
+   # We explicitly use no-asm as there is a symbol clash with gnutls
+@@ -67,7 +70,10 @@
  	cd $(PLATFORM); $(ARCHIVE_TOOL) $(ARCHIVE_TOOL_FLAGS) $(TARBALLS_LOCATION)/$(ARCHIVE)
  ifeq ($(OS),android)
  	cd $(PLATFORM); patch -p1 -i ../001-android-getauxvalrevert.patch
  endif
 +	cd $(PLATFORM); patch -p1 -i ../0001-openorbis-in6-addr.patch
 +	cd $(PLATFORM); patch -p1 -i ../0002-openorbis-endian-header.patch
- 	cd $(PLATFORM); cp ../16-kodi.conf ./Configurations/
-	cd $(PLATFORM); patch -p1 -i ../0003-openorbis-openssl-ps4-random.patch
++	cd $(PLATFORM); cp ../16-kodi.conf ./Configurations/
++	cd $(PLATFORM); patch -p1 -i ../0003-openorbis-openssl-ps4-random.patch
+-	cd $(PLATFORM); cp ../16-kodi.conf ./Configurations/
  	cd $(PLATFORM); $(CONFIGURE)
  	sed -ie "s|PROGRAMS=|PROGRAMS=#|" "$(PLATFORM)/Makefile";
