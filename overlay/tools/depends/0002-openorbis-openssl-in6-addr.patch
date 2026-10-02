@@ -1,7 +1,7 @@
 diff --git a/tools/depends/target/openssl/Makefile b/tools/depends/target/openssl/Makefile
 --- a/tools/depends/target/openssl/Makefile
 +++ b/tools/depends/target/openssl/Makefile
-@@ -1,5 +1,5 @@
+@@ -1,4 +1,4 @@
  include ../../Makefile.include OPENSSL-VERSION ../../download-files.include
 -DEPS = ../../Makefile.include Makefile OPENSSL-VERSION ../../download-files.include \
 +DEPS = ../../Makefile.include Makefile OPENSSL-VERSION ../../download-files.include 0001-openorbis-in6-addr.patch 0002-openorbis-endian-header.patch \
