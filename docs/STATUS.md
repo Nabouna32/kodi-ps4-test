@@ -487,3 +487,10 @@ added to its CMake options. This disables zlib's optional coverage/test executab
 The overlay application script now copies this zlib Makefile into the materialized pinned Kodi source before dependency configuration. No upstream Kodi source is modified in the repository.
 
 **Validation pending:** run the clean CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh workflow. The expected sequence is to build the required target dependencies including Fontconfig and then verify that the previous zlib coverage-test blocker is gone. Do not start a full Kodi build yet.
+
+
+## Latest repository-state verification — 2026-10-02
+
+The GitHub `main` branch was re-verified after a rollback/recovery concern. The restored implementation is present: the Iconv correction remains in the PS4 toolchain, Fontconfig remains staged by the build script, and the repository-owned zlib overlay remains applied with target zlib testing disabled while retaining the static library build.
+
+Current HEAD after the continuity update is the new documentation commit created immediately before this entry. The restored Fontconfig/zlib path still requires fresh WSL validation. Next action: run the clean `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh` workflow from current `main`. Do not start a full Kodi build before configure-only succeeds.
