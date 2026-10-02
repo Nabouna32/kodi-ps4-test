@@ -132,3 +132,23 @@ Decision for this step: keep the repository immutable and use it only for source
 
 Source: https://github.com/ps4dev/ps4sdk/commit/4df9d001b66ae4ec07d9a51b62d1e4c5e270eecc
 Confidence: high for the contents of that public revision; low for current runtime/API availability on modern PS4/OpenOrbis.
+
+## R-016 — OpenSSL FreeBSD random path versus PS4 APIs
+
+OpenSSL 3.5.7's failure at providers/implementations/rands/seeding/rand_unix.c is not evidence that sysctl(KERN_ARND) is the correct PS4 implementation. OpenSSL's FreeBSD path includes sys/sysctl.h and, when KERN_ARND is available, uses sysctl() as its random source. The same source also has a separate FreeBSD getrandom() path for sufficiently recent FreeBSD versions. Sources: OpenSSL 3.5.7/3.5.8 source comparison and historical OpenSSL source. citeturn4search0turn3search1
+
+Current OpenOrbis evidence:
+- the toolchain has no indexed sys/random.h, getrandom(), or getentropy() interface;
+- include/orbis/Random.h declares sceRandomGetRandomNumber, but its checked-in prototype is only void sceRandomGetRandomNumber();, so the header does not establish the usable buffer/length ABI;
+- OpenOrbis documentation explicitly states that header files and library stubs may still require updates for undiscovered functions. citeturn0search0turn0search3
+
+Historical PS4SDK evidence:
+- references/ps4sdk/include/sys/sysctl.h defines KERN_ARND and declares the standard sysctl() interface;
+- its syscall metadata includes sys___sysctl / syscall number 202, which is stronger evidence than a header-only declaration that the old SDK modeled a FreeBSD sysctl syscall path;
+- however, this SDK is from 2017 and does not expose sceRandomGetRandomNumber, so it cannot establish the current OpenOrbis implementation.
+
+Independent PS4 ecosystem evidence shows sceRandomGetRandomNumber(void *buf, size_t len) being called as a buffer-filling random primitive, including in LuaJIT's PS4 path. This supports investigating the native SCE random API rather than manufacturing a sys/sysctl.h compatibility header solely to satisfy OpenSSL. It still does not prove that the symbol is linkable from the current OpenOrbis v0.5.4 libraries. citeturn1search1
+
+Conclusion for this investigation: do not add a fake sys/sysctl.h yet. The remaining unknown is symbol availability/linkability of sceRandomGetRandomNumber in the exact OpenOrbis v0.5.4 toolchain installed for this project, followed by a minimal target-link smoke test. No OpenSSL implementation change is made in this step.
+
+Confidence: high for the inspected source/header facts; medium for the native random ABI based on independent PS4 software; unresolved for OpenOrbis library-symbol availability.
