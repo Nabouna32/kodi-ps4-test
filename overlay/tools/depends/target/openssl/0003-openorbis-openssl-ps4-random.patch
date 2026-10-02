@@ -15,37 +15,24 @@ diff --git a/Configurations/16-kodi.conf b/Configurations/16-kodi.conf
 diff --git a/providers/implementations/rands/seeding/rand_unix.c b/providers/implementations/rands/seeding/rand_unix.c
 --- a/providers/implementations/rands/seeding/rand_unix.c
 +++ b/providers/implementations/rands/seeding/rand_unix.c
-@@ -26,9 +26,11 @@
- #endif
--#if defined(__FreeBSD__) || defined(__NetBSD__)
-+#if defined(KODI_PS4)
-+#include <sys/random.h>
-+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+@@ -32,8 +32,10 @@
+ #if defined(__FreeBSD__) || defined(__NetBSD__)
  #include <sys/types.h>
  #include <sys/sysctl.h>
  #include <sys/param.h>
  #endif
 -#if defined(__FreeBSD__) && __FreeBSD_version >= 1200061
-+#if defined(__FreeBSD__) && __FreeBSD_version >= 1200061 && !defined(KODI_PS4)
++#if defined(KODI_PS4)
++#include <sys/random.h>
++#elif defined(__FreeBSD__) && __FreeBSD_version >= 1200061
  #include <sys/random.h>
  #endif
-@@ -196,7 +198,7 @@
- #define OPENSSL_RAND_SEED_GETRANDOM
- #define OPENSSL_RAND_SEED_DEVRANDOM
- #endif
+@@ -213,1 +215,1 @@
 -#if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
 +#if !defined(KODI_PS4) && (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
- /*
-  * sysctl_random(): Use sysctl() to read a random number from the kernel
-  * Returns the number of bytes returned in buf on success, -1 on failure.
-@@ -362,7 +364,9 @@
- #endif
-     /* Linux supports this since version 3.17 */
+@@ -389,1 +391,3 @@
 -#if defined(__linux) && defined(__NR_getrandom)
 +#if defined(KODI_PS4)
 +    return getrandom(buf, buflen, 0);
 +#elif defined(__linux) && defined(__NR_getrandom)
      return syscall(__NR_getrandom, buf, buflen, 0);
- #elif (defined(__DragonFly__) && __DragonFly_version >= 500700) \
-     || (defined(__NetBSD__) && __NetBSD_Version >= 1000000000)  \
-     || (defined(__FreeBSD__) && __FreeBSD_version >= 1200061)
