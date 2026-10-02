@@ -53,56 +53,17 @@ Host-native Kodi build tools may use normal Ubuntu/WSL development packages when
 
 Reason: CMake, TexturePacker, JsonSchemaBuilder, Meson, Ninja and related build-time utilities execute on the Linux host. Avoiding normal host packages by introducing project-local substitutes would add unnecessary complexity. This does **not** permit host Linux libraries to satisfy PS4 target dependencies; target libraries remain separately built for the OpenOrbis/FreeBSD target.
 
+## D-011 — Preserve OpenOrbis libc++ header precedence for C++ target builds
 
-## D-011 — Do not hard-code the host LLVM version before compatibility validation
+**Status: implemented; fresh full-build validation pending.**
 
-The repository toolchain continues to select generic LLVM tool names (clang, clang++, llvm-ar, llvm-ranlib, ld.lld) rather than pinning an Ubuntu-specific LLVM path.
+OpenOrbis libc++ wraps the SDK C headers and relies on its wrapper being found before the raw SDK header. A standalone PS4-targeted C++ <cmath> test established that libc++ must precede the SDK C include directory to restore the expected global abs declaration.
 
-Reason: LLVM/LLD 18.1.8 is currently installed as a controlled compatibility experiment for OpenOrbis v0.5.4, while LLVM/LLD 21.1.8 remains the validated baseline for the standalone PS4 smoke test. The project must first demonstrate the actual Kodi/HarfBuzz build result with LLVM 18 before deciding whether a repository-level version requirement is justified.
-
-## D-012 — Do not adopt LLVM 18 as the OpenOrbis header fix
-
-The LLVM/Clang/LLD 18.1.8 experiment was executed against the real Kodi HarfBuzz target build and reproduced the same cmath/global-abs failure seen with LLVM 21.
-
-Therefore LLVM 18 is not accepted as the fix for the current OpenOrbis v0.5.4 header mismatch.
-
-The repository continues to avoid hard-coding an Ubuntu-specific LLVM version until a real compatibility requirement is demonstrated. LLVM 18 remains installed only as an available diagnostic baseline.
-
-## D-013 — Preserve OpenOrbis libc++ header precedence over SDK C headers
-
-The current HarfBuzz failure is caused by C++ header search order, not by a HarfBuzz source defect or a required LLVM version change.
-
-OpenOrbis' forked libc++ provides a math.h wrapper that includes the SDK C math.h with #include_next and includes <stdlib.h> for C++. The libc++ cmath header expects that wrapper to be selected before the SDK C include directory.
-
-Therefore, when validated, the PS4 C++ build must place:
-
-    $OO_PS4_TOOLCHAIN/include/c++/v1
-
-before:
-
-    $OO_PS4_TOOLCHAIN/include
-
-for C++ header lookup.
-
-No OpenOrbis header copy, HarfBuzz patch, or compiler-version workaround is justified for this issue.
-
-## D-014 — Preserve OpenOrbis libc++ header precedence for C++ target builds
-
-**Status: validated decision.**
-
-OpenOrbis libc++ wraps the SDK C headers and relies on its wrapper being found before the raw SDK header. A standalone PS4-targeted `<cmath>` test proves that the current repository order is broken and that libc++ first is sufficient to restore the expected global `abs` declaration.
-
-Therefore the PS4 C++ target integration must use:
+Therefore the PS4 C++ target integration uses:
 
     -isystem $OO_PS4_TOOLCHAIN/include/c++/v1
     -isystem $OO_PS4_TOOLCHAIN/include
 
-Only the ordering is to change. Target triple, sysroot, linker, CRT and libraries remain unchanged.
+Only the header ordering is changed by this decision. The target triple, sysroot, linker, CRT and libraries remain unchanged.
 
-## D-015 — Implement the validated OpenOrbis libc++ include ordering
-
-**Status: implemented; validation pending.**
-
-The validated D-014 ordering is now applied to both repository-owned PS4 C++ integrations. C++ uses OpenOrbis libc++ headers before the SDK C headers. C target flags retain the SDK C include path independently.
-
-No other compiler, linker or dependency behavior was changed.
+The earlier LLVM 18 experiment did not resolve this issue, so no Ubuntu-specific LLVM version is pinned as a workaround.
