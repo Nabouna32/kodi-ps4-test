@@ -181,3 +181,14 @@ The first PS4 FFmpeg dependency overlay used an invalid unified-diff hunk header
 The exact pinned Kodi Makefile context is unchanged; only the patch metadata was wrong. The overlay is now aligned to the exact pinned source boundary and injects `dav1d ffmpeg` before dependency filtering.
 
 Validation level: source-level exactness verified against the pinned Kodi Makefile; fresh WSL configure-only execution remains required.
+
+
+## R-020 — OpenOrbis POSIX feature visibility for dav1d
+
+OpenOrbis v0.5.4 provides `clock_gettime` and `CLOCK_MONOTONIC`, but its `time.h` exposes their declarations only when a POSIX/XOPEN/GNU feature macro is enabled. dav1d 1.5.3 configures with C99 and therefore failed Meson's `clock_gettime` check when those macros were absent.
+
+Validation: a minimal OpenOrbis target C99 test failed without a feature macro and compiled/linked with `-D_POSIX_C_SOURCE=200809L`. Reconfiguring Kodi `tools/depends` with `--with-target-cflags="-D_POSIX_C_SOURCE=200809L"` then rebuilt and installed dav1d successfully, including `libdav1d.a`, headers and `dav1d.pc`.
+
+Implementation: pass the flag through the official Kodi `tools/depends/configure` interface in `scripts/build-ps4-kodi.sh`. No dav1d source patch or OpenOrbis header modification is required.
+
+Confidence: high for the direct WSL/dav1d validation; end-to-end script validation and FFmpeg compilation remain pending.
