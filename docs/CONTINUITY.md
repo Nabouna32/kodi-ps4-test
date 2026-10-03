@@ -73,13 +73,13 @@ PS4 target dependencies: `build/ps4/build/x86_64-pc-freebsd12-release`.
 
 ## Current validation boundary
 
-The Fontconfig/zlib implementation is present, but the recovered state has not yet had a fresh WSL `CONFIGURE_ONLY=1` run. The next blocker is therefore unknown until that run.
+The latest configure-only run completed OpenSSL 3.5.7 and then stopped at Kodi's FFmpeg discovery because the target prefix did not yet contain FFmpeg. The repository now stages FFmpeg 9.0.2 through the official Kodi target dependency recipe. Fresh WSL validation of that target build is pending.
 
 Do not start a full Kodi build before configure-only succeeds.
 
 ## Current blocker
 
-OpenSSL 3.5.7 previously stopped at `providers/implementations/rands/seeding/rand_unix.c` because OpenOrbis v0.5.4 lacks `sys/sysctl.h`. The repository-owned implementation now avoids that incompatible FreeBSD path and selects OpenOrbis `getrandom()` for PS4. Fresh WSL configure-only validation is pending.
+FFmpeg 9.0.2 is now the active build boundary. No OpenOrbis-specific FFmpeg incompatibility has yet been observed, so no FFmpeg source adaptation is justified at this point.
 
 ## Exact next action
 
@@ -106,9 +106,6 @@ The OpenSSL blocker was a FreeBSD compatibility-path mismatch. OpenSSL 3.5.7 sel
 
 The historical references/ps4sdk contains sys/sysctl.h, KERN_ARND, and SYS___sysctl, but it is a 2017 reference and does not expose sceRandomGetRandomNumber. Therefore we must not copy its header merely to make OpenSSL compile.
 
-## Exact next action
-
-Validate the approved OpenSSL PS4 random adaptation on `fix/ps4-cmake-dependency-root` with a fresh WSL configure-only run. The implementation selects an OpenSSL `kodi-ps4` target, defines `KODI_PS4`, excludes the FreeBSD `sysctl(KERN_ARND)` path, and calls the verified OpenOrbis `getrandom()` API. If configure-only passes OpenSSL, continue only with the next actual build blocker.
 
 
 ## Current FFmpeg blocker
