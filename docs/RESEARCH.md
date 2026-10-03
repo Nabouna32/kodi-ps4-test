@@ -164,3 +164,12 @@ Decision for this step: stage FFmpeg through the official Kodi target dependency
 Validation level: source inspection of the exact pinned Kodi revision plus implementation in the repository build script. Fresh WSL FFmpeg compilation/configuration remains pending.
 
 Confidence: high for the dependency-path diagnosis; pending target-build validation.
+\n\n## R-018 — FFmpeg target was not being built on PS4
+
+The first validation after adding `ffmpeg` to the build script still reached Kodi `FindFFMPEG.cmake` with no FFmpeg libraries. Exact inspection of the pinned Kodi `tools/depends/target/Makefile` showed that `DEPENDS += dav1d ffmpeg` is conditional on `OS=linux`. The PS4 depends configuration deliberately reports `platform_os=freebsd`, so the explicit `make ffmpeg` invocation did not pull the FFmpeg directory into the real dependency graph.
+
+Implementation: add `dav1d ffmpeg` to `DEPENDS` only for `TARGET_PLATFORM=ps4` through `overlay/tools/depends/0003-openorbis-ps4-ffmpeg-depends.patch`, with a dry-run check in `scripts/apply-kodi-overlay.cmake`.
+
+This is a dependency-graph correction, not an FFmpeg source adaptation. No FFmpeg/OpenOrbis compatibility issue has yet been observed.
+
+Validation status: patch implemented; fresh WSL configure-only validation pending.\n
