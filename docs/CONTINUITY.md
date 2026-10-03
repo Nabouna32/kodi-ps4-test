@@ -79,7 +79,7 @@ Do not start a full Kodi build before configure-only succeeds.
 
 ## Current blocker
 
-FFmpeg 9.0.2 is now the active build boundary. No OpenOrbis-specific FFmpeg incompatibility has yet been observed, so no FFmpeg source adaptation is justified at this point.
+FFmpeg 9.0.2 remains the next build boundary. Direct WSL validation showed that dav1d 1.5.3 needs `-D_POSIX_C_SOURCE=200809L` because OpenOrbis hides `clock_gettime` and `CLOCK_MONOTONIC` without a POSIX feature macro. Passing this flag through Kodi's supported `tools/depends/configure` interface made dav1d compile and install successfully. The build script now supplies the flag; end-to-end configure-only validation through the script is next.
 
 ## Exact next action
 
