@@ -39,7 +39,8 @@ echo "==> bootstrapping Kodi target dependency configuration"
     --with-linker=lld \
     --prefix="${DEPENDS_ROOT}" \
     --disable-debug \
-    --disable-ccache
+    --disable-ccache \
+    --with-target-cflags="-D_POSIX_C_SOURCE=200809L"
 )
 
 echo "==> building Kodi native dependency toolchain"
