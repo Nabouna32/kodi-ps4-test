@@ -95,3 +95,4 @@ The build script now stages the pinned Kodi FFmpeg 9.0.2 target dependency befor
 Current validation boundary: the repository change is committed on `fix/ps4-cmake-dependency-root`, but a fresh WSL configure-only run is still required to validate the FFmpeg target build. The next concrete blocker, if any, must come from that build rather than being assumed in advance.
 
 Next action: run `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh` on the approved branch and inspect the first FFmpeg/OpenOrbis failure, if present.
+\n\nThe first FFmpeg validation exposed a dependency-graph issue rather than an FFmpeg/OpenOrbis compilation failure: Kodi's target Makefile only places `ffmpeg` in `DEPENDS` for `OS=linux`, while PS4 reports `OS=freebsd`. The PS4 overlay now adds `dav1d ffmpeg` to `DEPENDS` specifically for `TARGET_PLATFORM=ps4`. Fresh configure-only validation is the next action.\n
