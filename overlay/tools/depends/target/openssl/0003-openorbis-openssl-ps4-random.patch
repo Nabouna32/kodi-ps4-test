@@ -37,4 +37,4 @@ diff --git a/providers/implementations/rands/seeding/rand_unix.c b/providers/imp
 +#if defined(KODI_PS4)
 +    return getrandom(buf, buflen, 0);
 +#elif defined(__linux) && defined(__NR_getrandom)
-     return syscall(__NR_getrandom, buflen, 0);
+     return syscall(__NR_getrandom, buf, buflen, 0);
