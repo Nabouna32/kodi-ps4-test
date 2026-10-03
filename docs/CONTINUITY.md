@@ -109,3 +109,16 @@ The historical references/ps4sdk contains sys/sysctl.h, KERN_ARND, and SYS___sys
 ## Exact next action
 
 Validate the approved OpenSSL PS4 random adaptation on `fix/ps4-cmake-dependency-root` with a fresh WSL configure-only run. The implementation selects an OpenSSL `kodi-ps4` target, defines `KODI_PS4`, excludes the FreeBSD `sysctl(KERN_ARND)` path, and calls the verified OpenOrbis `getrandom()` API. If configure-only passes OpenSSL, continue only with the next actual build blocker.
+
+
+## Current FFmpeg blocker
+
+The latest verified configure-only run completed the repository-owned OpenSSL 3.5.7 build, then stopped because the target prefix did not contain a suitable FFmpeg installation. The pinned Kodi revision requires FFmpeg 9.0.2 for the depends-build path.
+
+Source inspection of the pinned Kodi `tools/depends/target/ffmpeg` shows an official cross-compilation recipe using FFmpeg 9.0.2, the existing target toolchain, target pkg-config, NASM, and the repository's three Kodi FFmpeg source patches. The clean next implementation is therefore to stage `ffmpeg` through Kodi's target dependency Makefile before top-level CMake configuration.
+
+Implementation: `scripts/build-ps4-kodi.sh` now builds `fribidi harfbuzz fontconfig ffmpeg` before Brotli/OpenSSL and Kodi CMake configuration.
+
+Validation status: implementation committed on `fix/ps4-cmake-dependency-root`; fresh WSL validation of the FFmpeg target build is still pending.
+
+Do not force `ENABLE_INTERNAL_FFMPEG=ON` as a workaround. If the official FFmpeg recipe fails on an OpenOrbis-specific incompatibility, investigate that concrete failure as the next scoped adaptation.
