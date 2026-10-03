@@ -119,3 +119,6 @@ Implementation: `scripts/build-ps4-kodi.sh` now builds `fribidi harfbuzz fontcon
 Validation status: implementation committed on `fix/ps4-cmake-dependency-root`; fresh WSL validation of the FFmpeg target build is still pending.
 
 Do not force `ENABLE_INTERNAL_FFMPEG=ON` as a workaround. If the official FFmpeg recipe fails on an OpenOrbis-specific incompatibility, investigate that concrete failure as the next scoped adaptation.
+\n\nThe first post-implementation validation showed that FFmpeg was not actually invoked. Exact pinned Kodi source inspection explains why: `tools/depends/target/Makefile` adds `dav1d ffmpeg` only inside the `OS=linux` block. PS4 uses `OS=freebsd`, so an explicit `make ... ffmpeg` could resolve without invoking the directory recipe. The repository now adds `dav1d ffmpeg` to `DEPENDS` only when `TARGET_PLATFORM=ps4`, through a dry-run-validated overlay patch. This keeps Linux/other FreeBSD behavior unchanged.
+
+Next validation: rerun `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh`. The expected new boundary is actual dav1d/FFmpeg configuration or compilation; any failure there is the next concrete blocker.\n
