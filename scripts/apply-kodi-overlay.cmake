@@ -59,6 +59,21 @@ if(NOT PATCH_RESULT EQUAL 0)
 endif()
 
 execute_process(
+  COMMAND patch --dry-run -p1 -i "${PROJECT_ROOT}/overlay/tools/depends/0003-openorbis-ps4-ffmpeg-depends.patch"
+  WORKING_DIRECTORY "${KODI_SRC}"
+  RESULT_VARIABLE FFMPEG_DEPENDS_PATCH_DRY_RUN_RESULT)
+if(NOT FFMPEG_DEPENDS_PATCH_DRY_RUN_RESULT EQUAL 0)
+  message(FATAL_ERROR "OpenOrbis PS4 FFmpeg dependency patch does not match the pinned Kodi source")
+endif()
+execute_process(
+  COMMAND patch -p1 -i "${PROJECT_ROOT}/overlay/tools/depends/0003-openorbis-ps4-ffmpeg-depends.patch"
+  WORKING_DIRECTORY "${KODI_SRC}"
+  RESULT_VARIABLE FFMPEG_DEPENDS_PATCH_RESULT)
+if(NOT FFMPEG_DEPENDS_PATCH_RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to apply OpenOrbis PS4 FFmpeg dependency patch")
+endif()
+
+execute_process(
   COMMAND patch --dry-run -p1 -i "${PROJECT_ROOT}/overlay/tools/depends/0002-openorbis-openssl-in6-addr.patch"
   WORKING_DIRECTORY "${KODI_SRC}"
   RESULT_VARIABLE OPENSSL_PATCH_DRY_RUN_RESULT)
