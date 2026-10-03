@@ -8,7 +8,7 @@ diff --git a/Configurations/16-kodi.conf b/Configurations/16-kodi.conf
      },
 +    "kodi-ps4" => {
 +        inherit_from     => [ "BSD-x86_64" ],
-+        defines          => add("KODI_PS4"),
++        defines          => add("KODI_PS4", "_XOPEN_SOURCE=700"),
 +        disable          => add("devcryptoeng"),
 +    },
  );
