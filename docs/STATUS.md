@@ -90,3 +90,10 @@ The sys/sysctl.h failure is now classified as a FreeBSD compatibility-path misma
 OpenSSL 3.5.7 can use sysctl(KERN_ARND) on the FreeBSD path, but OpenOrbis exposes no indexed sys/random.h, getrandom() or getentropy() interface. OpenOrbis does declare sceRandomGetRandomNumber, although the checked-in prototype is incomplete. Historical ps4dev/ps4sdk provides sysctl.h/KERN_ARND and syscall metadata, but is too old to prove current OpenOrbis support.
 
 Implementation result: no compatibility header was copied and OpenSSL was adapted to use the verified OpenOrbis `getrandom()` path. The adaptation is isolated behind the OpenSSL-only `KODI_PS4` define and the `kodi-ps4` target. Fresh WSL configure-only validation is still pending.
+
+
+The build script now stages the pinned Kodi FFmpeg 9.0.2 target dependency before Kodi CMake configuration. This replaces the previous immediate `FindFFMPEG.cmake` failure caused by an empty target FFmpeg prefix.
+
+Current validation boundary: the repository change is committed on `fix/ps4-cmake-dependency-root`, but a fresh WSL configure-only run is still required to validate the FFmpeg target build. The next concrete blocker, if any, must come from that build rather than being assumed in advance.
+
+Next action: run `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh` on the approved branch and inspect the first FFmpeg/OpenOrbis failure, if present.
