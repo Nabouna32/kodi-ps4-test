@@ -151,3 +151,16 @@ No OpenOrbis SDK files are modified and no historical PS4SDK compatibility heade
 Validation level: source-level verification plus a successful OpenOrbis target-link smoke test for `getrandom`; the full OpenSSL dependency build remains pending.
 
 Confidence: high for the OpenOrbis header/symbol evidence and the narrow source adaptation; pending full dependency-build validation.
+
+
+## R-017 — Pinned Kodi FFmpeg dependency
+
+The pinned Kodi revision `9c3e7f4d7b3ff314cd2f19a291766555e0346024` uses FFmpeg `9.0.2` in `tools/depends/target/ffmpeg/FFMPEG-VERSION`. Its target recipe invokes the pinned FFmpeg CMake wrapper, passes the cross compiler/linker/archive tools and target pkg-config, and applies Kodi's three maintained FFmpeg source patches.
+
+The top-level `FindFFMPEG.cmake` requires the exact 9.0.2 library ABI versions when using the Kodi depends-build path. The previous PS4 configure failure occurred because the target dependency prefix contained no FFmpeg libraries, not because FFmpeg 9.0.2 had yet been shown incompatible with PS4.
+
+Decision for this step: stage FFmpeg through the official Kodi target dependency graph before Kodi CMake configuration. Do not force `ENABLE_INTERNAL_FFMPEG=ON` at the top level and do not adapt FFmpeg source until an actual OpenOrbis build failure establishes the need.
+
+Validation level: source inspection of the exact pinned Kodi revision plus implementation in the repository build script. Fresh WSL FFmpeg compilation/configuration remains pending.
+
+Confidence: high for the dependency-path diagnosis; pending target-build validation.
