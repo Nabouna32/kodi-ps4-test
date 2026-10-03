@@ -150,3 +150,4 @@ See `WSL-HOST-DEPENDENCIES.md`.
 ## Current validation boundary
 
 The FFmpeg 9.0.2 target dependency staging change is implemented on the approved branch, but fresh WSL configure-only validation is still required. Do not start a full Kodi build until configure-only succeeds.
+\n\nThe pinned Kodi target Makefile only adds FFmpeg to `DEPENDS` for `OS=linux`. PS4 uses `OS=freebsd`, so the build script's explicit `ffmpeg` target alone was a no-op. The PS4 overlay now adds `dav1d ffmpeg` to `DEPENDS` when `TARGET_PLATFORM=ps4`, preserving other platforms unchanged. The overlay performs a dry-run patch check before applying it.\n
