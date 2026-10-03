@@ -59,10 +59,10 @@ for tool in cmake ninja meson pkg-config python3 nasm TexturePacker JsonSchemaBu
   fi
 done
 
-echo "==> building Kodi target dependencies required by ASS/libass"
+echo "==> building Kodi target dependencies required by ASS/libass and Kodi core"
 make -C "${KODI_SRC}/tools/depends/target" \
   -j"${JOBS}" \
-  fribidi harfbuzz fontconfig
+  fribidi harfbuzz fontconfig ffmpeg
 make -C "${KODI_SRC}/tools/depends/target/brotli" \
   -j"${JOBS}"
 make -C "${KODI_SRC}/tools/depends/target/openssl" \
