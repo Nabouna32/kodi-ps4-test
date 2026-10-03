@@ -53,7 +53,7 @@ The latest verified configure-only run completed the repository-owned OpenSSL 3.
 
 ## Current blocker / boundary
 
-The FFmpeg target build has not yet been validated on WSL. The next concrete blocker must come from the official FFmpeg 9.0.2 cross-build, if one occurs. No FFmpeg source adaptation is currently justified.
+The PS4 dependency graph now reaches dav1d. Direct WSL validation confirmed dav1d 1.5.3 builds and installs when Kodi tools/depends receives `--with-target-cflags="-D_POSIX_C_SOURCE=200809L"`; the build script now supplies this flag. The remaining validation boundary is the end-to-end script run and then the official FFmpeg 9.0.2 cross-build. No FFmpeg source adaptation is currently justified.
 
 `references/ps4sdk` is a historical/public PS4 reference and is not used by the build.
 
