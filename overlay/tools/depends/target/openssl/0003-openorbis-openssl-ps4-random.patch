@@ -1,0 +1,40 @@
+diff --git a/Configurations/16-kodi.conf b/Configurations/16-kodi.conf
+--- a/Configurations/16-kodi.conf
++++ b/Configurations/16-kodi.conf
+@@ -29,4 +29,9 @@
+         bn_ops           => "SIXTY_FOUR_BIT_LONG",
+         perlasm_scheme   => "ios64",
+         sys_id           => "tvOS",
+     },
++    "kodi-ps4" => {
++        inherit_from     => [ "BSD-x86_64" ],
++        defines          => add("KODI_PS4"),
++        cflags           => add("-D_XOPEN_SOURCE=700"),
++        disable          => add("devcryptoeng"),
++    },
+ );
+diff --git a/providers/implementations/rands/seeding/rand_unix.c b/providers/implementations/rands/seeding/rand_unix.c
+--- a/providers/implementations/rands/seeding/rand_unix.c
++++ b/providers/implementations/rands/seeding/rand_unix.c
+@@ -32,8 +32,10 @@
+-#if defined(__FreeBSD__) || defined(__NetBSD__)
++#if defined(KODI_PS4)
++#include <sys/random.h>
++#elif defined(__FreeBSD__) || defined(__NetBSD__)
+ #include <sys/types.h>
+ #include <sys/sysctl.h>
+ #include <sys/param.h>
+ #endif
+-#if defined(__FreeBSD__) && __FreeBSD_version >= 1200061
++#if defined(__FreeBSD__) && __FreeBSD_version >= 1200061 && !defined(KODI_PS4)
+ #include <sys/random.h>
+ #endif
+@@ -213,1 +215,1 @@
+-#if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
++#if !defined(KODI_PS4) && (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
+@@ -389,1 +391,3 @@
+-#if defined(__linux) && defined(__NR_getrandom)
++#if defined(KODI_PS4)
++    return getrandom(buf, buflen, 0);
++#elif defined(__linux) && defined(__NR_getrandom)
+     return syscall(__NR_getrandom, buf, buflen, 0);

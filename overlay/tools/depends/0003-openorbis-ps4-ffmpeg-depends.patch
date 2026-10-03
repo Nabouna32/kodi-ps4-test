@@ -1,0 +1,11 @@
+diff --git a/tools/depends/target/Makefile b/tools/depends/target/Makefile
+--- a/tools/depends/target/Makefile
++++ b/tools/depends/target/Makefile
+@@ -137,4 +137,7 @@
+ endif
++ifeq ($(TARGET_PLATFORM),ps4)
++  DEPENDS += dav1d ffmpeg
++endif
+ DEPENDS := $(filter-out $(EXCLUDED_DEPENDS),$(DEPENDS))
+ 
+ .PHONY: $(DEPENDS) download $(DOWNLOAD_TARGETS)

@@ -39,7 +39,8 @@ echo "==> bootstrapping Kodi target dependency configuration"
     --with-linker=lld \
     --prefix="${DEPENDS_ROOT}" \
     --disable-debug \
-    --disable-ccache
+    --disable-ccache \
+    --with-target-cflags="-D_POSIX_C_SOURCE=200809L"
 )
 
 echo "==> building Kodi native dependency toolchain"
@@ -59,10 +60,14 @@ for tool in cmake ninja meson pkg-config python3 nasm TexturePacker JsonSchemaBu
   fi
 done
 
-echo "==> building Kodi target dependencies required by ASS/libass"
+echo "==> building Kodi target dependencies required by ASS/libass and Kodi core"
 make -C "${KODI_SRC}/tools/depends/target" \
   -j"${JOBS}" \
-  fribidi harfbuzz fontconfig
+  fribidi harfbuzz fontconfig ffmpeg
+make -C "${KODI_SRC}/tools/depends/target/brotli" \
+  -j"${JOBS}"
+make -C "${KODI_SRC}/tools/depends/target/openssl" \
+  -j"${JOBS}"
 
 cmake -S "${KODI_SRC}" -B "${BUILD_DIR}" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \

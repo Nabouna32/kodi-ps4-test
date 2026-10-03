@@ -1,0 +1,12 @@
+diff --git a/include/openssl/byteorder.h b/include/openssl/byteorder.h
+--- a/include/openssl/byteorder.h
++++ b/include/openssl/byteorder.h
+@@ -60,7 +60,7 @@
+ #if defined(__OpenBSD__)
+ #include <sys/types.h>
+ #else
+-#include <sys/endian.h>
++#include <endian.h>
+ #endif
+ #define OSSL_HTOBE16(x) htobe16(x)
+ #define OSSL_HTOBE32(x) htobe32(x)

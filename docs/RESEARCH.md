@@ -121,3 +121,74 @@ Validated boundaries:
 5. Self-hosted OpenOrbis CI design.
 
 These are future investigations, not current build blockers.
+
+## R-015 — ps4dev/ps4sdk as historical PS4 reference
+
+The public `ps4dev/ps4sdk` repository is pinned under `references/ps4sdk/` at `4df9d001b66ae4ec07d9a51b62d1e4c5e270eecc` (last `master` commit, 2017). It is a historical/open-source PS4 SDK reference, not a replacement for OpenOrbis and not a source of proprietary Sony SDK artifacts.
+
+It is relevant to the current OpenSSL blocker because its public headers include FreeBSD-derived compatibility interfaces missing from OpenOrbis v0.5.4, including `sys/sysctl.h`, and define `KERN_ARND`. This gives us concrete historical PS4/FreeBSD evidence for the API shape selected by OpenSSL's FreeBSD random-seeding path. It does not prove that the same interface is available or linkable in the current OpenOrbis userland.
+
+Decision for this step: keep the repository immutable and use it only for source comparison. No PS4SDK headers, libraries, binaries, or code are copied into the build.
+
+Source: https://github.com/ps4dev/ps4sdk/commit/4df9d001b66ae4ec07d9a51b62d1e4c5e270eecc
+Confidence: high for the contents of that public revision; low for current runtime/API availability on modern PS4/OpenOrbis.
+
+## R-016 — OpenSSL FreeBSD random path versus PS4 APIs
+
+OpenSSL 3.5.7's failure at `providers/implementations/rands/seeding/rand_unix.c` was a FreeBSD compatibility-path mismatch, not evidence that `sysctl(KERN_ARND)` is the correct PS4 implementation. OpenSSL's source includes both the older FreeBSD `sysctl(KERN_ARND)` path and a `getrandom()` path for sufficiently recent FreeBSD versions. citeturn5view0
+
+Current OpenOrbis v0.5.4 evidence changed the decision: the installed toolchain contains `include/sys/random.h` declaring `getrandom(void *, size_t, unsigned)`, and a minimal executable linked with the same OpenOrbis PS4 model used by Kodi resolves `getrandom` as a defined target symbol. This establishes a usable OpenOrbis entropy primitive without copying `sys/sysctl.h` from the historical PS4SDK.
+
+Implementation:
+- add an OpenSSL `kodi-ps4` target inheriting the existing `BSD-x86_64` target shape;
+- define `KODI_PS4` only for that target;
+- include `<sys/random.h>` for PS4;
+- bypass the FreeBSD `sysctl(KERN_ARND)` backend on PS4;
+- call `getrandom(buf, buflen, 0)` as the PS4 entropy source.
+
+No OpenOrbis SDK files are modified and no historical PS4SDK compatibility header is copied.
+
+Validation level: source-level verification plus a successful OpenOrbis target-link smoke test for `getrandom`; the full OpenSSL dependency build remains pending.
+
+Confidence: high for the OpenOrbis header/symbol evidence and the narrow source adaptation; pending full dependency-build validation.
+
+
+## R-017 — Pinned Kodi FFmpeg dependency
+
+The pinned Kodi revision `9c3e7f4d7b3ff314cd2f19a291766555e0346024` uses FFmpeg `9.0.2` in `tools/depends/target/ffmpeg/FFMPEG-VERSION`. Its target recipe invokes the pinned FFmpeg CMake wrapper, passes the cross compiler/linker/archive tools and target pkg-config, and applies Kodi's three maintained FFmpeg source patches.
+
+The top-level `FindFFMPEG.cmake` requires the exact 9.0.2 library ABI versions when using the Kodi depends-build path. The previous PS4 configure failure occurred because the target dependency prefix contained no FFmpeg libraries, not because FFmpeg 9.0.2 had yet been shown incompatible with PS4.
+
+Decision for this step: stage FFmpeg through the official Kodi target dependency graph before Kodi CMake configuration. Do not force `ENABLE_INTERNAL_FFMPEG=ON` at the top level and do not adapt FFmpeg source until an actual OpenOrbis build failure establishes the need.
+
+Validation level: source inspection of the exact pinned Kodi revision plus implementation in the repository build script. Fresh WSL FFmpeg compilation/configuration remains pending.
+
+Confidence: high for the dependency-path diagnosis; pending target-build validation.
+\n\n## R-018 — FFmpeg target was not being built on PS4
+
+The first validation after adding `ffmpeg` to the build script still reached Kodi `FindFFMPEG.cmake` with no FFmpeg libraries. Exact inspection of the pinned Kodi `tools/depends/target/Makefile` showed that `DEPENDS += dav1d ffmpeg` is conditional on `OS=linux`. The PS4 depends configuration deliberately reports `platform_os=freebsd`, so the explicit `make ffmpeg` invocation did not pull the FFmpeg directory into the real dependency graph.
+
+Implementation: add `dav1d ffmpeg` to `DEPENDS` only for `TARGET_PLATFORM=ps4` through `overlay/tools/depends/0003-openorbis-ps4-ffmpeg-depends.patch`, with a dry-run check in `scripts/apply-kodi-overlay.cmake`.
+
+This is a dependency-graph correction, not an FFmpeg source adaptation. No FFmpeg/OpenOrbis compatibility issue has yet been observed.
+
+Validation status: patch implemented; fresh WSL configure-only validation pending.\n
+
+## R-019 — Corrected FFmpeg dependency overlay hunk
+
+The first PS4 FFmpeg dependency overlay used an invalid unified-diff hunk header: `@@ -90,6 +90,10 @@` declared six old lines although the hunk contains four. `patch --dry-run` therefore rejected the overlay before any FFmpeg build occurred.
+
+The exact pinned Kodi Makefile context is unchanged; only the patch metadata was wrong. The overlay is now aligned to the exact pinned source boundary and injects `dav1d ffmpeg` before dependency filtering.
+
+Validation level: source-level exactness verified against the pinned Kodi Makefile; fresh WSL configure-only execution remains required.
+
+
+## R-020 — OpenOrbis POSIX feature visibility for dav1d
+
+OpenOrbis v0.5.4 provides `clock_gettime` and `CLOCK_MONOTONIC`, but its `time.h` exposes their declarations only when a POSIX/XOPEN/GNU feature macro is enabled. dav1d 1.5.3 configures with C99 and therefore failed Meson's `clock_gettime` check when those macros were absent.
+
+Validation: a minimal OpenOrbis target C99 test failed without a feature macro and compiled/linked with `-D_POSIX_C_SOURCE=200809L`. Reconfiguring Kodi `tools/depends` with `--with-target-cflags="-D_POSIX_C_SOURCE=200809L"` then rebuilt and installed dav1d successfully, including `libdav1d.a`, headers and `dav1d.pc`.
+
+Implementation: pass the flag through the official Kodi `tools/depends/configure` interface in `scripts/build-ps4-kodi.sh`. No dav1d source patch or OpenOrbis header modification is required.
+
+Confidence: high for the direct WSL/dav1d validation; end-to-end script validation and FFmpeg compilation remain pending.

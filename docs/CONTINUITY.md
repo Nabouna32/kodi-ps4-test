@@ -24,6 +24,7 @@ Normal work uses a branch and PR. Never commit directly to `main`, and never mer
 - PS5 reference pin: `0ea36e36d738aa045c1b8ed63c24a0314c7f72a5`.
 - `references/kodi/` is immutable.
 - `references/kodi-ps5/` is a technical reference only.
+- `references/ps4sdk/` is a historical/public PS4 technical reference only, pinned to `4df9d001b66ae4ec07d9a51b62d1e4c5e270eecc`.
 
 ## Project direction
 
@@ -72,17 +73,23 @@ PS4 target dependencies: `build/ps4/build/x86_64-pc-freebsd12-release`.
 
 ## Current validation boundary
 
-The Fontconfig/zlib implementation is present, but the recovered state has not yet had a fresh WSL `CONFIGURE_ONLY=1` run. The next blocker is therefore unknown until that run.
+The latest configure-only run completed OpenSSL 3.5.7 and then stopped at Kodi's FFmpeg discovery because the target prefix did not yet contain FFmpeg. The repository now stages FFmpeg 9.0.2 through the official Kodi target dependency recipe. Fresh WSL validation of that target build is pending.
 
 Do not start a full Kodi build before configure-only succeeds.
 
+## Current blocker
+
+FFmpeg 9.0.2 remains the next build boundary. Direct WSL validation showed that dav1d 1.5.3 needs `-D_POSIX_C_SOURCE=200809L` because OpenOrbis hides `clock_gettime` and `CLOCK_MONOTONIC` without a POSIX feature macro. Passing this flag through Kodi's supported `tools/depends/configure` interface made dav1d compile and install successfully. The build script now supplies the flag; end-to-end configure-only validation through the script is next.
+
 ## Exact next action
+
+Validate the approved implementation branch `fix/ps4-cmake-dependency-root`:
 
 ```bash
 cd ~/projects/kodi-ps4-test
 git fetch origin
-git switch main
-git reset --hard origin/main
+git switch fix/ps4-cmake-dependency-root
+git pull --ff-only
 export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
 export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
 CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
@@ -91,3 +98,33 @@ CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 When validating an approved implementation branch, switch to that branch before running the test and report the branch explicitly.
 
 Keep this file concise: Git history contains chronology; this file contains only the current handoff.
+
+
+## Randomness investigation result
+
+The OpenSSL blocker was a FreeBSD compatibility-path mismatch. OpenSSL 3.5.7 selects `sysctl(KERN_ARND)` on older FreeBSD paths and `getrandom()` on sufficiently new FreeBSD paths. Current OpenOrbis v0.5.4 actually provides `<sys/random.h>` with `getrandom(void *, size_t, unsigned)` and the symbol is linkable with the same PS4 target linkage used by Kodi.
+
+The historical references/ps4sdk contains sys/sysctl.h, KERN_ARND, and SYS___sysctl, but it is a 2017 reference and does not expose sceRandomGetRandomNumber. Therefore we must not copy its header merely to make OpenSSL compile.
+
+
+
+## Current FFmpeg blocker
+
+The latest verified configure-only run completed the repository-owned OpenSSL 3.5.7 build, then stopped because the target prefix did not contain a suitable FFmpeg installation. The pinned Kodi revision requires FFmpeg 9.0.2 for the depends-build path.
+
+Source inspection of the pinned Kodi `tools/depends/target/ffmpeg` shows an official cross-compilation recipe using FFmpeg 9.0.2, the existing target toolchain, target pkg-config, NASM, and the repository's three Kodi FFmpeg source patches. The clean next implementation is therefore to stage `ffmpeg` through Kodi's target dependency Makefile before top-level CMake configuration.
+
+Implementation: `scripts/build-ps4-kodi.sh` now builds `fribidi harfbuzz fontconfig ffmpeg` before Brotli/OpenSSL and Kodi CMake configuration.
+
+Validation status: implementation committed on `fix/ps4-cmake-dependency-root`; fresh WSL validation of the FFmpeg target build is still pending.
+
+Do not force `ENABLE_INTERNAL_FFMPEG=ON` as a workaround. If the official FFmpeg recipe fails on an OpenOrbis-specific incompatibility, investigate that concrete failure as the next scoped adaptation.
+\n\nThe first post-implementation validation showed that FFmpeg was not actually invoked. Exact pinned Kodi source inspection explains why: `tools/depends/target/Makefile` adds `dav1d ffmpeg` only inside the `OS=linux` block. PS4 uses `OS=freebsd`, so an explicit `make ... ffmpeg` could resolve without invoking the directory recipe. The repository now adds `dav1d ffmpeg` to `DEPENDS` only when `TARGET_PLATFORM=ps4`, through a dry-run-validated overlay patch. This keeps Linux/other FreeBSD behavior unchanged.
+
+Next validation: rerun `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh`. The expected new boundary is actual dav1d/FFmpeg configuration or compilation; any failure there is the next concrete blocker.\n
+
+## FFmpeg overlay correction
+
+The first correction addressed the hunk count but did not match the actual pinned Kodi context: the source has `endif` immediately followed by `DEPENDS := ...`. The overlay is now aligned to the exact source at that boundary and keeps the PS4 injection before dependency filtering.
+
+This is a patch-format correction only; no Kodi source, FFmpeg source, dependency policy, or toolchain behavior was changed. Fresh WSL configure-only validation is now the next action.

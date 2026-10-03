@@ -34,7 +34,15 @@ set(CMAKE_CXX_FLAGS_INIT
 set(CMAKE_ASM_FLAGS_INIT "--target=${PS4_TRIPLE}")
 
 set(CMAKE_SYSROOT "${OO_PS4_TOOLCHAIN}")
+
+# Kodi's target dependencies are a separate target prefix from the OpenOrbis
+# SDK. Keep both available to CMake's target-side find_*() logic, with the
+# dependency prefix taking precedence for Kodi-built libraries and headers.
 set(CMAKE_FIND_ROOT_PATH "${OO_PS4_TOOLCHAIN}")
+if(DEFINED DEPENDS_PATH AND DEPENDS_PATH)
+  list(PREPEND CMAKE_FIND_ROOT_PATH "${DEPENDS_PATH}")
+  set(CMAKE_LIBRARY_PATH "${DEPENDS_PATH}/lib")
+endif()
 
 # Kodi target dependencies use both FreeBSD-style pkg-config locations.
 # Restrict pkg-config to the PS4 target prefix so host packages cannot satisfy
