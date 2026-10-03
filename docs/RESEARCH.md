@@ -178,6 +178,6 @@ Validation status: patch implemented; fresh WSL configure-only validation pendin
 
 The first PS4 FFmpeg dependency overlay used an invalid unified-diff hunk header: `@@ -90,6 +90,10 @@` declared six old lines although the hunk contains four. `patch --dry-run` therefore rejected the overlay before any FFmpeg build occurred.
 
-The exact pinned Kodi Makefile context is unchanged; only the patch metadata was wrong. The overlay was corrected to `@@ -90,4 +90,8 @@` in commit `9f26094668334004873f0f254e1119d7bfc2b2dd`.
+The exact pinned Kodi Makefile context is unchanged; only the patch metadata was wrong. The overlay is now aligned to the exact pinned source boundary and injects `dav1d ffmpeg` before dependency filtering.
 
 Validation level: source-level exactness verified against the pinned Kodi Makefile; fresh WSL configure-only execution remains required.
