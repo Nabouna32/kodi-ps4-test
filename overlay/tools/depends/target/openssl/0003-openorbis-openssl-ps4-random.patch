@@ -1,7 +1,7 @@
 diff --git a/Configurations/16-kodi.conf b/Configurations/16-kodi.conf
 --- a/Configurations/16-kodi.conf
 +++ b/Configurations/16-kodi.conf
-@@ -29,5 +29,10 @@
+@@ -29,4 +29,9 @@
          bn_ops           => "SIXTY_FOUR_BIT_LONG",
          perlasm_scheme   => "ios64",
          sys_id           => "tvOS",
@@ -37,4 +37,4 @@ diff --git a/providers/implementations/rands/seeding/rand_unix.c b/providers/imp
 +#if defined(KODI_PS4)
 +    return getrandom(buf, buflen, 0);
 +#elif defined(__linux) && defined(__NR_getrandom)
-     return syscall(__NR_getrandom, buf, buflen, 0);
+     return syscall(__NR_getrandom, buflen, 0);
