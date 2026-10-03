@@ -122,3 +122,9 @@ Do not force `ENABLE_INTERNAL_FFMPEG=ON` as a workaround. If the official FFmpeg
 \n\nThe first post-implementation validation showed that FFmpeg was not actually invoked. Exact pinned Kodi source inspection explains why: `tools/depends/target/Makefile` adds `dav1d ffmpeg` only inside the `OS=linux` block. PS4 uses `OS=freebsd`, so an explicit `make ... ffmpeg` could resolve without invoking the directory recipe. The repository now adds `dav1d ffmpeg` to `DEPENDS` only when `TARGET_PLATFORM=ps4`, through a dry-run-validated overlay patch. This keeps Linux/other FreeBSD behavior unchanged.
 
 Next validation: rerun `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh`. The expected new boundary is actual dav1d/FFmpeg configuration or compilation; any failure there is the next concrete blocker.\n
+
+## FFmpeg overlay correction
+
+The first validation stopped in `scripts/apply-kodi-overlay.cmake` because the PS4 FFmpeg dependency patch had an invalid unified-diff hunk count (`@@ -90,6 +90,10 @@`). The hunk actually contains four old lines and eight new lines. The patch was corrected to `@@ -90,4 +90,8 @@` in commit `9f26094668334004873f0f254e1119d7bfc2b2dd`.
+
+This is a patch-format correction only; no Kodi source, FFmpeg source, dependency policy, or toolchain behavior was changed. Fresh WSL configure-only validation is now the next action.
