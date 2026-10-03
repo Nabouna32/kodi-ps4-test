@@ -1,7 +1,7 @@
 diff --git a/tools/depends/target/Makefile b/tools/depends/target/Makefile
 --- a/tools/depends/target/Makefile
 +++ b/tools/depends/target/Makefile
-@@ -90,6 +90,10 @@
+@@ -90,4 +90,8 @@
    endif
  endif
  
