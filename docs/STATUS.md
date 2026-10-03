@@ -46,32 +46,30 @@ Phase: build/toolchain validation / minimal bring-up
 4. builds Kodi native dependencies;
 5. builds native `JsonSchemaBuilder`;
 6. verifies native tools;
-7. stages `fribidi harfbuzz fontconfig`;
+7. stages `fribidi harfbuzz fontconfig ffmpeg`;
 8. configures Kodi with the OpenOrbis toolchain.
 
-The Fontconfig/zlib changes are implemented but have not yet been validated by a fresh WSL configure-only run from the recovered current state.
+The latest verified configure-only run completed the repository-owned OpenSSL 3.5.7 build and then stopped because the target prefix did not contain FFmpeg. The build script now stages the pinned FFmpeg 9.0.2 dependency before Kodi CMake configuration.
 
 ## Current blocker / boundary
 
-The latest configure-only run progressed through the OpenSSL OpenOrbis-specific patches and then stopped in OpenSSL 3.5.7 at `providers/implementations/rands/seeding/rand_unix.c` because OpenOrbis does not provide `sys/sysctl.h`. The validated implementation now adds a dedicated OpenSSL `kodi-ps4` target and routes its entropy path through OpenOrbis `getrandom()`. Local WSL validation is still required.
+The FFmpeg target build has not yet been validated on WSL. The next concrete blocker must come from the official FFmpeg 9.0.2 cross-build, if one occurs. No FFmpeg source adaptation is currently justified.
 
-`references/ps4sdk` is now available as a historical/public PS4 reference. It is not used by the build.
+`references/ps4sdk` is a historical/public PS4 reference and is not used by the build.
 
 ## Next action
 
-For the approved implementation branch `fix/ps4-cmake-dependency-root`:
+Validate the approved implementation branch `fix/ps4-cmake-dependency-root`:
 
 ```bash
 cd ~/projects/kodi-ps4-test
 git fetch origin
-git switch main
-git reset --hard origin/main
+git switch fix/ps4-cmake-dependency-root
+git pull --ff-only
 export OO_PS4_TOOLCHAIN="$HOME/opt/OpenOrbis/PS4Toolchain"
 export PATH="/usr/lib/llvm-21/bin:$OO_PS4_TOOLCHAIN/bin/linux:$PATH"
 CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh
 ```
-
-For a future approved change, switch to its task branch before local validation.
 
 Do not start a full Kodi build until configure-only succeeds.
 
