@@ -96,3 +96,9 @@ Current validation boundary: the repository change is committed on `fix/ps4-cmak
 
 Next action: run `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh` on the approved branch and inspect the first FFmpeg/OpenOrbis failure, if present.
 \n\nThe first FFmpeg validation exposed a dependency-graph issue rather than an FFmpeg/OpenOrbis compilation failure: Kodi's target Makefile only places `ffmpeg` in `DEPENDS` for `OS=linux`, while PS4 reports `OS=freebsd`. The PS4 overlay now adds `dav1d ffmpeg` to `DEPENDS` specifically for `TARGET_PLATFORM=ps4`. Fresh configure-only validation is the next action.\n
+
+## FFmpeg overlay correction
+
+The first validation stopped in `scripts/apply-kodi-overlay.cmake` because the PS4 FFmpeg dependency patch had an invalid unified-diff hunk count (`@@ -90,6 +90,10 @@`). The hunk actually contains four old lines and eight new lines. The patch was corrected to `@@ -90,4 +90,8 @@` in commit `9f26094668334004873f0f254e1119d7bfc2b2dd`.
+
+This is a patch-format correction only; no Kodi source, FFmpeg source, dependency policy, or toolchain behavior was changed. Fresh WSL configure-only validation is now the next action.
