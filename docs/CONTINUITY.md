@@ -125,6 +125,6 @@ Next validation: rerun `CONFIGURE_ONLY=1 ./scripts/build-ps4-kodi.sh`. The expec
 
 ## FFmpeg overlay correction
 
-The first validation stopped in `scripts/apply-kodi-overlay.cmake` because the PS4 FFmpeg dependency patch had an invalid unified-diff hunk count (`@@ -90,6 +90,10 @@`). The hunk actually contains four old lines and eight new lines. The patch was corrected to `@@ -90,4 +90,8 @@` in commit `9f26094668334004873f0f254e1119d7bfc2b2dd`.
+The first correction addressed the hunk count but did not match the actual pinned Kodi context: the source has `endif` immediately followed by `DEPENDS := ...`. The overlay is now aligned to the exact source at that boundary and keeps the PS4 injection before dependency filtering.
 
 This is a patch-format correction only; no Kodi source, FFmpeg source, dependency policy, or toolchain behavior was changed. Fresh WSL configure-only validation is now the next action.
