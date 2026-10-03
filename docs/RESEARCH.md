@@ -173,3 +173,11 @@ Implementation: add `dav1d ffmpeg` to `DEPENDS` only for `TARGET_PLATFORM=ps4` t
 This is a dependency-graph correction, not an FFmpeg source adaptation. No FFmpeg/OpenOrbis compatibility issue has yet been observed.
 
 Validation status: patch implemented; fresh WSL configure-only validation pending.\n
+
+## R-019 — Corrected FFmpeg dependency overlay hunk
+
+The first PS4 FFmpeg dependency overlay used an invalid unified-diff hunk header: `@@ -90,6 +90,10 @@` declared six old lines although the hunk contains four. `patch --dry-run` therefore rejected the overlay before any FFmpeg build occurred.
+
+The exact pinned Kodi Makefile context is unchanged; only the patch metadata was wrong. The overlay was corrected to `@@ -90,4 +90,8 @@` in commit `9f26094668334004873f0f254e1119d7bfc2b2dd`.
+
+Validation level: source-level exactness verified against the pinned Kodi Makefile; fresh WSL configure-only execution remains required.
