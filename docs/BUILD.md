@@ -149,17 +149,4 @@ See `WSL-HOST-DEPENDENCIES.md`.
 
 ## Current validation boundary
 
-The Fontconfig/zlib implementation has not yet been validated by a fresh configure-only run from current `main`. The next run determines the first new build fact.
-
-
-## FFmpeg target dependency
-
-The current target dependency staging now includes the pinned Kodi FFmpeg 9.0.2 recipe:
-
-```
-fribidi harfbuzz fontconfig ffmpeg
-```
-
-FFmpeg is built into the PS4 target prefix before Kodi CMake configuration, using Kodi's official `tools/depends/target/ffmpeg` recipe. This is intended to satisfy `FindFFMPEG.cmake` through the target prefix rather than forcing `ENABLE_INTERNAL_FFMPEG` from the top-level Kodi configure.
-
-The FFmpeg PS4 cross-build itself still requires fresh WSL validation; if its configure/compile exposes an OpenOrbis incompatibility, that becomes the next scoped blocker.
+The FFmpeg 9.0.2 target dependency staging change is implemented on the approved branch, but fresh WSL configure-only validation is still required. Do not start a full Kodi build until configure-only succeeds.
